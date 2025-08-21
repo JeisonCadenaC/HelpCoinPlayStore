@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "548171447107",
+    "project_id": "helpcoin-d0d97",
+    "storage_bucket": "helpcoin-d0d97.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:548171447107:android:77ce9d0bc140fb78dd0df6",
+        "android_client_info": {
+          "package_name": "com.example.finance_code"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCPXO6WazBPietOSmwUm4gu3lBNZ1i4-NY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
