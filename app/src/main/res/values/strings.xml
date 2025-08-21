@@ -1,3 +1,12 @@
 <resources>
-    <string name="app_name">finance_code</string>
+    <string name="app_name">Finance Code</string>
+    <string name="logo_description">Logo</string>
+    <string name="email_hint">Email</string>
+    <string name="password_hint">Contraseña</string>
+    <string name="login_button_text">Iniciar Sesión</string>
+    <string name="register_button_text">Registrarse</string>
+    <string name="facebook_button_description">Botón Facebook</string>
+    <string name="google_button_description">Botón Google</string>
+    <string name="social_button_description">Botón Red Social</string>
+    <string name="login_success_text">¡FUNCIONA EL LOGIN!</string>
 </resources>
