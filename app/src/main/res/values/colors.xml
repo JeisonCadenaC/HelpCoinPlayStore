@@ -2,5 +2,15 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="beige">#FFC4A484</color>"
+    <color name="grey">#FF9E9E9E</color>
+    <color name="red">#FFFF0000</color>
+    <color name="green">#FF32CD32</color>"
+    <color name="yellow">#FFFFEB3B</color>"
     <color name="primary_brand_color">#0288D1</color>
+
+<!--    colores para el boton de navegacion    -->
+    <color name="boton_nav_background">@color/grey</color>
+    <color name="boton_nav_select_item">#673AB7</color>
+    <color name="boton_nav_item">#4CAF50</color>
 </resources>

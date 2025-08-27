@@ -5,89 +5,96 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#120907"
     tools:context=".ui.transaction.addTransaction">
 
     <!-- TAMAÑOS DE FONDO
     width = 411dp
-    height = 900dp -->
+    height = 900dp
+    color background = #120907
+    -->
     <View
         android:id="@+id/spaceui"
         android:layout_width="413dp"
-        android:layout_height="23dp"
-        android:background="@color/material_dynamic_primary70"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"/>
-
-    <View
-        android:id="@+id/background"
-        android:layout_width="413dp"
-        android:layout_height="890dp"
-        android:background="@color/material_dynamic_primary70"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_height="35dp"
+        android:background="#717976"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/title"
         android:layout_width="match_parent"
         android:layout_height="60dp"
+        android:layout_marginTop="20dp"
         android:gravity="center|top"
         android:text="Añadir Transaccion"
+        android:textColor="@color/white"
         android:textSize="35sp"
-        app:layout_constraintTop_toBottomOf="@+id/spaceui" />
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@+id/spaceui"
+        tools:layout_editor_absoluteX="0dp" />
 
     <EditText
         android:id="@+id/descripcionT"
         android:layout_width="200dp"
         android:layout_height="60dp"
+        android:layout_marginTop="80dp"
         android:hint="Ejem: Netflix, Almuerzo"
+        android:textColorHint="@color/white"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/title"
 
-        />
+        app:layout_constraintTop_toBottomOf="@+id/title" />
+
+    <RadioGroup
+        android:id="@+id/registrarOpcion"
+        android:layout_width="150dp"
+        android:layout_height="110dp"
+
+        android:layout_marginTop="80dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/title">
+
+        <RadioButton
+            android:id="@+id/ingreso"
+            android:layout_width="150dp"
+            android:layout_height="55dp"
+            android:text="Ingreso"
+            android:textColor="@color/white" />
+
+
+        <RadioButton
+            android:id="@+id/egreso"
+            android:layout_width="150dp"
+            android:layout_height="55dp"
+            android:text="Egreso"
+            android:textColor="@color/white" />
+
+    </RadioGroup>
 
     <androidx.appcompat.widget.AppCompatEditText
         android:id="@+id/valorT"
         android:layout_width="200dp"
         android:layout_height="60dp"
+        android:layout_marginTop="4dp"
         android:hint="Ejem: 50.000"
         android:inputType="numberDecimal"
+        android:textColorHint="@color/white"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/descripcionT" />
 
-    <RadioGroup
-        android:id="@+id/registrarOpcion"
-        android:layout_width="150dp"
-        android:layout_height="70dp"
-        app:layout_constraintStart_toEndOf="@+id/descripcionT"
-        app:layout_constraintTop_toBottomOf="@+id/title">
-
-        <RadioButton
-            android:id="@+id/ingreso"
-            android:layout_width="100dp"
-            android:layout_height="35dp"
-            android:text="Ingreso" />
-
-        <RadioButton
-            android:id="@+id/egreso"
-            android:layout_width="100dp"
-            android:layout_height="35dp"
-            android:text="Egreso" />
-
-    </RadioGroup>
-
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/guardarT"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="200dp"
+        android:layout_height="60dp"
+        android:layout_marginTop="156dp"
         android:width="411dp"
-        android:height="4dp"
-        android:background="#5F3B95"
+        android:background="#f2e987"
         android:text="Guardar Transaccion"
+        android:textStyle="bold"
         android:textColor="@color/white"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/valorT"
-
-        />
+        app:layout_constraintTop_toBottomOf="@+id/valorT" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
