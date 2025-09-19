@@ -85,21 +85,7 @@
         app:layout_constraintTop_toBottomOf="@id/btnsingUpButton" />
 
     <ImageButton
-        android:id="@+id/btnFacebook"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_marginTop="24dp"
-        android:background="@drawable/button_social"
-        android:backgroundTint="@android:color/transparent"
-        android:contentDescription="@string/facebook_button_description"
-        android:scaleType="fitCenter"
-        android:src="@drawable/facebook_logo_1080029_107_photoroom"
-        app:layout_constraintEnd_toStartOf="@+id/btnGoogle"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnregisterButton" />
-
-    <ImageButton
-        android:id="@+id/btnGoogle"
+        android:id="@+id/googleButton"
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:layout_marginTop="24dp"
@@ -112,17 +98,4 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btnregisterButton" />
 
-    <ImageButton
-        android:id="@+id/btnSocial"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_marginTop="24dp"
-        android:background="@drawable/button_social"
-        android:backgroundTint="@android:color/transparent"
-        android:contentDescription="@string/social_button_description"
-        android:scaleType="fitCenter"
-        android:src="@drawable/__photoroom"
-        app:layout_constraintStart_toEndOf="@+id/btnGoogle"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnregisterButton" />
 </androidx.constraintlayout.widget.ConstraintLayout>
