@@ -9,11 +9,8 @@
         android:id="@+id/inicioFragment"
         android:name="com.example.finance_code.ui.home.InicioFragment"
         android:label="fragment_inicio"
-        tools:layout="@layout/fragment_inicio" >
-        <action
-            android:id="@+id/action_inicioFragment_to_metasFragment"
-            app:destination="@id/metasFragment" />
-    </fragment>
+        tools:layout="@layout/fragment_inicio" />
+
     <fragment
         android:id="@+id/metasFragment"
         android:name="com.example.finance_code.ui.home.MetasFragment"
