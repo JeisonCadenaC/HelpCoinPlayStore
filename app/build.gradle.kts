@@ -51,4 +51,7 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.1.0"))
     implementation("com.google.firebase:firebase-auth")
 
+    // 🔹 Google Sign-In (falta en tu proyecto)
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
+
 }

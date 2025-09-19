@@ -4,7 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
-import android.widget.ImageButton // Importa ImageButton
+import android.widget.ImageButton
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
@@ -27,11 +27,10 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var registerButton: Button
     private lateinit var emailEditText: EditText
     private lateinit var passwordEditText: EditText
-    private lateinit var googleButton: ImageButton // Cambiado de Button a ImageButton
+    private lateinit var googleButton: ImageButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Asegúrate de que Firebase se inicialice antes de usarlo.
         FirebaseApp.initializeApp(this)
         enableEdgeToEdge()
         setContentView(R.layout.activity_login)
@@ -70,7 +69,6 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    // 🔹 Login con correo y contraseña
     private fun Login() {
         if (emailEditText.text.isNotEmpty() && passwordEditText.text.isNotEmpty()) {
             auth.signInWithEmailAndPassword(
@@ -80,10 +78,7 @@ class LoginActivity : AppCompatActivity() {
                 if (task.isSuccessful) {
                     showPrincipalView()
                 } else {
-                    showAlert(
-                        "Error de autenticación",
-                        "No se pudo iniciar sesión. Verifique sus credenciales."
-                    )
+                    showAlert("Error de autenticación", "No se pudo iniciar sesión. Verifique sus credenciales.")
                 }
             }
         } else {
@@ -91,7 +86,6 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    // 🔹 Registro con correo y contraseña
     private fun Register() {
         if (emailEditText.text.isNotEmpty() && passwordEditText.text.isNotEmpty()) {
             auth.createUserWithEmailAndPassword(
@@ -101,8 +95,7 @@ class LoginActivity : AppCompatActivity() {
                 if (task.isSuccessful) {
                     showPrincipalView()
                 } else {
-                    val errorMessage = task.exception?.message
-                        ?: "Error desconocido al registrar el usuario."
+                    val errorMessage = task.exception?.message ?: "Error desconocido al registrar el usuario."
                     showAlert("Error en el registro", errorMessage)
                 }
             }
@@ -111,7 +104,6 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    // 🔹 Login con Google (resultado del intent)
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
@@ -120,24 +112,16 @@ class LoginActivity : AppCompatActivity() {
             try {
                 val cuenta = task.getResult(ApiException::class.java)
 
-                // Obtenemos credencial con el idToken
                 val credential = GoogleAuthProvider.getCredential(cuenta.idToken, null)
-
-                auth.signInWithCredential(credential)
-                    .addOnCompleteListener(this) { firebaseTask ->
-                        if (firebaseTask.isSuccessful) {
-                            showPrincipalView()
-                            val usuario = auth.currentUser
-                            Toast.makeText(
-                                this,
-                                "Bienvenido ${usuario?.displayName ?: "Usuario"}",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        } else {
-                            showAlert("Error", "No se pudo autenticar con Google.")
-                        }
+                auth.signInWithCredential(credential).addOnCompleteListener(this) { firebaseTask ->
+                    if (firebaseTask.isSuccessful) {
+                        showPrincipalView()
+                        val usuario = auth.currentUser
+                        Toast.makeText(this, "Bienvenido ${usuario?.displayName ?: "Usuario"}", Toast.LENGTH_SHORT).show()
+                    } else {
+                        showAlert("Error", "No se pudo autenticar con Google.")
                     }
-
+                }
             } catch (e: ApiException) {
                 showAlert("Error", "Error en Google Sign-In: ${e.message}")
             }
@@ -158,5 +142,4 @@ class LoginActivity : AppCompatActivity() {
         startActivity(intent)
         finish()
     }
-
 }
