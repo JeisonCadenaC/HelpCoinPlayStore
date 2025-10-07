@@ -9,6 +9,16 @@
     tools:context=".ui.home.HomeActivity">
 
 
+    <TextView
+        android:id="@+id/main34"
+        android:layout_width="379dp"
+        android:layout_height="20dp"
+        android:text="hola estas en el home"
+        android:textColor="@color/yellow"
+        app:layout_constraintBottom_toBottomOf="@+id/bottom_navigation"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/mainContainer"

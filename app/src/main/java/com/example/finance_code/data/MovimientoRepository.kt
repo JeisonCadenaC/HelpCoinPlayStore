@@ -7,5 +7,4 @@ class MovimientoRepository (private val movimientoDao: MovimientoDao){
     suspend fun insertar(movimiento: Movimiento) {
         movimientoDao.insertar(movimiento)
     }
-
 }
