@@ -5,7 +5,9 @@
     android:id="@+id/nav_graph"
     app:startDestination="@id/inicioFragment">
 
-    <fragment
+
+
+<fragment
         android:id="@+id/inicioFragment"
         android:name="com.example.finance_code.ui.home.InicioFragment"
         android:label="fragment_inicio"
@@ -16,11 +18,12 @@
         android:name="com.example.finance_code.ui.home.MetasFragment"
         android:label="fragment_metas"
         tools:layout="@layout/fragment_metas" />
+
     <fragment
         android:id="@+id/movimientosFragment"
         android:name="com.example.finance_code.ui.home.MovimientosFragment"
-        android:label="fragment_movimientos"
-        tools:layout="@layout/fragment_movimientos" />
+        android:label="fragment_movimientos" />
+
     <fragment
         android:id="@+id/perfilFragment"
         android:name="com.example.finance_code.ui.home.PerfilFragment"
