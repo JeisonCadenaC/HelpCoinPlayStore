@@ -1,4 +1,5 @@
 package com.example.finance_code.data
+// Aquí van las consultas
 
 class MovimientoRepository (private val movimientoDao: MovimientoDao){
     fun obtenerTodos():kotlinx.coroutines.flow.Flow<List<Movimiento>> {
