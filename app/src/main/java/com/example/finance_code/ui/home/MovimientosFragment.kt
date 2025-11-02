@@ -10,7 +10,8 @@ import androidx.fragment.app.Fragment
 import com.example.finance_code.R
 import com.example.finance_code.ui.transaction.addTransaction
 
-class MovimientosFragment : Fragment() {
+class
+MovimientosFragment : Fragment() {
 
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,savedInstanceState: Bundle?): View? {
