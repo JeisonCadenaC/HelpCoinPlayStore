@@ -65,4 +65,3 @@ class SplashActivity : AppCompatActivity() {
         finish()
     }
 }
-//para subir el nuevo commit comento
