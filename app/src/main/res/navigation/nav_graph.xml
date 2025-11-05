@@ -1,30 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
-             xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
     app:startDestination="@id/inicioFragment">
 
-<fragment
+    <fragment
         android:id="@+id/inicioFragment"
         android:name="com.example.finance_code.ui.home.InicioFragment"
-        android:label="fragment_inicio"
+        android:label="Inicio"
         tools:layout="@layout/fragment_inicio" />
 
     <fragment
         android:id="@+id/metasFragment"
         android:name="com.example.finance_code.ui.home.MetasFragment"
-        android:label="fragment_metas"
+        android:label="Metas"
         tools:layout="@layout/fragment_metas" />
 
     <fragment
         android:id="@+id/movimientosFragment"
         android:name="com.example.finance_code.ui.home.MovimientosFragment"
-        android:label="fragment_movimientos" />
+        android:label="Movimientos"
+        tools:layout="@layout/fragment_movimientos" />
 
     <fragment
         android:id="@+id/perfilFragment"
         android:name="com.example.finance_code.ui.home.PerfilFragment"
-        android:label="fragment_perfil"
+        android:label="Perfil"
         tools:layout="@layout/fragment_perfil" />
 </navigation>

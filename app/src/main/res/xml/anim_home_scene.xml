@@ -1,0 +1,51 @@
+<MotionScene xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:motion="http://schemas.android.com/apk/res-auto">
+
+    <Transition
+        motion:constraintSetStart="@+id/start"
+        motion:constraintSetEnd="@+id/end"
+        motion:duration="1500"
+        motion:motionInterpolator="easeInOut">
+
+        <OnSwipe
+            motion:touchAnchorId="@id/home_root"
+            motion:touchAnchorSide="top"
+            motion:dragDirection="dragDown" />
+
+        <KeyFrameSet>
+            <KeyAttribute
+                motion:motionTarget="@id/headerSection"
+                motion:framePosition="0"
+                android:alpha="0"
+                android:translationY="-100dp" />
+            <KeyAttribute
+                motion:motionTarget="@id/headerSection"
+                motion:framePosition="50"
+                android:alpha="1"
+                android:translationY="0dp" />
+
+            <KeyAttribute
+                motion:motionTarget="@id/cardNotificacion"
+                motion:framePosition="25"
+                android:alpha="0" />
+            <KeyAttribute
+                motion:motionTarget="@id/cardNotificacion"
+                motion:framePosition="70"
+                android:alpha="1" />
+
+            <KeyAttribute
+                motion:motionTarget="@id/gridOpciones"
+                motion:framePosition="40"
+                android:alpha="0"
+                android:translationY="60dp" />
+            <KeyAttribute
+                motion:motionTarget="@id/gridOpciones"
+                motion:framePosition="100"
+                android:alpha="1"
+                android:translationY="0dp" />
+        </KeyFrameSet>
+    </Transition>
+
+    <ConstraintSet android:id="@+id/start" />
+    <ConstraintSet android:id="@+id/end" />
+</MotionScene>
