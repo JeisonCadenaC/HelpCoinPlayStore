@@ -60,7 +60,7 @@ class SplashActivity : AppCompatActivity() {
 
     private fun saltarAlLogin() {
 
-        val intent = Intent(this, com.example.finance_code.ui.login.LoginActivity::class.java)
+        val intent = Intent(this, AuthCheckActivity::class.java)
         startActivity(intent)
         finish()
     }

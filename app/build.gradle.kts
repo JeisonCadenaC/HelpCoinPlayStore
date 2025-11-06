@@ -72,4 +72,6 @@ dependencies {
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.android.gms:play-services-auth:21.2.0")
     implementation("androidx.gridlayout:gridlayout:1.0.0")
+
+    implementation ("androidx.biometric:biometric:1.1.0")
 }
