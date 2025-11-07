@@ -21,11 +21,21 @@
         android:id="@+id/movimientosFragment"
         android:name="com.example.finance_code.ui.home.MovimientosFragment"
         android:label="Movimientos"
-        tools:layout="@layout/fragment_movimientos" />
+        tools:layout="@layout/fragment_movimientos"><action
+        android:id="@+id/action_movimientosFragment_to_eTransactionFragment"
+        app:destination="@id/eTransactionFragment" />
+    </fragment>
+
 
     <fragment
         android:id="@+id/perfilFragment"
         android:name="com.example.finance_code.ui.home.PerfilFragment"
         android:label="Perfil"
         tools:layout="@layout/fragment_perfil" />
+    <fragment
+        android:id="@+id/eTransactionFragment"
+        android:name="com.example.finance_code.ui.transaction.ETransactionFragment"
+        android:label="Editar Movimiento"
+        tools:layout="@layout/fragment_e_transaction" />
+
 </navigation>

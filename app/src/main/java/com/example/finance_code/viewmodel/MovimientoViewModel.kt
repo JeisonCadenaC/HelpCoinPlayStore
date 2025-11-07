@@ -17,4 +17,15 @@ class MovimientoViewModel(private val repository: MovimientoRepository) : ViewMo
             repository.insertar(movimiento)
             }
         }
+
+    fun actualizar(movimiento: Movimiento) {
+        viewModelScope.launch {
+            repository.actualizar(movimiento)
+        }
+    }
+    fun eliminar(movimiento: Movimiento) {
+        viewModelScope.launch {
+            repository.eliminar(movimiento)
+        }
+    }
 }

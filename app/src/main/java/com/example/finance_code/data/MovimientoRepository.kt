@@ -8,4 +8,13 @@ class MovimientoRepository (private val movimientoDao: MovimientoDao){
     suspend fun insertar(movimiento: Movimiento) {
         movimientoDao.insertar(movimiento)
     }
+
+    suspend fun actualizar(movimiento: Movimiento) {
+        movimientoDao.actualizar(movimiento)
+    }
+
+    suspend fun eliminar(movimiento: Movimiento) {
+        movimientoDao.eliminar(movimiento)
+    }
+
 }

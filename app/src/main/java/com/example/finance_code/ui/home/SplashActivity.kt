@@ -1,16 +1,14 @@
-package com.example.finance_code
-
-
+package com.example.finance_code.ui.home
 
 import android.content.Intent
-import android.media.MediaPlayer
-import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.WindowManager
 import android.widget.VideoView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toUri
+import com.example.finance_code.R
+import com.example.finance_code.ui.login.AuthCheckActivity
 
 class SplashActivity : AppCompatActivity() {
 
