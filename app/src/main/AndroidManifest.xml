@@ -38,6 +38,10 @@
             android:exported="false" />
 
         <activity
+            android:name=".ui.transaction.addTransaction"
+            android:exported="false" />
+
+        <activity
             android:name=".ui.home.SplashActivity"
             android:exported="true"
             android:theme="@style/Theme.Finance_code">
