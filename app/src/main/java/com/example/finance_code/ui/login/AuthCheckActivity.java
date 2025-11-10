@@ -1,5 +1,5 @@
 
-package com.example.finance_code;
+package com.example.finance_code.ui.login;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,8 +10,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.biometric.BiometricManager;
 import androidx.biometric.BiometricPrompt;
 import androidx.core.content.ContextCompat;
-
-import com.example.finance_code.ui.login.LoginActivity;
 
 import java.util.concurrent.Executor;
 

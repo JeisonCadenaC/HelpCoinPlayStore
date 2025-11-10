@@ -13,6 +13,8 @@ import java.util.Locale
 class MovimientosAdapter : RecyclerView.Adapter<MovimientosAdapter.MovimientoViewHolder>() {
 
     private var movimientos = listOf<Movimiento>()
+    private var onItemLongClick: (Movimiento) -> Unit = {}
+
 
     // ViewHolder: representa cada item de la lista
     class MovimientoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -46,7 +48,7 @@ class MovimientosAdapter : RecyclerView.Adapter<MovimientosAdapter.MovimientoVie
         }
 
         // Formatear cantidad con separador de miles
-        val formato = NumberFormat.getCurrencyInstance(Locale("es", "CO"))
+        val formato = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("es-CO"))
         holder.tvCantidad.text = formato.format(movimiento.cantidad)
 
         // Datos básicos
@@ -60,7 +62,14 @@ class MovimientosAdapter : RecyclerView.Adapter<MovimientosAdapter.MovimientoVie
             holder.tvCategoria.visibility = View.VISIBLE
             holder.tvCategoria.text = movimiento.categoria
         }
-    }
+
+
+        // 👇 Evento de mantener presionado
+        holder.itemView.setOnLongClickListener {
+            onItemLongClick(movimiento)
+            true
+        }
+}
 
     // Cantidad de items
     override fun getItemCount(): Int = movimientos.size
@@ -69,5 +78,8 @@ class MovimientosAdapter : RecyclerView.Adapter<MovimientosAdapter.MovimientoVie
     fun actualizarMovimientos(nuevosMovimientos: List<Movimiento>) {
         movimientos = nuevosMovimientos
         notifyDataSetChanged()
+    }
+    fun setOnItemLongClickListener(listener: (Movimiento) -> Unit) {
+        onItemLongClick = listener
     }
 }
