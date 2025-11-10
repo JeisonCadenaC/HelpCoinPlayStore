@@ -9,7 +9,11 @@
         android:id="@+id/inicioFragment"
         android:name="com.example.finance_code.ui.home.InicioFragment"
         android:label="Inicio"
-        tools:layout="@layout/fragment_inicio" />
+        tools:layout="@layout/fragment_inicio" >
+        <action
+            android:id="@+id/action_inicioFragment_to_calendarioFragment"
+            app:destination="@id/calendarioFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/metasFragment"
@@ -37,5 +41,10 @@
         android:name="com.example.finance_code.ui.transaction.ETransactionFragment"
         android:label="Editar Movimiento"
         tools:layout="@layout/fragment_e_transaction" />
+    <fragment
+        android:id="@+id/calendarioFragment"
+        android:name="com.example.finance_code.ui.home.CalendarioFragment"
+        android:label="Calendario"
+        tools:layout="@layout/fragment_calendario" />
 
 </navigation>
