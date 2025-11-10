@@ -5,10 +5,16 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-// Aquí va la base de datos
-@Database(entities = [Movimiento::class], version = 1, exportSchema = false)
+// Agregamos la entidad Meta además de Movimiento
+@Database(
+    entities = [Movimiento::class, MetaDB::class],
+    version = 2, // ⚠️ Aumenta la versión al cambiar estructura
+    exportSchema = false
+)
 abstract class AppDB : RoomDatabase() {
+
     abstract fun movimientoDao(): MovimientoDao
+    abstract fun metaDao(): MetaDao   // ✅ Nuevo DAO para las metas
 
     companion object {
         @Volatile
@@ -20,7 +26,10 @@ abstract class AppDB : RoomDatabase() {
                     context.applicationContext,
                     AppDB::class.java,
                     "finance_db"   // Nombre de la BD
-                ).build()
+                )
+                    // Borra la BD si hay cambios de versión (útil durante desarrollo)
+                    .fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
                 instance
             }
