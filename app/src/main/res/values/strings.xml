@@ -16,4 +16,6 @@
     </string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+<string name="accept_terms_and_conditions">Acepto los Términos y Condiciones</string>
+<string name="error_accept_terms">Debe aceptar los Términos y Condiciones para continuar.</string>
 </resources>
