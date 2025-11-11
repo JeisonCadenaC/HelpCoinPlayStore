@@ -77,4 +77,7 @@ dependencies {
 
     implementation(libs.androidx.gridlayout)
     implementation(libs.androidx.biometric)
+    implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("com.google.firebase:firebase-storage-ktx")
+    implementation("com.github.bumptech.glide:glide:4.16.0")
 }

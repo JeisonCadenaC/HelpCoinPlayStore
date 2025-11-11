@@ -2,30 +2,30 @@ package com.example.finance_code.ui.home
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.NavController
+import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.ui.NavigationUI
+import androidx.navigation.ui.setupWithNavController
 import com.example.finance_code.R
 import com.example.finance_code.databinding.ActivityHomeBinding
 
 class HomeActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityHomeBinding
-    private lateinit var navController: NavController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         binding = ActivityHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_home) as NavHostFragment
+        val navController = navHostFragment.navController
 
-        ReminderHelper.createNotificationChannel(this)
+        binding.navView.setupWithNavController(navController)
+    }
 
-        val navHostFragment = supportFragmentManager
-            .findFragmentById(R.id.mainContainer) as NavHostFragment
-        navController = navHostFragment.navController
-
-
-        NavigationUI.setupWithNavController(binding.bottomNavigation, navController)
+    override fun onSupportNavigateUp(): Boolean {
+        val navController = findNavController(R.id.nav_host_fragment_activity_home)
+        return navController.navigateUp() || super.onSupportNavigateUp()
     }
 }
