@@ -10,10 +10,11 @@
     <string name="social_button_description">Botón Red Social</string>
     <string name="login_success_text">¡FUNCIONA EL LOGIN!</string>
 
-    <!-- 🔹 Agregado para Google Sign-In -->
     <string name="default_web_client_id">
         548171447107-tadj0thvoc3cf4hf0jad3lv7m554jun9.apps.googleusercontent.com
     </string>
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <string name="accept_terms_and_conditions">Acepto los <a href="http://helpcoinuan.site/TyC">Términos y Condiciones</a></string>
+    <string name="error_accept_terms">Debe aceptar los Términos y Condiciones para continuar.</string>
 </resources>
