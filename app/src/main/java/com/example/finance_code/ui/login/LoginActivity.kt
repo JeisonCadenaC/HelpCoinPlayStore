@@ -13,6 +13,7 @@ import android.text.method.LinkMovementMethod
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.finance_code.R
@@ -36,9 +37,10 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var googleButton: ImageButton
     private lateinit var termsAndConditionsCheckbox: CheckBox
     private lateinit var rememberEmailCheckbox: CheckBox
+    private var toggleDarkModeButton: ImageButton? = null
 
     private lateinit var sharedPreferences: SharedPreferences
-
+    private lateinit var themePreferences: SharedPreferences
     private lateinit var binding: ActivityLoginBinding
 
     companion object {
@@ -50,6 +52,11 @@ class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         FirebaseApp.initializeApp(this)
+
+        themePreferences = getSharedPreferences("AppPrefe", Context.MODE_PRIVATE)
+        val modoOscuroActivado = themePreferences.getBoolean("modo_oscuro", false)
+        aplicarModoOscuro(modoOscuroActivado)
+
         enableEdgeToEdge()
 
         binding = ActivityLoginBinding.inflate(layoutInflater)
@@ -76,8 +83,9 @@ class LoginActivity : AppCompatActivity() {
         termsAndConditionsCheckbox = binding.termsAndConditionsCheckbox
         rememberEmailCheckbox = binding.rememberEmailCheckbox
 
-        sharedPreferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        toggleDarkModeButton = binding.themeToggleButton // ← Cambio aplicado
 
+        sharedPreferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         termsAndConditionsCheckbox.movementMethod = LinkMovementMethod.getInstance()
 
         loginButton.setOnClickListener { Login() }
@@ -98,6 +106,35 @@ class LoginActivity : AppCompatActivity() {
         }
 
         loadPreferences()
+        setupDarkModeToggle()
+    }
+
+    private fun setupDarkModeToggle() {
+        toggleDarkModeButton?.let { button ->
+            val modoOscuroActivado = themePreferences.getBoolean("modo_oscuro", false)
+            actualizarIconoModoOscuro(modoOscuroActivado)
+
+            button.setOnClickListener {
+                val nuevoEstado = !themePreferences.getBoolean("modo_oscuro", false)
+                with(themePreferences.edit()) {
+                    putBoolean("modo_oscuro", nuevoEstado)
+                    apply()
+                }
+                aplicarModoOscuro(nuevoEstado)
+                actualizarIconoModoOscuro(nuevoEstado)
+            }
+        }
+    }
+
+    private fun actualizarIconoModoOscuro(isDark: Boolean) {
+        toggleDarkModeButton?.setImageResource(if (isDark) R.drawable.ic_sun else R.drawable.ic_moon)
+    }
+
+    private fun aplicarModoOscuro(activado: Boolean) {
+        AppCompatDelegate.setDefaultNightMode(
+            if (activado) AppCompatDelegate.MODE_NIGHT_YES
+            else AppCompatDelegate.MODE_NIGHT_NO
+        )
     }
 
     private fun loadPreferences() {
@@ -128,16 +165,17 @@ class LoginActivity : AppCompatActivity() {
         editor.apply()
 
         if (email.isNotEmpty() && password.isNotEmpty()) {
-            auth.signInWithEmailAndPassword(
-                email,
-                password
-            ).addOnCompleteListener(this) { task ->
-                if (task.isSuccessful) {
-                    showPrincipalView()
-                } else {
-                    showAlert("Error de autenticación", "No se pudo iniciar sesión. Verifique sus credenciales.")
+            auth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this) { task ->
+                    if (task.isSuccessful) {
+                        showPrincipalView()
+                    } else {
+                        showAlert(
+                            "Error de autenticación",
+                            "No se pudo iniciar sesión. Verifique sus credenciales."
+                        )
+                    }
                 }
-            }
         } else {
             showAlert("Campos obligatorios", "Por favor, ingrese su correo y contraseña.")
         }
@@ -157,7 +195,8 @@ class LoginActivity : AppCompatActivity() {
                 if (task.isSuccessful) {
                     showPrincipalView()
                 } else {
-                    val errorMessage = task.exception?.message ?: "Error desconocido al registrar el usuario."
+                    val errorMessage = task.exception?.message
+                        ?: "Error desconocido al registrar el usuario."
                     showAlert("Error en el registro", errorMessage)
                 }
             }
@@ -173,17 +212,23 @@ class LoginActivity : AppCompatActivity() {
             val task = GoogleSignIn.getSignedInAccountFromIntent(data)
             try {
                 val cuenta = task.getResult(ApiException::class.java)
-
                 val credential = GoogleAuthProvider.getCredential(cuenta.idToken, null)
                 auth.signInWithCredential(credential).addOnCompleteListener(this) { firebaseTask ->
                     if (firebaseTask.isSuccessful) {
                         showPrincipalView()
                         val usuario = auth.currentUser
-                        Toast.makeText(this, "Bienvenido ${usuario?.displayName ?: "Usuario"}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            this,
+                            "Bienvenido ${usuario?.displayName ?: "Usuario"}",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     } else {
                         val exception = firebaseTask.exception
                         if (exception is FirebaseAuthUserCollisionException) {
-                            showAlert("Error de Inicio", "Ya existe una cuenta con este correo electrónico. Por favor, inicie sesión con su método original (email y contraseña).")
+                            showAlert(
+                                "Error de Inicio",
+                                "Ya existe una cuenta con este correo electrónico. Por favor, inicie sesión con su método original."
+                            )
                         } else {
                             showAlert("Error", "No se pudo autenticar con Google: ${exception?.message}")
                         }
@@ -200,13 +245,11 @@ class LoginActivity : AppCompatActivity() {
         builder.setTitle(title)
         builder.setMessage(message)
         builder.setPositiveButton("Aceptar", null)
-        val dialog: AlertDialog = builder.create()
-        dialog.show()
+        builder.create().show()
     }
 
     private fun showPrincipalView() {
-        val intent = Intent(this, HomeActivity::class.java)
-        startActivity(intent)
+        startActivity(Intent(this, HomeActivity::class.java))
         finish()
     }
 }
