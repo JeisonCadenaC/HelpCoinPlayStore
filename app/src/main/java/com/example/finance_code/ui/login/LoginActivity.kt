@@ -6,7 +6,9 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.Toast
-import android.widget.CheckBox // 💡 Asegúrate de tener este import
+import android.widget.CheckBox // 💡 NUEVO: Importar CheckBox
+import android.text.method.LinkMovementMethod // 💡 NUEVO: Para hacer el hipervínculo clicable
+import android.text.util.Linkify // 💡 NUEVO: Para reconocer enlaces en el texto
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -29,7 +31,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var emailEditText: EditText
     private lateinit var passwordEditText: EditText
     private lateinit var googleButton: ImageButton
-    private lateinit var termsAndConditionsCheckbox: CheckBox // 💡 DECLARACIÓN
+    private lateinit var termsAndConditionsCheckbox: CheckBox // 💡 DECLARACIÓN del CheckBox
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,12 +59,15 @@ class LoginActivity : AppCompatActivity() {
         googleButton = findViewById(R.id.googleButton)
         termsAndConditionsCheckbox = findViewById(R.id.termsAndConditionsCheckbox) // 💡 INICIALIZACIÓN
 
+        // 💡 LÓGICA DEL HIPERVÍNCULO: Permite hacer clic en el texto HTML del CheckBox
+        termsAndConditionsCheckbox.movementMethod = LinkMovementMethod.getInstance()
+
         loginButton.setOnClickListener { Login() }
         registerButton.setOnClickListener { Register() }
 
         // 🔹 Configuración de Google Sign-In
         googleButton.setOnClickListener {
-            if (termsAndConditionsCheckbox.isChecked) { // 💡 VERIFICACIÓN AÑADIDA
+            if (termsAndConditionsCheckbox.isChecked) { // 💡 Verificación de términos
                 val googleConf = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                     .requestIdToken(getString(R.string.default_web_client_id))
                     .requestEmail()
@@ -77,7 +82,7 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun Login() {
-        if (!termsAndConditionsCheckbox.isChecked) { // 💡 VERIFICACIÓN AÑADIDA
+        if (!termsAndConditionsCheckbox.isChecked) { // 💡 Chequeo de términos
             showAlert("Términos y Condiciones", getString(R.string.error_accept_terms))
             return
         }
@@ -99,8 +104,8 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun Register() {
-        if (!termsAndConditionsCheckbox.isChecked) {
-            // 💡 FIX: Changed R.ing to R.string
+        if (!termsAndConditionsCheckbox.isChecked) { // 💡 Chequeo de términos
+            // 🐛 Corrección del typo: Se usa R.string.error_accept_terms
             showAlert("Términos y Condiciones", getString(R.string.error_accept_terms))
             return
         }
