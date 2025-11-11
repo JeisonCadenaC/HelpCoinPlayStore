@@ -9,8 +9,6 @@
     <string name="google_button_description">Botón Google</string>
     <string name="social_button_description">Botón Red Social</string>
     <string name="login_success_text">¡FUNCIONA EL LOGIN!</string>
-
-    <!-- 🔹 Agregado para Google Sign-In -->
     <string name="default_web_client_id">
         548171447107-tadj0thvoc3cf4hf0jad3lv7m554jun9.apps.googleusercontent.com
     </string>
