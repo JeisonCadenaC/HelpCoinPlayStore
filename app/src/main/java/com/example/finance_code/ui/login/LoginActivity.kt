@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.finance_code.R
+import com.example.finance_code.databinding.ActivityLoginBinding
 import com.example.finance_code.ui.home.HomeActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -38,6 +39,8 @@ class LoginActivity : AppCompatActivity() {
 
     private lateinit var sharedPreferences: SharedPreferences
 
+    private lateinit var binding: ActivityLoginBinding
+
     companion object {
         private const val PREFS_NAME = "LoginPrefs"
         private const val PREF_KEY_EMAIL = "saved_email"
@@ -48,9 +51,11 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         FirebaseApp.initializeApp(this)
         enableEdgeToEdge()
-        setContentView(R.layout.activity_login)
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+        binding = ActivityLoginBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.main) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
@@ -63,13 +68,13 @@ class LoginActivity : AppCompatActivity() {
         title = "Autenticación del usuario"
         auth = FirebaseAuth.getInstance()
 
-        loginButton = findViewById(R.id.btnsingUpButton)
-        registerButton = findViewById(R.id.btnregisterButton)
-        emailEditText = findViewById(R.id.emailEditText)
-        passwordEditText = findViewById(R.id.passwordEditText)
-        googleButton = findViewById(R.id.googleButton)
-        termsAndConditionsCheckbox = findViewById(R.id.termsAndConditionsCheckbox)
-        rememberEmailCheckbox = findViewById(R.id.rememberEmailCheckbox)
+        loginButton = binding.btnsingUpButton
+        registerButton = binding.btnregisterButton
+        emailEditText = binding.emailEditText
+        passwordEditText = binding.passwordEditText
+        googleButton = binding.googleButton
+        termsAndConditionsCheckbox = binding.termsAndConditionsCheckbox
+        rememberEmailCheckbox = binding.rememberEmailCheckbox
 
         sharedPreferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
