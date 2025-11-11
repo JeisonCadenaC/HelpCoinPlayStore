@@ -1,16 +1,15 @@
 [versions]
 
-agp = "8.5.0"
-kotlin = "1.9.22"
+agp = "8.13.1"
+kotlin = "2.2.0"
 googleServices = "4.4.3"
-
 
 coreKtx = "1.13.1"
 appcompat = "1.6.1"
 material = "1.11.0"
 activity = "1.8.2"
 constraintlayout = "2.1.4"
-room = "2.6.1"
+room = "2.8.3" # 💡 Versión actualizada para compatibilidad con Kotlin 1.9.x
 nav = "2.7.7"
 lifecycle = "2.8.0"
 biometric = "1.1.0"

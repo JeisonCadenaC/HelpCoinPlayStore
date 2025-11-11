@@ -6,6 +6,9 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.Toast
+import android.widget.CheckBox // 💡 NUEVO: Importar CheckBox
+import android.text.method.LinkMovementMethod // 💡 NUEVO: Para hacer el hipervínculo clicable
+import android.text.util.Linkify // 💡 NUEVO: Para reconocer enlaces en el texto
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -28,6 +31,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var emailEditText: EditText
     private lateinit var passwordEditText: EditText
     private lateinit var googleButton: ImageButton
+    private lateinit var termsAndConditionsCheckbox: CheckBox // 💡 DECLARACIÓN del CheckBox
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,23 +57,36 @@ class LoginActivity : AppCompatActivity() {
         emailEditText = findViewById(R.id.emailEditText)
         passwordEditText = findViewById(R.id.passwordEditText)
         googleButton = findViewById(R.id.googleButton)
+        termsAndConditionsCheckbox = findViewById(R.id.termsAndConditionsCheckbox) // 💡 INICIALIZACIÓN
+
+        // 💡 LÓGICA DEL HIPERVÍNCULO: Permite hacer clic en el texto HTML del CheckBox
+        termsAndConditionsCheckbox.movementMethod = LinkMovementMethod.getInstance()
 
         loginButton.setOnClickListener { Login() }
         registerButton.setOnClickListener { Register() }
 
         // 🔹 Configuración de Google Sign-In
         googleButton.setOnClickListener {
-            val googleConf = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(getString(R.string.default_web_client_id))
-                .requestEmail()
-                .build()
+            if (termsAndConditionsCheckbox.isChecked) { // 💡 Verificación de términos
+                val googleConf = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestIdToken(getString(R.string.default_web_client_id))
+                    .requestEmail()
+                    .build()
 
-            val googleClient = GoogleSignIn.getClient(this, googleConf)
-            startActivityForResult(googleClient.signInIntent, 100)
+                val googleClient = GoogleSignIn.getClient(this, googleConf)
+                startActivityForResult(googleClient.signInIntent, 100)
+            } else {
+                showAlert("Términos y Condiciones", getString(R.string.error_accept_terms))
+            }
         }
     }
 
     private fun Login() {
+        if (!termsAndConditionsCheckbox.isChecked) { // 💡 Chequeo de términos
+            showAlert("Términos y Condiciones", getString(R.string.error_accept_terms))
+            return
+        }
+
         if (emailEditText.text.isNotEmpty() && passwordEditText.text.isNotEmpty()) {
             auth.signInWithEmailAndPassword(
                 emailEditText.text.toString(),
@@ -87,6 +104,12 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun Register() {
+        if (!termsAndConditionsCheckbox.isChecked) { // 💡 Chequeo de términos
+            // 🐛 Corrección del typo: Se usa R.string.error_accept_terms
+            showAlert("Términos y Condiciones", getString(R.string.error_accept_terms))
+            return
+        }
+
         if (emailEditText.text.isNotEmpty() && passwordEditText.text.isNotEmpty()) {
             auth.createUserWithEmailAndPassword(
                 emailEditText.text.toString(),
