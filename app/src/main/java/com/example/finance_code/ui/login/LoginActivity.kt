@@ -1,6 +1,8 @@
 package com.example.finance_code.ui.login
 
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
@@ -13,7 +15,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.appcompat.app.AppCompatDelegate
 import com.example.finance_code.R
 import com.example.finance_code.ui.home.HomeActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -21,8 +22,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.GoogleAuthProvider
-import android.content.SharedPreferences
 
 class LoginActivity : AppCompatActivity() {
 
@@ -33,19 +34,17 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var passwordEditText: EditText
     private lateinit var googleButton: ImageButton
     private lateinit var termsAndConditionsCheckbox: CheckBox
-    private lateinit var themeButton: ImageButton
+    private lateinit var rememberEmailCheckbox: CheckBox
+
     private lateinit var sharedPreferences: SharedPreferences
 
     companion object {
-        private const val PREFS_NAME = "theme_prefs"
-        private const val KEY_THEME = "theme_key"
-        private const val NIGHT_MODE = AppCompatDelegate.MODE_NIGHT_YES
-        private const val LIGHT_MODE = AppCompatDelegate.MODE_NIGHT_NO
+        private const val PREFS_NAME = "LoginPrefs"
+        private const val PREF_KEY_EMAIL = "saved_email"
+        private const val PREF_KEY_REMEMBER = "remember_email"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-
         super.onCreate(savedInstanceState)
         FirebaseApp.initializeApp(this)
         enableEdgeToEdge()
@@ -70,52 +69,37 @@ class LoginActivity : AppCompatActivity() {
         passwordEditText = findViewById(R.id.passwordEditText)
         googleButton = findViewById(R.id.googleButton)
         termsAndConditionsCheckbox = findViewById(R.id.termsAndConditionsCheckbox)
-        themeButton = findViewById(R.id.themeToggleButton)
+        rememberEmailCheckbox = findViewById(R.id.rememberEmailCheckbox)
+
+        sharedPreferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
         termsAndConditionsCheckbox.movementMethod = LinkMovementMethod.getInstance()
-
-        updateThemeButtonIcon()
 
         loginButton.setOnClickListener { Login() }
         registerButton.setOnClickListener { Register() }
 
-        themeButton.setOnClickListener {
-            toggleTheme()
-        }
-
         googleButton.setOnClickListener {
-            if (!termsAndConditionsCheckbox.isChecked) {
+            if (termsAndConditionsCheckbox.isChecked) {
+                val googleConf = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestIdToken(getString(R.string.default_web_client_id))
+                    .requestEmail()
+                    .build()
+
+                val googleClient = GoogleSignIn.getClient(this, googleConf)
+                startActivityForResult(googleClient.signInIntent, 100)
+            } else {
                 showAlert("Términos y Condiciones", getString(R.string.error_accept_terms))
-                return@setOnClickListener
             }
-
-            val googleConf = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(getString(R.string.default_web_client_id))
-                .requestEmail()
-                .build()
-
-            val googleClient = GoogleSignIn.getClient(this, googleConf)
-            startActivityForResult(googleClient.signInIntent, 100)
         }
+
+        loadPreferences()
     }
 
-    private fun toggleTheme() {
-        val currentTheme = sharedPreferences.getInt(KEY_THEME, AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-        val newMode = if (currentTheme == NIGHT_MODE) LIGHT_MODE else NIGHT_MODE
-
-        sharedPreferences.edit().putInt(KEY_THEME, newMode).apply()
-        AppCompatDelegate.setDefaultNightMode(newMode)
-        recreate()
-    }
-
-    private fun updateThemeButtonIcon() {
-        val currentNightMode = sharedPreferences.getInt(KEY_THEME, AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-        val isDark = currentNightMode == NIGHT_MODE
-
-        if (isDark) {
-            themeButton.setImageResource(R.drawable.ic_theme_moon)
-        } else {
-            themeButton.setImageResource(R.drawable.ic_theme_sun)
+    private fun loadPreferences() {
+        val shouldRemember = sharedPreferences.getBoolean(PREF_KEY_REMEMBER, false)
+        rememberEmailCheckbox.isChecked = shouldRemember
+        if (shouldRemember) {
+            emailEditText.setText(sharedPreferences.getString(PREF_KEY_EMAIL, ""))
         }
     }
 
@@ -125,10 +109,23 @@ class LoginActivity : AppCompatActivity() {
             return
         }
 
-        if (emailEditText.text.isNotEmpty() && passwordEditText.text.isNotEmpty()) {
+        val email = emailEditText.text.toString()
+        val password = passwordEditText.text.toString()
+
+        val editor = sharedPreferences.edit()
+        if (rememberEmailCheckbox.isChecked) {
+            editor.putString(PREF_KEY_EMAIL, email)
+            editor.putBoolean(PREF_KEY_REMEMBER, true)
+        } else {
+            editor.remove(PREF_KEY_EMAIL)
+            editor.putBoolean(PREF_KEY_REMEMBER, false)
+        }
+        editor.apply()
+
+        if (email.isNotEmpty() && password.isNotEmpty()) {
             auth.signInWithEmailAndPassword(
-                emailEditText.text.toString(),
-                passwordEditText.text.toString()
+                email,
+                password
             ).addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
                     showPrincipalView()
@@ -179,7 +176,12 @@ class LoginActivity : AppCompatActivity() {
                         val usuario = auth.currentUser
                         Toast.makeText(this, "Bienvenido ${usuario?.displayName ?: "Usuario"}", Toast.LENGTH_SHORT).show()
                     } else {
-                        showAlert("Error", "No se pudo autenticar con Google.")
+                        val exception = firebaseTask.exception
+                        if (exception is FirebaseAuthUserCollisionException) {
+                            showAlert("Error de Inicio", "Ya existe una cuenta con este correo electrónico. Por favor, inicie sesión con su método original (email y contraseña).")
+                        } else {
+                            showAlert("Error", "No se pudo autenticar con Google: ${exception?.message}")
+                        }
                     }
                 }
             } catch (e: ApiException) {

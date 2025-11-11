@@ -3,15 +3,16 @@ package com.example.finance_code.ui.login;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Toast;
-import android.content.SharedPreferences;
-import android.content.Context;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.biometric.BiometricManager;
 import androidx.biometric.BiometricPrompt;
 import androidx.core.content.ContextCompat;
+
+import com.example.finance_code.ui.home.HomeActivity;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.util.concurrent.Executor;
 
@@ -21,15 +22,13 @@ public class AuthCheckActivity extends AppCompatActivity {
     private BiometricPrompt biometricPrompt;
     private BiometricPrompt.PromptInfo promptInfo;
 
+    private FirebaseAuth mAuth;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
-        SharedPreferences sharedPreferences = getSharedPreferences("theme_prefs", Context.MODE_PRIVATE);
-        int savedTheme = sharedPreferences.getInt("theme_key", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
-        AppCompatDelegate.setDefaultNightMode(savedTheme);
-
         super.onCreate(savedInstanceState);
 
+        mAuth = FirebaseAuth.getInstance();
         executor = ContextCompat.getMainExecutor(this);
 
         biometricPrompt = new BiometricPrompt(this, executor,
@@ -39,7 +38,13 @@ public class AuthCheckActivity extends AppCompatActivity {
                     public void onAuthenticationSucceeded(
                             @NonNull BiometricPrompt.AuthenticationResult result) {
                         super.onAuthenticationSucceeded(result);
-                        goToLogin();
+
+                        FirebaseUser currentUser = mAuth.getCurrentUser();
+                        if (currentUser != null) {
+                            goToHome();
+                        } else {
+                            goToLogin();
+                        }
                     }
 
                     @Override
@@ -87,6 +92,12 @@ public class AuthCheckActivity extends AppCompatActivity {
 
     private void goToLogin() {
         Intent intent = new Intent(AuthCheckActivity.this, LoginActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
+    private void goToHome() {
+        Intent intent = new Intent(AuthCheckActivity.this, HomeActivity.class);
         startActivity(intent);
         finish();
     }
