@@ -1,21 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="beige">#FFC4A484</color>"
+    <color name="beige">#FFC4A484</color>
     <color name="grey">#FF9E9E9E</color>
     <color name="red">#FFFF0000</color>
-    <color name="green">#FF32CD32</color>"
-    <color name="yellow">#FFFFEB3B</color>"
+    <color name="green">#FF32CD32</color>
+    <color name="yellow">#FFFFEB3B</color>
     <color name="primary_brand_color">#0288D1</color>
 
-<!--    colores para el boton de navegacion    -->
     <color name="boton_nav_background">@color/grey</color>
     <color name="boton_nav_select_item">#673AB7</color>
     <color name="boton_nav_item">#4CAF50</color>
 
-    <!--    colores para el home    -->
-    <color name="background_dark">#1E1E1E</color>
-    <color name="card_dark">#2B2B2B</color>
-    <color name="accent">#00BFA6</color> <!-- turquesa -->
+    <color name="background_dark">#121212</color>
+    <color name="card_dark">#1E1E1E</color>
+    <color name="accent">#00BFA6</color>
     <color name="text_primary">#FFFFFF</color>
     <color name="text_secondary">#B3B3B3</color>
     <color name="button_light">#FFF4C2</color>
@@ -25,7 +23,6 @@
     <color name="gray">#9E9E9E</color>
     <color name="dark_gray">#616161</color>
 
-    <!-- Colores de acento -->
     <color name="purple_500">#6200EE</color>
     <color name="purple_700">#3700B3</color>
 </resources>

@@ -13,6 +13,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.appcompat.app.AppCompatDelegate
 import com.example.finance_code.R
 import com.example.finance_code.ui.home.HomeActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -21,6 +22,7 @@ import com.google.android.gms.common.api.ApiException
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
+import android.content.SharedPreferences
 
 class LoginActivity : AppCompatActivity() {
 
@@ -31,8 +33,19 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var passwordEditText: EditText
     private lateinit var googleButton: ImageButton
     private lateinit var termsAndConditionsCheckbox: CheckBox
+    private lateinit var themeButton: ImageButton
+    private lateinit var sharedPreferences: SharedPreferences
+
+    companion object {
+        private const val PREFS_NAME = "theme_prefs"
+        private const val KEY_THEME = "theme_key"
+        private const val NIGHT_MODE = AppCompatDelegate.MODE_NIGHT_YES
+        private const val LIGHT_MODE = AppCompatDelegate.MODE_NIGHT_NO
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+
         super.onCreate(savedInstanceState)
         FirebaseApp.initializeApp(this)
         enableEdgeToEdge()
@@ -57,24 +70,52 @@ class LoginActivity : AppCompatActivity() {
         passwordEditText = findViewById(R.id.passwordEditText)
         googleButton = findViewById(R.id.googleButton)
         termsAndConditionsCheckbox = findViewById(R.id.termsAndConditionsCheckbox)
+        themeButton = findViewById(R.id.themeToggleButton)
 
         termsAndConditionsCheckbox.movementMethod = LinkMovementMethod.getInstance()
+
+        updateThemeButtonIcon()
 
         loginButton.setOnClickListener { Login() }
         registerButton.setOnClickListener { Register() }
 
-        googleButton.setOnClickListener {
-            if (termsAndConditionsCheckbox.isChecked) {
-                val googleConf = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                    .requestIdToken(getString(R.string.default_web_client_id))
-                    .requestEmail()
-                    .build()
+        themeButton.setOnClickListener {
+            toggleTheme()
+        }
 
-                val googleClient = GoogleSignIn.getClient(this, googleConf)
-                startActivityForResult(googleClient.signInIntent, 100)
-            } else {
+        googleButton.setOnClickListener {
+            if (!termsAndConditionsCheckbox.isChecked) {
                 showAlert("Términos y Condiciones", getString(R.string.error_accept_terms))
+                return@setOnClickListener
             }
+
+            val googleConf = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build()
+
+            val googleClient = GoogleSignIn.getClient(this, googleConf)
+            startActivityForResult(googleClient.signInIntent, 100)
+        }
+    }
+
+    private fun toggleTheme() {
+        val currentTheme = sharedPreferences.getInt(KEY_THEME, AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        val newMode = if (currentTheme == NIGHT_MODE) LIGHT_MODE else NIGHT_MODE
+
+        sharedPreferences.edit().putInt(KEY_THEME, newMode).apply()
+        AppCompatDelegate.setDefaultNightMode(newMode)
+        recreate()
+    }
+
+    private fun updateThemeButtonIcon() {
+        val currentNightMode = sharedPreferences.getInt(KEY_THEME, AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        val isDark = currentNightMode == NIGHT_MODE
+
+        if (isDark) {
+            themeButton.setImageResource(R.drawable.ic_theme_moon)
+        } else {
+            themeButton.setImageResource(R.drawable.ic_theme_sun)
         }
     }
 

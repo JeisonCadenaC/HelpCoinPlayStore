@@ -1,12 +1,14 @@
-
 package com.example.finance_code.ui.login;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Toast;
+import android.content.SharedPreferences;
+import android.content.Context;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.biometric.BiometricManager;
 import androidx.biometric.BiometricPrompt;
 import androidx.core.content.ContextCompat;
@@ -21,6 +23,11 @@ public class AuthCheckActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        SharedPreferences sharedPreferences = getSharedPreferences("theme_prefs", Context.MODE_PRIVATE);
+        int savedTheme = sharedPreferences.getInt("theme_key", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+        AppCompatDelegate.setDefaultNightMode(savedTheme);
+
         super.onCreate(savedInstanceState);
 
         executor = ContextCompat.getMainExecutor(this);

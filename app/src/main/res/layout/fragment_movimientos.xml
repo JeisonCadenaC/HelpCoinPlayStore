@@ -3,30 +3,33 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="?android:attr/colorBackground"
     tools:context=".ui.home.MovimientosFragment">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:gravity="center"
-        android:background="#E3F2FD">
+        android:padding="16dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Movimientos"
-            android:textColor="@android:color/black"
+            android:textColor="?attr/colorOnBackground"
             android:textSize="22sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"/>
 
         <Button
             android:id="@+id/button2"
-            android:layout_width="203dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Agregar transaccion" />
+            android:text="Agregar transaccion"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"/>
 
-        <!-- Encabezado -->
         <TextView
             android:id="@+id/tvTitulo"
             android:layout_width="match_parent"
@@ -34,7 +37,8 @@
             android:text="Mis Movimientos"
             android:textSize="24sp"
             android:textStyle="bold"
-            android:textColor="#000000"
+            android:textColor="?attr/colorOnBackground"
+            android:layout_marginTop="24dp"
             android:layout_marginBottom="8dp"/>
 
         <TextView
@@ -43,10 +47,10 @@
             android:layout_height="wrap_content"
             android:text="Total: 0 movimientos"
             android:textSize="14sp"
-            android:textColor="#666666"
+            android:textColor="?attr/colorOnBackground"
+            android:alpha="0.7"
             android:layout_marginBottom="16dp"/>
 
-        <!-- Lista de movimientos -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerMovimientos"
             android:layout_width="match_parent"

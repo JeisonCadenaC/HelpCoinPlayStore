@@ -6,7 +6,7 @@
     android:id="@+id/home_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
+    android:background="?android:attr/colorBackground"
     tools:context=".ui.home.InicioFragment">
 
     <LinearLayout
@@ -38,7 +38,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="¡HOLA, BIENVENIDO!"
-                android:textColor="@color/black"
+                android:textColor="?attr/colorOnBackground"
                 android:textSize="22sp"
                 android:textStyle="bold" />
 
@@ -47,7 +47,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Tu resumen financiero del día"
-                android:textColor="@color/dark_gray"
+                android:textColor="?attr/colorOnBackground"
+                android:alpha="0.7"
                 android:textSize="13sp"
                 android:layout_marginTop="2dp" />
         </LinearLayout>
@@ -58,7 +59,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Próximos Recordatorios"
-        android:textColor="@color/black"
+        android:textColor="?attr/colorOnBackground"
         android:textSize="18sp"
         android:textStyle="bold"
         android:layout_marginTop="24dp"
@@ -76,26 +77,45 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@id/cardCalendario"
-        tools:listitem="@layout/item_recordatorio" /> <com.google.android.material.card.MaterialCardView
-    android:id="@+id/cardCalendario"
-    style="@style/HomeButtonCard"
-    android:layout_width="140dp"
-    android:layout_height="170dp"
-    android:layout_marginBottom="24dp"
-    app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintEnd_toEndOf="parent">
+        tools:listitem="@layout/item_recordatorio" />
 
-    <LinearLayout style="@style/HomeCardContent">
-        <ImageView
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:src="@drawable/ic_calendar"
-            app:tint="@color/purple_500" />
-        <TextView
-            android:text="CALENDARIO"
-            style="@style/HomeCardText" />
-    </LinearLayout>
-</com.google.android.material.card.MaterialCardView>
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardCalendario"
+        android:layout_width="160dp"
+        android:layout_height="180dp"
+        android:layout_marginBottom="24dp"
+        app:cardBackgroundColor="?attr/colorSurface"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="10dp"
+        app:strokeColor="@color/primary_brand_color"
+        app:strokeWidth="2dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="20dp">
+
+            <ImageView
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:src="@drawable/ic_calendar"
+                app:tint="@color/purple_500" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="CALENDARIO"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:gravity="center" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

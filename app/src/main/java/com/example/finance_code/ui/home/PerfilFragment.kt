@@ -1,12 +1,17 @@
 package com.example.finance_code.ui.home
 
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Button
+import android.widget.ImageView
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.Fragment
 import com.example.finance_code.R
 import com.example.finance_code.ui.login.LoginActivity
@@ -14,12 +19,23 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import android.widget.Toast
+import com.google.android.material.switchmaterial.SwitchMaterial
 
 class PerfilFragment : Fragment() {
 
     private lateinit var googleSignInClient: GoogleSignInClient
     private lateinit var auth: FirebaseAuth
+    private lateinit var themeSwitch: SwitchMaterial
+    private lateinit var themeIcon: ImageView
+    private lateinit var sharedPreferences: SharedPreferences
+    private lateinit var txtEmail: TextView
+
+    companion object {
+        private const val PREFS_NAME = "theme_prefs"
+        private const val KEY_THEME = "theme_key"
+        private const val NIGHT_MODE = AppCompatDelegate.MODE_NIGHT_YES
+        private const val LIGHT_MODE = AppCompatDelegate.MODE_NIGHT_NO
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -31,45 +47,75 @@ class PerfilFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Inicializar FirebaseAuth
         auth = FirebaseAuth.getInstance()
+        sharedPreferences = requireActivity().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-        // --- Mostrar correo del usuario autenticado ---
-        val txtEmail = view.findViewById<TextView>(R.id.txtUserEmail)
-        val user = auth.currentUser
-        txtEmail.text = user?.email ?: "Invitado"
+        txtEmail = view.findViewById(R.id.txtUserEmail)
+        themeSwitch = view.findViewById(R.id.themeSwitch)
+        themeIcon = view.findViewById(R.id.imgThemeIcon)
+        val btnLogout = view.findViewById<Button>(R.id.btnLogout)
 
-        // --- Configurar Google Sign-In ---
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(getString(R.string.default_web_client_id)) // viene de google-services.json
+            .requestIdToken(getString(R.string.default_web_client_id))
             .requestEmail()
             .build()
 
         googleSignInClient = GoogleSignIn.getClient(requireContext(), gso)
 
-        // --- Botón de cerrar sesión ---
-        val btnLogout = view.findViewById<Button>(R.id.btnLogout)
+        displayUserEmail()
+        loadThemePreference()
+        setupListeners()
+
         btnLogout.setOnClickListener {
             cerrarSesion()
         }
     }
 
+    private fun displayUserEmail() {
+        val user = auth.currentUser
+        txtEmail.text = user?.email ?: "Invitado"
+    }
+
     private fun cerrarSesion() {
-        // Cierra sesión de Google primero (si aplica)
         googleSignInClient.signOut().addOnCompleteListener {
-            // Luego cierra sesión en Firebase
             auth.signOut()
 
-            // Mostrar confirmación breve
             Toast.makeText(requireContext(), "Sesión cerrada correctamente", Toast.LENGTH_SHORT).show()
 
-            // Redirigir al LoginActivity
             val intent = Intent(requireContext(), LoginActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(intent)
 
-            // Finalizar la actividad actual
             requireActivity().finish()
+        }
+    }
+
+    private fun loadThemePreference() {
+        val currentTheme = sharedPreferences.getInt(KEY_THEME, AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        themeSwitch.isChecked = currentTheme == NIGHT_MODE
+        updateThemeIcon(themeSwitch.isChecked)
+    }
+
+    private fun setupListeners() {
+        themeSwitch.setOnCheckedChangeListener { _, isChecked ->
+            val mode = if (isChecked) NIGHT_MODE else LIGHT_MODE
+            setTheme(mode)
+            updateThemeIcon(isChecked)
+        }
+    }
+
+    private fun setTheme(mode: Int) {
+        sharedPreferences.edit().putInt(KEY_THEME, mode).apply()
+        AppCompatDelegate.setDefaultNightMode(mode)
+
+       requireActivity().recreate()
+    }
+
+    private fun updateThemeIcon(isDark: Boolean) {
+        if (isDark) {
+            themeIcon.setImageResource(R.drawable.ic_delete)
+        } else {
+            themeIcon.setImageResource(R.drawable.ic_add)
         }
     }
 }
