@@ -9,6 +9,8 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.finance_code.R
 import com.example.finance_code.data.MetaDB
+import java.text.NumberFormat
+import java.util.Locale
 
 class MetasAdapter(
     private var metaDBS: List<MetaDB> = emptyList(),
@@ -33,7 +35,15 @@ class MetasAdapter(
         val meta = metaDBS[position]
 
         holder.tvNombre.text = meta.nombre
-        holder.tvMontos.text = "$${meta.montoActual} / $${meta.montoObjetivo}"
+
+        val locale = Locale.Builder().setLanguage("es").setRegion("CO").build()
+        val formatter = NumberFormat.getCurrencyInstance(locale)
+        formatter.maximumFractionDigits = 0
+
+        val montoActualFormateado = formatter.format(meta.montoActual)
+        val montoObjetivoFormateado = formatter.format(meta.montoObjetivo)
+
+        holder.tvMontos.text = "$montoActualFormateado / $montoObjetivoFormateado"
 
         val porcentaje =
             if (meta.montoObjetivo > 0) ((meta.montoActual / meta.montoObjetivo) * 100).coerceIn(0.0, 100.0)

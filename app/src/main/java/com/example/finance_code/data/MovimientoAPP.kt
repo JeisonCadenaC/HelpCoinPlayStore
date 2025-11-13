@@ -1,15 +1,23 @@
 package com.example.finance_code.data
 
 import android.app.Application
+import androidx.appcompat.app.AppCompatDelegate
 
-//Inicializar tu base de datos Room al arrancar la app.
-//Guardar la instancia en un lugar global (Application) para que toda tu app la comparta.
 class MovimientoAPP : Application() {
-    lateinit var room: AppDB
 
     override fun onCreate() {
         super.onCreate()
-        // Inicializamos la base de datos con la función centralizada
-        room = AppDB.getDatabase(applicationContext)
+        aplicarTemaGuardado()
+    }
+
+    private fun aplicarTemaGuardado() {
+        val prefs = getSharedPreferences("theme_prefs", MODE_PRIVATE)
+        val isDarkMode = prefs.getBoolean("is_dark_mode", false)
+
+        if (isDarkMode) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+        } else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+        }
     }
 }

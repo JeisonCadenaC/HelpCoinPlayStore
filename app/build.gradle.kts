@@ -74,7 +74,7 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.play.services.auth)
-
+    implementation("com.google.android.material:material:1.12.0")
     implementation(libs.androidx.gridlayout)
     implementation(libs.androidx.biometric)
     implementation("com.google.firebase:firebase-firestore-ktx")

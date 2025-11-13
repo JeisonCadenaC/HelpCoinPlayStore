@@ -1,15 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="24dp"
+    android:background="?attr/colorSurface">
 
-    <com.google.android.material.textfield.TextInputLayout
+    <TextView
+        android:id="@+id/dialog_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Nombre de la meta">
+        android:text="Añadir Nueva Meta"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="?attr/colorOnSurface"
+        android:drawableStart="@drawable/ic_metas"
+        android:drawablePadding="12dp"
+        app:drawableTint="?attr/colorPrimary"
+        android:layout_marginBottom="24dp"/>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/nombreMetaLayout"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Nombre de la meta"
+        app:startIconDrawable="@drawable/ic_metas">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etNombreMeta"
@@ -18,9 +36,13 @@
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/montoObjetivoLayout"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Monto objetivo">
+        android:layout_marginTop="16dp"
+        android:hint="Monto objetivo"
+        app:startIconDrawable="@drawable/ic_savings">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etMontoObjetivo"
@@ -30,9 +52,13 @@
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/montoActualLayout"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Monto ahorrado (opcional)">
+        android:layout_marginTop="16dp"
+        android:hint="Monto ahorrado (opcional)"
+        app:startIconDrawable="@drawable/ic_credit_card">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etMontoActual"

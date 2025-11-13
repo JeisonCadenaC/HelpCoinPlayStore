@@ -28,62 +28,39 @@ class MovimientosFragment : Fragment(R.layout.fragment_movimientos) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // PASO 1: Obtener la base de datos
         val database = AppDB.getDatabase(requireContext())
         val buttonT = view.findViewById<Button>(R.id.button2)
 
-        // PASO 2: Crear el Repository
         val repository = MovimientoRepository(database.movimientoDao())
 
-        // PASO 3: Crear el Factory
         val factory = MovimientoViewModelFactory(repository)
 
-        // PASO 4: Obtener el ViewModel
         viewModel = ViewModelProvider(this, factory)[MovimientoViewModel::class.java]
 
-
-        //Para abrir el fragment de agregar transaccion
         buttonT.setOnClickListener {
             val intent =
                 Intent(requireContext(), addTransaction::class.java)
             startActivity(intent)
         }
-        // Referencias a las vistas
         val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerMovimientos)
         val tvContador = view.findViewById<TextView>(R.id.tvContador)
 
-        // Configurar RecyclerView
-        adapter = MovimientosAdapter()
+        adapter = MovimientosAdapter(emptyList())
         recyclerView.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
+
         adapter.setOnItemLongClickListener { movimiento ->
             mostrarMenuOpciones(movimiento)
         }
-        // Observar cambios en la base de datos
-        viewModel.movimientos.observe(viewLifecycleOwner) { lista ->
-            // Actualizar el adapter
-            adapter.actualizarMovimientos(lista)
 
-            // Actualizar contador
+        viewModel.movimientos.observe(viewLifecycleOwner) { lista ->
+            adapter.setData(lista)
+
             tvContador.text = "Total: ${lista.size} movimientos"
 
-            // Log para debug
             println("📊 Movimientos cargados: ${lista.size}")
             lista.forEach { mov ->
                 println("  - ${mov.descripcion}: $${mov.cantidad}")
-            }
-        }
-
-        // PASO 6: Observar los cambios
-        viewModel.movimientos.observe(viewLifecycleOwner) { lista ->
-            Toast.makeText(
-                requireContext(),
-                "Total: ${lista.size} movimientos",
-                Toast.LENGTH_SHORT
-            ).show()
-
-            lista.forEach { mov ->
-                println("💰 ${mov.descripcion}: $${mov.cantidad}")
             }
         }
     }
@@ -114,7 +91,4 @@ class MovimientosFragment : Fragment(R.layout.fragment_movimientos) {
         viewModel.eliminar(movimiento)
         Toast.makeText(requireContext(), "Movimiento eliminado", Toast.LENGTH_SHORT).show()
     }
-
 }
-
-
