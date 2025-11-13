@@ -11,7 +11,7 @@
 
     <LinearLayout
         android:id="@+id/headerSection"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center_horizontal"
@@ -27,33 +27,26 @@
             android:src="@drawable/help_coin_logo"
             android:contentDescription="@string/app_name" />
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/txtHolaNombre"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
             android:layout_marginTop="8dp"
-            android:gravity="center_horizontal">
+            android:text="¡HOLA, BIENVENIDO!"
+            android:textColor="@color/black"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:gravity="center" />
 
-            <TextView
-                android:id="@+id/txtHolaNombre"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="¡HOLA, BIENVENIDO!"
-                android:textColor="@color/black"
-                android:textSize="22sp"
-                android:textStyle="bold"
-                android:gravity="center" />
-
-            <TextView
-                android:id="@+id/txtSubtitulo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Tu resumen financiero del día"
-                android:textColor="@color/dark_gray"
-                android:textSize="13sp"
-                android:layout_marginTop="2dp"
-                android:gravity="center" />
-        </LinearLayout>
+        <TextView
+            android:id="@+id/txtSubtitulo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tu resumen financiero del día"
+            android:textColor="@color/dark_gray"
+            android:textSize="13sp"
+            android:layout_marginTop="2dp"
+            android:gravity="center" />
     </LinearLayout>
 
     <TextView
@@ -92,7 +85,7 @@
         app:strokeWidth="2dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" >
+        app:layout_constraintEnd_toEndOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"

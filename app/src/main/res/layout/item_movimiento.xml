@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView
+<com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
     app:cardCornerRadius="12dp"
-    app:cardElevation="4dp">
+    app:cardElevation="4dp"
+
+    app:strokeColor="@color/purple_500"
+    app:strokeWidth="3dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,7 +18,6 @@
         android:orientation="horizontal"
         android:padding="16dp">
 
-        <!-- Icono del tipo (Ingreso/Gasto) -->
         <TextView
             android:id="@+id/tvIcono"
             android:layout_width="40dp"
@@ -24,7 +27,6 @@
             android:textSize="24sp"
             android:background="@android:color/transparent"/>
 
-        <!-- Información del movimiento -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -39,7 +41,8 @@
                 android:text="Descripción"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="#000000"/>
+
+                android:textColor="?attr/colorOnSurface" />
 
             <TextView
                 android:id="@+id/tvFecha"
@@ -47,8 +50,10 @@
                 android:layout_height="wrap_content"
                 android:text="2025-11-01"
                 android:textSize="12sp"
-                android:textColor="#666666"
-                android:layout_marginTop="4dp"/>
+                android:layout_marginTop="4dp"
+
+                android:textColor="?attr/colorOnSurface"
+                android:alpha="0.7"/>
 
             <TextView
                 android:id="@+id/tvCategoria"
@@ -56,11 +61,12 @@
                 android:layout_height="wrap_content"
                 android:text="Categoría"
                 android:textSize="12sp"
-                android:textColor="#999999"
-                android:layout_marginTop="2dp"/>
+                android:layout_marginTop="2dp"
+
+                android:textColor="?attr/colorOnSurface"
+                android:alpha="0.5"/>
         </LinearLayout>
 
-        <!-- Cantidad -->
         <TextView
             android:id="@+id/tvCantidad"
             android:layout_width="wrap_content"
@@ -69,6 +75,7 @@
             android:textSize="18sp"
             android:textStyle="bold"
             android:layout_gravity="center_vertical"
-            android:textColor="#4CAF50"/>
+            android:textColor="#4CAF50"
+            tools:ignore="HardcodedText"/>
     </LinearLayout>
-</androidx.cardview.widget.CardView>
+</com.google.android.material.card.MaterialCardView>
