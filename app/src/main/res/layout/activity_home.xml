@@ -12,16 +12,18 @@
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:fitsSystemWindows="true"
+        android:fitsSystemWindows="false"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/topAppBar"
-            style="?attr/colorOnBackground"
             android:layout_width="match_parent"
-            android:layout_height="31dp" />
+            android:layout_height="wrap_content"
+            android:minHeight="31dp"
+            android:background="?attr/colorPrimary"
+            android:fitsSystemWindows="true" />
 
     </com.google.android.material.appbar.AppBarLayout>
 

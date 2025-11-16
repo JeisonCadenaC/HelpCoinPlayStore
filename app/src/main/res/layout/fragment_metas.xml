@@ -13,11 +13,13 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Mis metas de ahorro"
-        android:textSize="20sp"
+        android:textSize="22sp"
         android:textStyle="bold"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+
+        android:textColor="?attr/colorOnBackground" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvMetas"

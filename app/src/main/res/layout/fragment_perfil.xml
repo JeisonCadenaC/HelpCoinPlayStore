@@ -21,7 +21,9 @@
             android:textSize="28sp"
             android:layout_marginBottom="32dp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            android:textColor="?attr/colorOnBackground" /> ```
+
 
         <androidx.cardview.widget.CardView
             android:id="@+id/cardViewImagen"
