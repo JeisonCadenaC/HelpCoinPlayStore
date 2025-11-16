@@ -1,7 +1,7 @@
 package com.example.finance_code.ui.home
 
 import android.content.Intent
-import android.media.MediaPlayer // Asegúrate que este import esté
+import android.media.MediaPlayer
 import android.os.Bundle
 import android.util.Log
 import android.widget.VideoView
@@ -38,7 +38,7 @@ class SplashActivity : AppCompatActivity() {
         }
 
 
-        videoView.setOnErrorListener { mp, what, extra ->
+        videoView.setOnErrorListener { _, what, extra ->
 
             Log.e("SplashActivity", "Error al reproducir video. Codigo: $what, Extra: $extra")
 
