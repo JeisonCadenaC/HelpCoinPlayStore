@@ -170,6 +170,7 @@ class PerfilFragment : Fragment() {
         val prefs = getPrefs()
         val nombreGuardado = prefs?.getString(KEY_USER_NAME, "Usuario") ?: "Usuario"
         val rutaImagenGuardada = prefs?.getString(KEY_IMAGE_PATH, null)
+        val googlePhotoUrl = prefs?.getString("google_photo_url", null)
 
         tvNombreUsuario.text = nombreGuardado
 
@@ -181,6 +182,15 @@ class PerfilFragment : Fragment() {
                     .placeholder(R.drawable.ic_perfil)
                     .into(imgPerfil)
             }
+        } else if (googlePhotoUrl != null) {
+            Glide.with(this)
+                .load(googlePhotoUrl)
+                .placeholder(R.drawable.ic_perfil)
+                .into(imgPerfil)
+        } else {
+            Glide.with(this)
+                .load(R.drawable.ic_perfil)
+                .into(imgPerfil)
         }
     }
 

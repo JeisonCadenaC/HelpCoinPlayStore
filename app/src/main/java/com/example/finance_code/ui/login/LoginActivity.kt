@@ -47,6 +47,7 @@ class LoginActivity : AppCompatActivity() {
         private const val PREFS_NAME = "LoginPrefs"
         private const val PREF_KEY_EMAIL = "saved_email"
         private const val PREF_KEY_REMEMBER = "remember_email"
+        private const val KEY_USER_NAME = "user_name"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -83,7 +84,7 @@ class LoginActivity : AppCompatActivity() {
         termsAndConditionsCheckbox = binding.termsAndConditionsCheckbox
         rememberEmailCheckbox = binding.rememberEmailCheckbox
 
-        toggleDarkModeButton = binding.themeToggleButton // ← Cambio aplicado
+        toggleDarkModeButton = binding.themeToggleButton
 
         sharedPreferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         termsAndConditionsCheckbox.movementMethod = LinkMovementMethod.getInstance()
@@ -215,6 +216,27 @@ class LoginActivity : AppCompatActivity() {
                 val credential = GoogleAuthProvider.getCredential(cuenta.idToken, null)
                 auth.signInWithCredential(credential).addOnCompleteListener(this) { firebaseTask ->
                     if (firebaseTask.isSuccessful) {
+
+                        val user = auth.currentUser
+                        val userUID = user?.uid
+                        val googlePhotoUrl = cuenta.photoUrl
+                        val googleDisplayName = cuenta.displayName
+
+                        if (userUID != null) {
+                            val prefsName = "${userUID}_UserProfilePrefs"
+                            val userPrefs = getSharedPreferences(prefsName, Context.MODE_PRIVATE)
+
+                            with(userPrefs.edit()) {
+                                if (googlePhotoUrl != null) {
+                                    putString("google_photo_url", googlePhotoUrl.toString())
+                                }
+                                if (googleDisplayName != null) {
+                                    putString(KEY_USER_NAME, googleDisplayName)
+                                }
+                                apply()
+                            }
+                        }
+
                         showPrincipalView()
                         val usuario = auth.currentUser
                         Toast.makeText(
