@@ -34,7 +34,6 @@ class SplashActivity : AppCompatActivity() {
 
         videoView.setOnPreparedListener { mp ->
             mp.setVolume(0f, 0f)
-            // Esta línea elimina las bandas blancas
             mp.setVideoScalingMode(MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING)
         }
 
