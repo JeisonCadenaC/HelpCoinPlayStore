@@ -27,4 +27,6 @@
     <color name="purple_700">#3700B3</color>
     <color name="colorIngreso">#4CAF50</color>
     <color name="colorEgreso">#F44336</color>
+
+    <color name="fab_icon_tint">#FFFFFFFF</color>
 </resources>

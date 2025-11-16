@@ -198,9 +198,7 @@ class PerfilFragment : Fragment() {
         val sharedPreferences = requireActivity().getSharedPreferences("AppPrefe", Context.MODE_PRIVATE)
         val modoOscuroActivado = sharedPreferences.getBoolean("modo_oscuro", false)
         switchModoOscuro.isChecked = modoOscuroActivado
-        aplicarModoOscuro(modoOscuroActivado)
     }
-
     private fun configurarModoOscuro(activado: Boolean) {
         val sharedPreferences = requireActivity().getSharedPreferences("AppPrefe", Context.MODE_PRIVATE)
         with(sharedPreferences.edit()) {

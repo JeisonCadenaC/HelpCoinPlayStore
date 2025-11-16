@@ -1,11 +1,13 @@
 package com.example.finance_code.ui.home
 
+import android.content.Context
 import android.content.Intent
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.util.Log
 import android.widget.VideoView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -17,6 +19,10 @@ class SplashActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val sharedPreferences = getSharedPreferences("AppPrefe", Context.MODE_PRIVATE)
+        val modoOscuroActivado = sharedPreferences.getBoolean("modo_oscuro", false)
+        aplicarModoOscuro(modoOscuroActivado)
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
         val controller = WindowInsetsControllerCompat(window, window.decorView)
@@ -64,5 +70,13 @@ class SplashActivity : AppCompatActivity() {
         val intent = Intent(this, AuthCheckActivity::class.java)
         startActivity(intent)
         finish()
+    }
+
+    private fun aplicarModoOscuro(activado: Boolean) {
+        if (activado) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+        } else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+        }
     }
 }
