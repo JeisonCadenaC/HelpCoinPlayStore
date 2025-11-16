@@ -67,4 +67,17 @@
             android:layout_height="wrap_content"/>
     </com.google.android.material.textfield.TextInputLayout>
 
+    <Button
+        android:id="@+id/btnEliminarMeta"
+        style="@style/Widget.MaterialComponents.Button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Eliminar Meta"
+        android:layout_marginTop="16dp"
+        android:backgroundTint="@color/design_default_color_error"
+        android:textColor="@color/white"
+        app:icon="@drawable/ic_delete"
+        app:iconTint="@color/white"
+        android:visibility="gone" />
+
 </LinearLayout>

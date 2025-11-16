@@ -9,6 +9,6 @@ data class MetaDB(
     val nombre: String,
     val montoObjetivo: Double,
     val montoActual: Double = 0.0,
-    val fechaLimite: Long? = null,  // fecha límite opcional (en milisegundos)
-    val completada: Boolean = false // cambia a true cuando se cumple la meta
+    val fechaLimite: Long? = null,
+    val completada: Boolean = false
 )

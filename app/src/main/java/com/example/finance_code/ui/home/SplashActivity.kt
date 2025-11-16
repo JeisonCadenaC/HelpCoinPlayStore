@@ -14,11 +14,14 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.example.finance_code.R
 import com.example.finance_code.ui.login.AuthCheckActivity
+import com.example.finance_code.ui.home.ReminderHelper
 
 class SplashActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        ReminderHelper.createNotificationChannels(this.applicationContext)
 
         val sharedPreferences = getSharedPreferences("AppPrefe", Context.MODE_PRIVATE)
         val modoOscuroActivado = sharedPreferences.getBoolean("modo_oscuro", false)

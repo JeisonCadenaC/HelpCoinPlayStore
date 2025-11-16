@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Finance Code</string>
+    <string name="app_name">Help Coin</string>
     <string name="logo_description">Logo</string>
     <string name="email_hint">Email</string>
     <string name="password_hint">Contraseña</string>
