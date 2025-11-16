@@ -1,12 +1,15 @@
 package com.example.finance_code.ui.home
 
 import android.content.Intent
+import android.media.MediaPlayer // Asegúrate que este import esté
 import android.os.Bundle
 import android.util.Log
-import android.view.WindowManager
 import android.widget.VideoView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toUri
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.example.finance_code.R
 import com.example.finance_code.ui.login.AuthCheckActivity
 
@@ -15,11 +18,10 @@ class SplashActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        @Suppress("DEPRECATION")
-        window.setFlags(
-            WindowManager.LayoutParams.FLAG_FULLSCREEN,
-            WindowManager.LayoutParams.FLAG_FULLSCREEN
-        )
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        val controller = WindowInsetsControllerCompat(window, window.decorView)
+        controller.hide(WindowInsetsCompat.Type.systemBars())
+        controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
 
         setContentView(R.layout.activity_splash)
 
@@ -32,6 +34,8 @@ class SplashActivity : AppCompatActivity() {
 
         videoView.setOnPreparedListener { mp ->
             mp.setVolume(0f, 0f)
+            // Esta línea elimina las bandas blancas
+            mp.setVideoScalingMode(MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING)
         }
 
 
