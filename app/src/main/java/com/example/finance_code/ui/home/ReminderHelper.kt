@@ -7,12 +7,14 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.provider.CalendarContract
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import com.example.finance_code.NotificationReceiver
 import com.example.finance_code.R
 import java.util.Calendar
+import java.util.TimeZone
 
 object ReminderHelper {
 
@@ -170,5 +172,63 @@ object ReminderHelper {
             .build()
 
         notificationManager.notify(notificationId, notification)
+    }
+
+    fun cancelWeeklyMetaNotification(
+        context: Context,
+        nombreMeta: String,
+        fechaCreacionMillis: Long
+    ) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+        val mensaje = "¡Ánimo! Sigue trabajando en tu meta: '$nombreMeta'"
+        val titulo = "Recordatorio de Meta Semanal"
+        val requestCode = (fechaCreacionMillis).toInt()
+
+        val intent = Intent(context, NotificationReceiver::class.java).apply {
+            putExtra("EXTRA_MESSAGE", mensaje)
+            putExtra("EXTRA_TITLE", titulo)
+            putExtra("EXTRA_CHANNEL_ID", METAS_CHANNEL_ID)
+            putExtra("EXTRA_NOTIFICATION_ID", requestCode)
+        }
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            requestCode,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        try {
+            alarmManager.cancel(pendingIntent)
+            Log.d("ReminderHelper", "Alarma cancelada para la meta: $nombreMeta")
+        } catch (se: SecurityException) {
+            Log.e("ReminderHelper", "Fallo de seguridad al cancelar alarma de meta", se)
+        }
+    }
+    fun createGoogleCalendarEvent(
+        context: Context,
+        nombre: String,
+        fechaMillis: Long
+    ) {
+        val intent = Intent(Intent.ACTION_INSERT).apply {
+            data = CalendarContract.Events.CONTENT_URI
+            putExtra(CalendarContract.Events.TITLE, "Recordatorio de Pago: $nombre")
+            putExtra(CalendarContract.Events.DESCRIPTION, "No olvides realizar este pago.")
+            putExtra(CalendarContract.EXTRA_EVENT_ALL_DAY, true)
+            putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, fechaMillis)
+            putExtra(CalendarContract.EXTRA_EVENT_END_TIME, fechaMillis + 1000 * 60 * 60 * 24)
+
+            putExtra(
+                CalendarContract.Events.EVENT_TIMEZONE,
+                TimeZone.getDefault().id
+            )
+        }
+
+        if (intent.resolveActivity(context.packageManager) != null) {
+            context.startActivity(intent)
+        } else {
+            Toast.makeText(context, "No se encontró una aplicación de calendario para añadir el evento.", Toast.LENGTH_LONG).show()
+        }
     }
 }

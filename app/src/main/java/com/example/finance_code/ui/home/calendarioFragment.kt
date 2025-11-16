@@ -171,6 +171,12 @@ class CalendarioFragment : Fragment() {
             fechaFormateada
         )
 
+        ReminderHelper.createGoogleCalendarEvent(
+            requireContext(),
+            nombre,
+            fechaEnMillis
+        )
+
         findNavController().popBackStack()
     }
 

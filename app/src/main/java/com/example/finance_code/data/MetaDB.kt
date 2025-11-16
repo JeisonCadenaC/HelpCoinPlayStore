@@ -10,5 +10,6 @@ data class MetaDB(
     val montoObjetivo: Double,
     val montoActual: Double = 0.0,
     val fechaLimite: Long? = null,
-    val completada: Boolean = false
+    val completada: Boolean = false,
+    val fechaCreacion: Long? = null
 )

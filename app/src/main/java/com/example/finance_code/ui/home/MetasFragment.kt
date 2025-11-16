@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -78,19 +79,60 @@ class MetasFragment : Fragment() {
 
                 if (nombre.isNotEmpty() && montoObjetivo > 0) {
                     if (metaDBExistente == null) {
+                        val fechaCreacion = System.currentTimeMillis()
+
                         val nuevaMetaDB = MetaDB(
                             nombre = nombre,
                             montoObjetivo = montoObjetivo,
-                            montoActual = montoActual
+                            montoActual = montoActual,
+                            fechaCreacion = fechaCreacion
                         )
                         metaViewModel.insert(nuevaMetaDB)
+
+                        ReminderHelper.scheduleWeeklyMetaNotification(
+                            requireContext(),
+                            nuevaMetaDB.nombre,
+                            fechaCreacion
+                        )
+
+                        Toast.makeText(
+                            requireContext(),
+                            "Meta '${nuevaMetaDB.nombre}' creada. Se te recordará semanalmente.",
+                            Toast.LENGTH_LONG
+                        ).show()
+
                     } else {
+                        val eraCompletada = metaDBExistente.completada
+                        val esCompletadaAhora = montoActual >= montoObjetivo
+
                         val actualizada = metaDBExistente.copy(
                             nombre = nombre,
                             montoObjetivo = montoObjetivo,
-                            montoActual = montoActual
+                            montoActual = montoActual,
+                            completada = esCompletadaAhora
                         )
                         metaViewModel.update(actualizada)
+
+                        if (esCompletadaAhora && !eraCompletada) {
+                            if (actualizada.fechaCreacion != null) {
+                                ReminderHelper.cancelWeeklyMetaNotification(
+                                    requireContext(),
+                                    actualizada.nombre,
+                                    actualizada.fechaCreacion
+                                )
+                                Toast.makeText(
+                                    requireContext(),
+                                    "¡Felicidades! Meta '${actualizada.nombre}' completada. Ya no recibirás recordatorios.",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            } else {
+                                Toast.makeText(
+                                    requireContext(),
+                                    "¡Felicidades! Meta '${actualizada.nombre}' completada.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
                     }
                 }
             }
@@ -121,6 +163,13 @@ class MetasFragment : Fragment() {
                     .setTitle("Confirmar eliminación")
                     .setMessage("¿Estás seguro de que quieres eliminar la meta '${metaDBExistente.nombre}'?")
                     .setPositiveButton("Eliminar") { _, _ ->
+                        if (metaDBExistente.fechaCreacion != null) {
+                            ReminderHelper.cancelWeeklyMetaNotification(
+                                requireContext(),
+                                metaDBExistente.nombre,
+                                metaDBExistente.fechaCreacion
+                            )
+                        }
                         metaViewModel.delete(metaDBExistente)
                         dialog.dismiss()
                     }
