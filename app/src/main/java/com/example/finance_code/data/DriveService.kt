@@ -4,9 +4,9 @@ import android.content.Context
 import android.util.Log
 import com.example.finance_code.R
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
-import com.google.api.client.extensions.android.http.AndroidHttp
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.http.FileContent
+import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.drive.Drive
 import com.google.api.services.drive.DriveScopes
@@ -22,7 +22,7 @@ class DriveService(context: Context, account: GoogleSignInAccount) {
         ).setSelectedAccount(account.account)
 
         Drive.Builder(
-            AndroidHttp.newCompatibleTransport(),
+            NetHttpTransport(),
             GsonFactory.getDefaultInstance(),
             credential
         )

@@ -18,6 +18,15 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        packaging {
+            resources {
+                excludes.add("META-INF/DEPENDENCIES")
+                excludes.add("META-INF/LICENSE")
+                excludes.add("META-INF/LICENSE.txt")
+                excludes.add("META-INF/NOTICE")
+                excludes.add("META-INF/NOTICE.txt")
+            }
+        }
     }
 
     buildFeatures {
@@ -81,4 +90,6 @@ dependencies {
 
     implementation(libs.google.api.client)
     implementation(libs.google.api.services.drive)
+    implementation(libs.google.api.client.android)
+    implementation("com.google.api-client:google-api-client-android:2.2.0")
 }

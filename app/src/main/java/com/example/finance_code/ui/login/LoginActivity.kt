@@ -28,6 +28,7 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.api.services.drive.DriveScopes
 
 class LoginActivity : AppCompatActivity() {
 
@@ -99,7 +100,7 @@ class LoginActivity : AppCompatActivity() {
                 val googleConf = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                     .requestIdToken(getString(R.string.default_web_client_id))
                     .requestEmail()
-                    .requestScopes(Scope(Scopes.DRIVE_APPDATA)) // LÍNEA CORREGIDA
+                    .requestScopes(Scope(DriveScopes.DRIVE_APPDATA))
                     .build()
 
                 val googleClient = GoogleSignIn.getClient(this, googleConf)
