@@ -160,9 +160,12 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:background="@drawable/button_rounded"
-            android:text="Cerrar Sesión"
             android:fontFamily="@font/montserrat_bold"
             android:layout_marginTop="32dp"
+            android:text="Cerrar Sesión"
+
+            app:backgroundTint="#D32F2F"
+
             app:layout_constraintTop_toBottomOf="@id/btnRestaurar"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
