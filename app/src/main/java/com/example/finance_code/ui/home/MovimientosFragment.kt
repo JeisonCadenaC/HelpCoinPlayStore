@@ -19,6 +19,7 @@ import com.example.finance_code.data.MovimientoRepository
 import com.example.finance_code.ui.transaction.addTransaction
 import com.example.finance_code.viewmodel.MovimientoViewModel
 import com.example.finance_code.viewmodel.MovimientoViewModelFactory
+import com.google.firebase.auth.FirebaseAuth
 
 class MovimientosFragment : Fragment(R.layout.fragment_movimientos) {
 
@@ -28,7 +29,13 @@ class MovimientosFragment : Fragment(R.layout.fragment_movimientos) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val database = AppDB.getDatabase(requireContext())
+        val userEmail = FirebaseAuth.getInstance().currentUser?.email
+        if (userEmail == null) {
+            Toast.makeText(requireContext(), "Error: Usuario no autenticado", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        val database = AppDB.getDatabase(requireContext(), userEmail)
         val buttonT = view.findViewById<Button>(R.id.button2)
 
         val repository = MovimientoRepository(database.movimientoDao())

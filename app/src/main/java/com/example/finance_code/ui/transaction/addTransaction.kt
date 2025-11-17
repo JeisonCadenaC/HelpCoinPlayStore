@@ -18,6 +18,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.firebase.auth.FirebaseAuth
 
 class addTransaction : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,7 +33,14 @@ class addTransaction : AppCompatActivity() {
         val cdoValorT = findViewById<TextInputEditText>(R.id.valorT)
         val btnGuardar = findViewById<MaterialButton>(R.id.guardarT)
 
-        val database = AppDB.getDatabase(this)
+        val userEmail = FirebaseAuth.getInstance().currentUser?.email
+        if (userEmail == null) {
+            Toast.makeText(this, "Error: Usuario no autenticado", Toast.LENGTH_LONG).show()
+            finish()
+            return
+        }
+
+        val database = AppDB.getDatabase(this, userEmail)
         val repository = MovimientoRepository(database.movimientoDao())
         val factory = MovimientoViewModelFactory(repository)
         viewModel = ViewModelProvider(this, factory)[MovimientoViewModel::class.java]

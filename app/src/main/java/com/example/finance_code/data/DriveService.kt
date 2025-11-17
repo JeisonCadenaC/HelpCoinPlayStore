@@ -14,7 +14,11 @@ import com.google.api.services.drive.model.File
 import java.io.FileOutputStream
 import java.io.OutputStream
 
-class DriveService(context: Context, account: GoogleSignInAccount) {
+class DriveService(
+    context: Context,
+    account: GoogleSignInAccount,
+    private val userIdentifier: String
+) {
 
     private val driveService: Drive = run {
         val credential = GoogleAccountCredential.usingOAuth2(
@@ -30,9 +34,7 @@ class DriveService(context: Context, account: GoogleSignInAccount) {
             .build()
     }
 
-    companion object {
-        const val BACKUP_FILE_NAME = "finance_db_backup.db"
-    }
+    private val BACKUP_FILE_NAME = "finance_db_backup_${userIdentifier}.db"
 
     suspend fun uploadBackup(databaseFile: java.io.File): String? {
         return try {

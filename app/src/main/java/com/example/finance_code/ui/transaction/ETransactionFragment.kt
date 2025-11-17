@@ -14,6 +14,7 @@ import com.example.finance_code.data.Movimiento
 import com.example.finance_code.data.MovimientoRepository
 import com.example.finance_code.viewmodel.MovimientoViewModel
 import com.example.finance_code.viewmodel.MovimientoViewModelFactory
+import com.google.firebase.auth.FirebaseAuth
 
 class ETransactionFragment : Fragment(R.layout.fragment_e_transaction){
 
@@ -33,7 +34,14 @@ class ETransactionFragment : Fragment(R.layout.fragment_e_transaction){
         etDescripcion.setText(movimiento.descripcion)
         etMonto.setText(movimiento.cantidad.toString())
 
-        val database = AppDB.getDatabase(requireContext())
+        val userEmail = FirebaseAuth.getInstance().currentUser?.email
+        if (userEmail == null) {
+            Toast.makeText(requireContext(), "Error: Usuario no autenticado", Toast.LENGTH_LONG).show()
+            findNavController().popBackStack()
+            return
+        }
+
+        val database = AppDB.getDatabase(requireContext(), userEmail)
         val repository = MovimientoRepository(database.movimientoDao())
         val factory = MovimientoViewModelFactory(repository)
         viewModel = ViewModelProvider(this, factory)[MovimientoViewModel::class.java]
