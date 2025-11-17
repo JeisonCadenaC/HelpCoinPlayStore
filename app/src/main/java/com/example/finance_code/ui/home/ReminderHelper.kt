@@ -58,10 +58,20 @@ object ReminderHelper {
         val now = System.currentTimeMillis()
 
         val triggerCalendar = fechaPago.clone() as Calendar
+
         triggerCalendar.set(Calendar.HOUR_OF_DAY, 9)
         triggerCalendar.set(Calendar.MINUTE, 0)
         triggerCalendar.set(Calendar.SECOND, 0)
-        val triggerTimeMillis = triggerCalendar.timeInMillis
+        var triggerTimeMillis = triggerCalendar.timeInMillis
+
+        val today = Calendar.getInstance()
+        if (triggerTimeMillis <= now &&
+            fechaPago.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
+            fechaPago.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR)) {
+
+            triggerTimeMillis = now + 60000L
+        }
+
 
         val tiempos = listOf(
             triggerTimeMillis - (7 * dayInMillis),
@@ -206,6 +216,7 @@ object ReminderHelper {
             Log.e("ReminderHelper", "Fallo de seguridad al cancelar alarma de meta", se)
         }
     }
+
     fun createGoogleCalendarEvent(
         context: Context,
         nombre: String,
@@ -215,6 +226,7 @@ object ReminderHelper {
             data = CalendarContract.Events.CONTENT_URI
             putExtra(CalendarContract.Events.TITLE, "Recordatorio de Pago: $nombre")
             putExtra(CalendarContract.Events.DESCRIPTION, "No olvides realizar este pago.")
+
             putExtra(CalendarContract.EXTRA_EVENT_ALL_DAY, true)
             putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, fechaMillis)
             putExtra(CalendarContract.EXTRA_EVENT_END_TIME, fechaMillis + 1000 * 60 * 60 * 24)
@@ -228,7 +240,7 @@ object ReminderHelper {
         if (intent.resolveActivity(context.packageManager) != null) {
             context.startActivity(intent)
         } else {
-            Toast.makeText(context, "No se encontró una aplicación de calendario para añadir el evento.", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "ERROR: No se encontró una aplicación de calendario para añadir el evento. Asegúrate de tener una aplicación de calendario instalada.", Toast.LENGTH_LONG).show()
         }
     }
 }
