@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
@@ -20,11 +21,18 @@ import androidx.appcompat.widget.SwitchCompat
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
 import com.example.finance_code.R
+import com.example.finance_code.data.AppDB
+import com.example.finance_code.data.DriveService
 import com.example.finance_code.databinding.FragmentPerfilBinding
 import com.example.finance_code.ui.login.LoginActivity
+import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.firebase.auth.FirebaseAuth
 import java.io.File
 import java.io.FileOutputStream
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class PerfilFragment : Fragment() {
 
@@ -39,6 +47,9 @@ class PerfilFragment : Fragment() {
     private lateinit var tvEmailUsuario: TextView
     private lateinit var imgEditarNombre: ImageView
     private lateinit var switchModoOscuro: SwitchCompat
+
+    private lateinit var btnHacerBackup: Button
+    private lateinit var btnRestaurar: Button
 
     private val KEY_USER_NAME = "user_name"
     private val KEY_IMAGE_PATH = "profile_image_path"
@@ -81,6 +92,11 @@ class PerfilFragment : Fragment() {
         imgEditarNombre = binding.imgEditarNombre
         switchModoOscuro = binding.switchModoOscuro
 
+        // Inicialización de los botones de Drive usando ViewBinding
+        btnHacerBackup = binding.btnHacerBackup
+        btnRestaurar = binding.btnRestaurar
+
+
         cargarDatosUsuario()
         cargarPreferenciasModoOscuro()
 
@@ -98,6 +114,108 @@ class PerfilFragment : Fragment() {
 
         switchModoOscuro.setOnCheckedChangeListener { _, isChecked ->
             configurarModoOscuro(isChecked)
+        }
+
+        // Lógica de los botones de Drive
+        btnHacerBackup.setOnClickListener {
+            performBackup()
+        }
+
+        btnRestaurar.setOnClickListener {
+            AlertDialog.Builder(requireContext())
+                .setTitle("Restaurar Backup")
+                .setMessage("Esto reemplazará todos tus datos actuales con la copia de seguridad. ¿Continuar?")
+                .setPositiveButton("Restaurar") { _, _ ->
+                    performRestore()
+                }
+                .setNegativeButton("Cancelar", null)
+                .show()
+        }
+
+        actualizarVisibilidadBotonesBackup()
+    }
+
+    private fun actualizarVisibilidadBotonesBackup() {
+        val account = GoogleSignIn.getLastSignedInAccount(requireContext())
+        if (account != null) {
+            btnHacerBackup.visibility = View.VISIBLE
+            btnRestaurar.visibility = View.VISIBLE
+        } else {
+            btnHacerBackup.visibility = View.GONE
+            btnRestaurar.visibility = View.GONE
+        }
+    }
+
+    private fun performBackup() {
+        val account = GoogleSignIn.getLastSignedInAccount(requireContext())
+        if (account == null) {
+            Toast.makeText(requireContext(), "Error: No hay cuenta de Google", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        Toast.makeText(requireContext(), "Iniciando backup...", Toast.LENGTH_SHORT).show()
+
+        GlobalScope.launch(Dispatchers.IO) {
+            try {
+                // Paso 1: Cerrar la base de datos de Room para evitar corrupción
+                AppDB.getDatabase(requireContext()).close()
+                val dbFile = requireContext().getDatabasePath("finance_db")
+
+                if (dbFile.exists()) {
+                    // Paso 2: Subir el archivo de la DB
+                    val driveService = DriveService(requireContext(), account)
+                    val fileId = driveService.uploadBackup(dbFile)
+
+                    withContext(Dispatchers.Main) {
+                        if (fileId != null) {
+                            Toast.makeText(requireContext(), "Backup exitoso", Toast.LENGTH_LONG).show()
+                        } else {
+                            Toast.makeText(requireContext(), "Error en el backup", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
+    private fun performRestore() {
+        val account = GoogleSignIn.getLastSignedInAccount(requireContext())
+        if (account == null) {
+            Toast.makeText(requireContext(), "Error: No hay cuenta de Google", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        Toast.makeText(requireContext(), "Iniciando restauración...", Toast.LENGTH_SHORT).show()
+
+        GlobalScope.launch(Dispatchers.IO) {
+            try {
+                // Paso 1: Cerrar la base de datos de Room
+                AppDB.getDatabase(requireContext()).close()
+                val dbFile = requireContext().getDatabasePath("finance_db")
+
+                // Paso 2: Descargar y sobreescribir el archivo de la DB
+                val driveService = DriveService(requireContext(), account)
+                val success = driveService.downloadRestore(dbFile)
+
+                withContext(Dispatchers.Main) {
+                    if (success) {
+                        Toast.makeText(requireContext(), "Restauración completa. Reinicia la app.", Toast.LENGTH_LONG).show()
+                        // Forzar el reinicio (cierra la sesión para volver al login)
+                        cerrarSesion()
+                    } else {
+                        Toast.makeText(requireContext(), "No se encontró backup o hubo un error.", Toast.LENGTH_LONG).show()
+                    }
+                }
+
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "Error en restauración: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
         }
     }
 
