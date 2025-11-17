@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.ActivityNotFoundException
 import android.os.Build
 import android.provider.CalendarContract
 import android.util.Log
@@ -237,9 +238,9 @@ object ReminderHelper {
             )
         }
 
-        if (intent.resolveActivity(context.packageManager) != null) {
+        try {
             context.startActivity(intent)
-        } else {
+        } catch (e: ActivityNotFoundException) {
             Toast.makeText(context, "ERROR: No se encontró una aplicación de calendario para añadir el evento. Asegúrate de tener una aplicación de calendario instalada.", Toast.LENGTH_LONG).show()
         }
     }
