@@ -12,14 +12,9 @@ import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
 import com.example.finance_code.R
-import com.example.finance_code.data.BackupWorker
 import com.example.finance_code.ui.login.AuthCheckActivity
 import com.example.finance_code.ui.home.ReminderHelper
-import java.util.concurrent.TimeUnit
 
 class SplashActivity : AppCompatActivity() {
 
@@ -31,8 +26,6 @@ class SplashActivity : AppCompatActivity() {
         val sharedPreferences = getSharedPreferences("AppPrefe", Context.MODE_PRIVATE)
         val modoOscuroActivado = sharedPreferences.getBoolean("modo_oscuro", false)
         aplicarModoOscuro(modoOscuroActivado)
-
-        scheduleAutoBackup()
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
         val controller = WindowInsetsControllerCompat(window, window.decorView)
@@ -73,21 +66,6 @@ class SplashActivity : AppCompatActivity() {
 
 
         videoView.start()
-    }
-
-    private fun scheduleAutoBackup() {
-        val backupWorkRequest = PeriodicWorkRequestBuilder<BackupWorker>(
-            24, TimeUnit.HOURS
-        )
-            .build()
-
-        WorkManager.getInstance(applicationContext).enqueueUniquePeriodicWork(
-            "dailyAutoBackup",
-            ExistingPeriodicWorkPolicy.KEEP,
-            backupWorkRequest
-        )
-
-        Log.d("SplashActivity", "Tarea de backup automático programada.")
     }
 
     private fun saltarAlLogin() {
