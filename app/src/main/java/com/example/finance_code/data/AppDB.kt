@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [Movimiento::class, MetaDB::class, Recordatorio::class],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class AppDB : RoomDatabase() {

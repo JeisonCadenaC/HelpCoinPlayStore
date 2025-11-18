@@ -23,6 +23,7 @@ import androidx.appcompat.widget.SwitchCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.example.finance_code.R
 import com.example.finance_code.data.AppDB
 import com.example.finance_code.data.DriveService
@@ -219,37 +220,29 @@ class PerfilFragment : Fragment() {
     }
 
     private fun proceedWithBackup(googleAccount: GoogleSignInAccount) {
-        if (userEmail == null) {
-            Toast.makeText(requireContext(), "Error: No se encontró Email de usuario", Toast.LENGTH_SHORT).show()
+        if (userEmail == null || userUID == null) {
+            Toast.makeText(requireContext(), "Error: Datos de usuario incompletos", Toast.LENGTH_SHORT).show()
             return
         }
 
         val progressDialog = ProgressDialog(requireContext())
-        progressDialog.setMessage("Guardando copia de seguridad...")
+        progressDialog.setMessage("Guardando copia de seguridad completa (imágenes, movimientos, datos y más)...")
         progressDialog.setCancelable(false)
         progressDialog.show()
 
         val dbIdentifier = getDbIdentifier(userEmail!!)
-        val dbName = "finance_db_$dbIdentifier"
-        val dbFile = requireContext().getDatabasePath(dbName)
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 AppDB.checkpointAndClose(requireContext(), userEmail!!)
 
-                if (!dbFile.exists()) {
-                    progressDialog.dismiss()
-                    Toast.makeText(requireContext(), "Error: No se encontró la base de datos local", Toast.LENGTH_SHORT).show()
-                    return@launch
-                }
-
                 val driveService = DriveService(requireContext(), googleAccount, dbIdentifier)
-                val fileId = driveService.uploadBackup(dbFile)
+                val fileId = driveService.uploadFullBackup(userEmail!!, userUID!!)
 
                 progressDialog.dismiss()
 
                 if (fileId != null) {
-                    Toast.makeText(requireContext(), "Copia de seguridad actualizada correctamente", Toast.LENGTH_LONG).show()
+                    Toast.makeText(requireContext(), "Copia de seguridad guardada exitosamente", Toast.LENGTH_LONG).show()
                 } else {
                     Toast.makeText(requireContext(), "Error al subir el archivo a Drive", Toast.LENGTH_LONG).show()
                 }
@@ -262,8 +255,8 @@ class PerfilFragment : Fragment() {
 
     private fun mostrarDialogoConfirmarRestauracion(googleAccount: GoogleSignInAccount) {
         AlertDialog.Builder(requireContext())
-            .setTitle("Restaurar Copia")
-            .setMessage("Esto sobrescribirá tus datos locales. ¿Estás seguro?\nLa app se reiniciará.")
+            .setTitle("Restaurar Todo")
+            .setMessage("Se recuperarán tus movimientos, metas, nombre de perfil, foto y configuraciones.\n\nLa aplicación se reiniciará.")
             .setPositiveButton("Restaurar") { _, _ ->
                 proceedWithRestore(googleAccount)
             }
@@ -272,34 +265,24 @@ class PerfilFragment : Fragment() {
     }
 
     private fun proceedWithRestore(googleAccount: GoogleSignInAccount) {
-        if (userEmail == null) {
-            Toast.makeText(requireContext(), "Error: No se encontró Email de usuario", Toast.LENGTH_SHORT).show()
+        if (userEmail == null || userUID == null) {
+            Toast.makeText(requireContext(), "Error: Datos de usuario incompletos", Toast.LENGTH_SHORT).show()
             return
         }
 
         val progressDialog = ProgressDialog(requireContext())
-        progressDialog.setMessage("Restaurando copia de seguridad...")
+        progressDialog.setMessage("Restaurando copia de seguridad completa (imágenes, movimientos, datos y más)...")
         progressDialog.setCancelable(false)
         progressDialog.show()
 
         val dbIdentifier = getDbIdentifier(userEmail!!)
-        val dbName = "finance_db_$dbIdentifier"
-        val dbFile = requireContext().getDatabasePath(dbName)
-
-        val dbPath = dbFile.absolutePath
-        val walFile = File("$dbPath-wal")
-        val shmFile = File("$dbPath-shm")
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 AppDB.closeInstance()
 
-                if (walFile.exists()) walFile.delete()
-                if (shmFile.exists()) shmFile.delete()
-                if (dbFile.exists()) dbFile.delete()
-
                 val driveService = DriveService(requireContext(), googleAccount, dbIdentifier)
-                val exito = driveService.downloadRestore(dbFile)
+                val exito = driveService.restoreFullBackup(userEmail!!, userUID!!)
 
                 progressDialog.dismiss()
 
@@ -307,7 +290,7 @@ class PerfilFragment : Fragment() {
                     Toast.makeText(requireContext(), "Restauración completada. Reiniciando...", Toast.LENGTH_LONG).show()
                     reiniciarApp()
                 } else {
-                    Toast.makeText(requireContext(), "No se encontró copia para este usuario", Toast.LENGTH_LONG).show()
+                    Toast.makeText(requireContext(), "No se encontró copia completa para este usuario", Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
                 progressDialog.dismiss()
@@ -367,7 +350,7 @@ class PerfilFragment : Fragment() {
             val nuevoNombre = input.text.toString().trim()
             if (nuevoNombre.isNotEmpty()) {
                 val prefs = getPrefs()
-                prefs?.edit()?.putString(KEY_USER_NAME, nuevoNombre)?.apply()
+                prefs?.edit()?.putString(KEY_USER_NAME, nuevoNombre)?.commit()
                 tvNombreUsuario.text = nuevoNombre
             }
             dialog.dismiss()
@@ -395,7 +378,20 @@ class PerfilFragment : Fragment() {
                 Glide.with(this)
                     .load(file)
                     .placeholder(R.drawable.ic_perfil)
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .skipMemoryCache(true)
                     .into(imgPerfil)
+            } else {
+                if (googlePhotoUrl != null) {
+                    Glide.with(this)
+                        .load(googlePhotoUrl)
+                        .placeholder(R.drawable.ic_perfil)
+                        .into(imgPerfil)
+                } else {
+                    Glide.with(this)
+                        .load(R.drawable.ic_perfil)
+                        .into(imgPerfil)
+                }
             }
         } else if (googlePhotoUrl != null) {
             Glide.with(this)
@@ -446,6 +442,7 @@ class PerfilFragment : Fragment() {
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         requireActivity().finish()
+        Runtime.getRuntime().exit(0)
     }
 
     override fun onDestroyView() {
