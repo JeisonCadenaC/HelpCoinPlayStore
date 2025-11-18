@@ -4,12 +4,15 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.text.InputType
+import android.text.method.LinkMovementMethod
+import android.view.ViewGroup
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.Toast
-import android.widget.CheckBox
-import android.text.method.LinkMovementMethod
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -21,14 +24,14 @@ import com.example.finance_code.databinding.ActivityLoginBinding
 import com.example.finance_code.ui.home.HomeActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.Scopes
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.Scope
-import com.google.android.gms.common.Scopes // IMPORTACIÓN AÑADIDA
+import com.google.api.services.drive.DriveScopes
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.GoogleAuthProvider
-import com.google.api.services.drive.DriveScopes
 
 class LoginActivity : AppCompatActivity() {
 
@@ -94,6 +97,10 @@ class LoginActivity : AppCompatActivity() {
 
         loginButton.setOnClickListener { Login() }
         registerButton.setOnClickListener { Register() }
+
+        binding.tvForgotPassword.setOnClickListener {
+            showRecoverPasswordDialog()
+        }
 
         googleButton.setOnClickListener {
             if (termsAndConditionsCheckbox.isChecked) {
@@ -208,6 +215,49 @@ class LoginActivity : AppCompatActivity() {
         } else {
             showAlert("Campos obligatorios", "Por favor, complete todos los campos para registrarse.")
         }
+    }
+
+    private fun showRecoverPasswordDialog() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Recuperar Contraseña")
+        builder.setMessage("Ingresa tu correo para enviarte un enlace de restablecimiento.")
+
+        val input = EditText(this)
+        input.hint = "Correo electrónico"
+        input.inputType = InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+        input.setText(binding.emailEditText.text.toString())
+
+        val container = FrameLayout(this)
+        val params = FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        params.setMargins(50, 20, 50, 20)
+        input.layoutParams = params
+        container.addView(input)
+        builder.setView(container)
+
+        builder.setPositiveButton("Enviar") { _, _ ->
+            val email = input.text.toString().trim()
+            if (email.isNotEmpty()) {
+                enviarCorreoRecuperacion(email)
+            } else {
+                Toast.makeText(this, "Por favor ingresa un correo", Toast.LENGTH_SHORT).show()
+            }
+        }
+        builder.setNegativeButton("Cancelar", null)
+        builder.show()
+    }
+
+    private fun enviarCorreoRecuperacion(email: String) {
+        auth.sendPasswordResetEmail(email)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    showAlert("Correo enviado", "Revisa tu bandeja de entrada para restablecer tu contraseña.")
+                } else {
+                    showAlert("Error", "No se pudo enviar el correo: ${task.exception?.message}")
+                }
+            }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
