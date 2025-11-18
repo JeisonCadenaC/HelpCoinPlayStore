@@ -1,11 +1,13 @@
 package com.example.finance_code.ui.home
 
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
-import androidx.core.content.ContextCompat
+import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.finance_code.R
 import com.example.finance_code.data.Movimiento
@@ -21,8 +23,9 @@ class MovimientosAdapter(
     inner class MovimientoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val tvNombre: TextView = itemView.findViewById(R.id.tvDescripcion)
         val tvMonto: TextView = itemView.findViewById(R.id.tvCantidad)
-        val tvIcono: TextView = itemView.findViewById(R.id.tvIcono)
+        val ivIcono: ImageView = itemView.findViewById(R.id.ivIcono)
         val tvFecha: TextView = itemView.findViewById(R.id.tvFecha)
+        val iconContainer: CardView = itemView.findViewById(R.id.iconContainer)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MovimientoViewHolder {
@@ -33,7 +36,6 @@ class MovimientosAdapter(
 
     override fun onBindViewHolder(holder: MovimientoViewHolder, position: Int) {
         val movimiento = movimientos[position]
-        val context = holder.itemView.context
 
         holder.tvNombre.text = movimiento.descripcion
         holder.tvFecha.text = movimiento.fecha
@@ -43,20 +45,22 @@ class MovimientosAdapter(
         formatter.maximumFractionDigits = 0
         val montoFormateado = formatter.format(movimiento.cantidad)
 
-        holder.tvIcono.text = ""
-
         if (movimiento.tipo == 1) {
-            holder.tvMonto.text = "+${montoFormateado}"
-            holder.tvIcono.setBackgroundResource(R.drawable.ic_savings)
-            val colorVerde = ContextCompat.getColor(context, R.color.colorIngreso)
-            holder.tvIcono.backgroundTintList = ColorStateList.valueOf(colorVerde)
-            holder.tvMonto.setTextColor(colorVerde)
+            holder.tvMonto.text = "+ $montoFormateado"
+            val verde = Color.parseColor("#4CAF50")
+            holder.tvMonto.setTextColor(verde)
+
+            holder.ivIcono.setImageResource(R.drawable.ic_arrow_up)
+            holder.ivIcono.imageTintList = ColorStateList.valueOf(verde)
+            holder.iconContainer.setCardBackgroundColor(Color.parseColor("#E8F5E9"))
         } else {
-            holder.tvMonto.text = "-${montoFormateado}"
-            holder.tvIcono.setBackgroundResource(R.drawable.ic_credit_card)
-            val colorRojo = ContextCompat.getColor(context, R.color.colorEgreso)
-            holder.tvIcono.backgroundTintList = ColorStateList.valueOf(colorRojo)
-            holder.tvMonto.setTextColor(colorRojo)
+            holder.tvMonto.text = "- $montoFormateado"
+            val rojo = Color.parseColor("#F44336")
+            holder.tvMonto.setTextColor(rojo)
+
+            holder.ivIcono.setImageResource(R.drawable.ic_arrow_down)
+            holder.ivIcono.imageTintList = ColorStateList.valueOf(rojo)
+            holder.iconContainer.setCardBackgroundColor(Color.parseColor("#FFEBEE"))
         }
 
         holder.itemView.setOnLongClickListener {

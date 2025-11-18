@@ -19,9 +19,13 @@ interface MovimientoDao {
     @Delete
     suspend fun eliminar(movimiento: Movimiento)
 
-    @Query("SELECT * FROM movimientos")
+    @Query("SELECT * FROM movimientos ORDER BY id DESC")
     fun obtenerTodos(): Flow<List<Movimiento>>
+
 
     @Query("SELECT SUM(CASE WHEN tipo = 1 THEN cantidad ELSE -cantidad END) FROM movimientos")
     fun obtenerSaldoActualSincrono(): Double?
+
+    @Query("SELECT SUM(CASE WHEN tipo = 1 THEN cantidad ELSE -cantidad END) FROM movimientos")
+    fun obtenerSaldoTotalFlow(): Flow<Double?>
 }

@@ -12,6 +12,8 @@ class MovimientoViewModel(private val repository: MovimientoRepository) : ViewMo
 
     val movimientos = repository.obtenerTodos().asLiveData()
 
+    val saldoTotal = repository.obtenerSaldoTotalFlow().asLiveData()
+
     fun insertar(movimiento: Movimiento): Job = viewModelScope.launch {
         repository.insertar(movimiento)
     }

@@ -44,7 +44,7 @@
                 android:textSize="24sp"
                 android:textStyle="bold"
                 android:textColor="?attr/colorOnSurface"
-                android:drawableStart="@drawable/ic_movimientos"
+                app:drawableStartCompat="@drawable/ic_movimientos"
                 android:drawablePadding="12dp"
                 app:drawableTint="?attr/colorPrimary"
                 app:layout_constraintTop_toTopOf="parent"
@@ -80,6 +80,38 @@
 
             </com.google.android.material.button.MaterialButtonToggleGroup>
 
+            <LinearLayout
+                android:id="@+id/voiceInputContainer"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/rounded_background_card"
+                android:padding="12dp"
+                android:layout_marginTop="24dp"
+                app:layout_constraintTop_toBottomOf="@id/registrarOpcion"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="¿Prefieres dictarlo?"
+                    android:textSize="16sp"
+                    android:textStyle="italic"
+                    android:textColor="?android:attr/textColorSecondary"/>
+
+                <ImageButton
+                    android:id="@+id/btnVoiceInput"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@android:drawable/ic_btn_speak_now"
+                    app:tint="?attr/colorPrimary"
+                    android:contentDescription="Entrada por voz" />
+            </LinearLayout>
+
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/valorLayout"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -89,7 +121,7 @@
                 android:hint="Monto"
                 app:prefixText="$"
                 app:prefixTextColor="?attr/colorOnSurface"
-                app:layout_constraintTop_toBottomOf="@id/registrarOpcion"
+                app:layout_constraintTop_toBottomOf="@id/voiceInputContainer"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent">
 

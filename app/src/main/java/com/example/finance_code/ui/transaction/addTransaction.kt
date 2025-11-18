@@ -1,11 +1,15 @@
 package com.example.finance_code.ui.transaction
 
+import android.app.Activity
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
+import android.speech.RecognizerIntent
+import android.widget.ImageButton
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.example.finance_code.FinanceWidgetProvider
@@ -28,6 +32,21 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.firebase.auth.FirebaseAuth
 
 class addTransaction : AppCompatActivity() {
+
+    private lateinit var cdodescripcionT: TextInputEditText
+    private lateinit var cdoValorT: TextInputEditText
+    private lateinit var btnregistrarOpcion: MaterialButtonToggleGroup
+
+    private val speechLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK && result.data != null) {
+            val speechResult = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+            val spokenText = speechResult?.get(0) ?: ""
+            procesarTextoVoz(spokenText)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -35,10 +54,12 @@ class addTransaction : AppCompatActivity() {
         val viewModel: MovimientoViewModel
 
         val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
-        val btnregistrarOpcion = findViewById<MaterialButtonToggleGroup>(R.id.registrarOpcion)
-        val cdodescripcionT = findViewById<TextInputEditText>(R.id.descripcionT)
-        val cdoValorT = findViewById<TextInputEditText>(R.id.valorT)
+        btnregistrarOpcion = findViewById(R.id.registrarOpcion)
+        cdodescripcionT = findViewById(R.id.descripcionT)
+        cdoValorT = findViewById(R.id.valorT)
         val btnGuardar = findViewById<MaterialButton>(R.id.guardarT)
+
+        val btnVoiceInput = findViewById<ImageButton>(R.id.btnVoiceInput)
 
         val userEmail = FirebaseAuth.getInstance().currentUser?.email
         if (userEmail == null) {
@@ -59,13 +80,15 @@ class addTransaction : AppCompatActivity() {
             } else {
                 R.id.egreso
             }
-            if (buttonId != -1) {
-                btnregistrarOpcion.check(buttonId)
-            }
+            btnregistrarOpcion.check(buttonId)
         }
 
         toolbar.setNavigationOnClickListener {
             finish()
+        }
+
+        btnVoiceInput.setOnClickListener {
+            startVoiceInput()
         }
 
         btnGuardar.setOnClickListener {
@@ -127,6 +150,42 @@ class addTransaction : AppCompatActivity() {
                     finish()
                 }
             }
+        }
+    }
+
+    private fun startVoiceInput() {
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Di algo como: 'Almuerzo 50000'")
+
+        try {
+            speechLauncher.launch(intent)
+        } catch (e: Exception) {
+            Toast.makeText(this, "Tu dispositivo no soporta entrada de voz", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun procesarTextoVoz(texto: String) {
+        val regex = Regex("([0-9][0-9.,]*)$")
+        val matchResult = regex.find(texto)
+
+        if (matchResult != null) {
+            val rawNumber = matchResult.value
+            val cleanNumber = rawNumber.replace(",", "").replace(".", "")
+
+            val descripcionStr = texto.substring(0, matchResult.range.first).trim()
+
+            cdoValorT.setText(cleanNumber)
+
+            if (descripcionStr.isNotEmpty()) {
+                cdodescripcionT.setText(descripcionStr.replaceFirstChar { it.uppercase() })
+            } else {
+                cdodescripcionT.setText("Gasto sin descripción")
+            }
+        } else {
+            cdodescripcionT.setText(texto.replaceFirstChar { it.uppercase() })
+            Toast.makeText(this, "No detecté un monto al final", Toast.LENGTH_SHORT).show()
         }
     }
 }

@@ -1,32 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="beige">#FFC4A484</color>
-    <color name="grey">#FF9E9E9E</color>
-    <color name="red">#FFFF0000</color>
-    <color name="green">#FF32CD32</color>
-    <color name="yellow">#FFFFEB3B</color>
-    <color name="primary_brand_color">#0288D1</color>
-
-    <color name="boton_nav_background">@color/grey</color>
-    <color name="boton_nav_select_item">#673AB7</color>
-    <color name="boton_nav_item">#4CAF50</color>
-
-    <color name="background_dark">#121212</color>
-    <color name="card_dark">#1E1E1E</color>
-    <color name="accent">#00BFA6</color>
-    <color name="text_primary">#FFFFFF</color>
-    <color name="text_secondary">#B3B3B3</color>
-    <color name="button_light">#FFF4C2</color>
-
+    <color name="purple_500">#6200EE</color>
+    <color name="purple_700">#3700B3</color>
+    <color name="teal_200">#03DAC5</color>
+    <color name="teal_700">#018786</color>
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
     <color name="gray">#9E9E9E</color>
     <color name="dark_gray">#616161</color>
 
-    <color name="purple_500">#6200EE</color>
-    <color name="purple_700">#3700B3</color>
-    <color name="colorIngreso">#4CAF50</color>
-    <color name="colorEgreso">#F44336</color>
-
+    <color name="card_dark">#1E1E1E</color>
+    <color name="background_dark">#121212</color>
+    <color name="beige">#FFC4A484</color>
+    <color name="grey">#FF9E9E9E</color>
+    <color name="red">#FFFF0000</color>
+    <color name="green">#FF32CD32</color>
+    <color name="yellow">#FFFFEB3B</color>
+    <color name="button_light">#FFF4C2</color>
     <color name="fab_icon_tint">#FFFFFFFF</color>
+
+    <color name="boton_nav_background">@color/grey</color>
+    <color name="boton_nav_select_item">#673AB7</color>
+    <color name="boton_nav_item">#4CAF50</color>
+
+    <color name="background_main">#121212</color>
+    <color name="surface_card">#1E1E1E</color>
+    <color name="accent_primary">#BB86FC</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B0B0B0</color>
+    <color name="income_green">#00E676</color>
+    <color name="expense_red">#CF6679</color>
+
+    <color name="primary_brand_color">#0288D1</color>
+    <color name="accent">#00BFA6</color>
+    <color name="colorIngreso">@color/income_green</color>
+    <color name="colorEgreso">@color/expense_red</color>
+    <color name="primary_color">@color/accent_primary</color>
+    <color name="colorPrimary">@color/accent_primary</color>
+    <color name="colorSurface">@color/surface_card</color>
+    <color name="colorOnSurface">@color/text_primary</color>
+    <color name="background_color">@color/background_main</color>
+
+    <color name="card_start">#E0E0E0</color>
+    <color name="card_mid">#BDBDBD</color>
+    <color name="card_end">#9E9E9E</color>
+    <color name="card_text_primary">#212121</color>
+    <color name="card_text_secondary">#616161</color>
+    <color name="card_logo_tint">#424242</color>
 </resources>

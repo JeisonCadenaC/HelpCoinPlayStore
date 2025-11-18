@@ -1,7 +1,9 @@
 package com.example.finance_code.data
 
+import kotlinx.coroutines.flow.Flow
+
 class MovimientoRepository (private val movimientoDao: MovimientoDao){
-    fun obtenerTodos():kotlinx.coroutines.flow.Flow<List<Movimiento>> {
+    fun obtenerTodos(): Flow<List<Movimiento>> {
         return movimientoDao.obtenerTodos()
     }
     suspend fun insertar(movimiento: Movimiento) {
@@ -18,5 +20,9 @@ class MovimientoRepository (private val movimientoDao: MovimientoDao){
 
     fun obtenerSaldoActualSincrono(): Double? {
         return movimientoDao.obtenerSaldoActualSincrono()
+    }
+
+    fun obtenerSaldoTotalFlow(): Flow<Double?> {
+        return movimientoDao.obtenerSaldoTotalFlow()
     }
 }
