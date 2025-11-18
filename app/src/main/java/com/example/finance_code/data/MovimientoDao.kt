@@ -7,7 +7,6 @@ import androidx.room.Query
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
-// Aquí van las funciones (insertar, leer, etc.)
 @Dao
 interface MovimientoDao {
 
@@ -22,4 +21,7 @@ interface MovimientoDao {
 
     @Query("SELECT * FROM movimientos")
     fun obtenerTodos(): Flow<List<Movimiento>>
+
+    @Query("SELECT SUM(CASE WHEN tipo = 1 THEN cantidad ELSE -cantidad END) FROM movimientos")
+    fun obtenerSaldoActualSincrono(): Double?
 }

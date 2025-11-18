@@ -5,24 +5,23 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.finance_code.data.Movimiento
 import com.example.finance_code.data.MovimientoRepository
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-class MovimientoViewModel(private val repository: MovimientoRepository) : ViewModel(){
-    //funcion de livedata
+class MovimientoViewModel(private val repository: MovimientoRepository) : ViewModel() {
+
     val movimientos = repository.obtenerTodos().asLiveData()
 
-    //funcion para insertar
-    fun insertar(movimiento: Movimiento) {
-        viewModelScope.launch {
-            repository.insertar(movimiento)
-            }
-        }
+    fun insertar(movimiento: Movimiento): Job = viewModelScope.launch {
+        repository.insertar(movimiento)
+    }
 
     fun actualizar(movimiento: Movimiento) {
         viewModelScope.launch {
             repository.actualizar(movimiento)
         }
     }
+
     fun eliminar(movimiento: Movimiento) {
         viewModelScope.launch {
             repository.eliminar(movimiento)

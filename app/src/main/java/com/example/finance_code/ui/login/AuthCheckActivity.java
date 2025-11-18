@@ -11,6 +11,7 @@ import androidx.biometric.BiometricPrompt;
 import androidx.core.content.ContextCompat;
 
 import com.example.finance_code.ui.home.HomeActivity;
+import com.example.finance_code.ui.transaction.addTransaction;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -21,8 +22,9 @@ public class AuthCheckActivity extends AppCompatActivity {
     private Executor executor;
     private BiometricPrompt biometricPrompt;
     private BiometricPrompt.PromptInfo promptInfo;
-
     private FirebaseAuth mAuth;
+
+    private static final String EXTRA_WIDGET_TRANSACTION_TYPE = "com.example.finance_code.WIDGET_TRANSACTION_TYPE";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,7 +43,13 @@ public class AuthCheckActivity extends AppCompatActivity {
 
                         FirebaseUser currentUser = mAuth.getCurrentUser();
                         if (currentUser != null) {
-                            goToHome();
+                            Intent currentIntent = getIntent();
+                            if (currentIntent != null && currentIntent.hasExtra(EXTRA_WIDGET_TRANSACTION_TYPE)) {
+                                int type = currentIntent.getIntExtra(EXTRA_WIDGET_TRANSACTION_TYPE, -1);
+                                goToAddTransaction(type);
+                            } else {
+                                goToHome();
+                            }
                         } else {
                             goToLogin();
                         }
@@ -51,6 +59,7 @@ public class AuthCheckActivity extends AppCompatActivity {
                     public void onAuthenticationError(int errorCode,
                                                       @NonNull CharSequence errString) {
                         super.onAuthenticationError(errorCode, errString);
+                        // Si el usuario cancela o hay error, cerramos la app
                         Toast.makeText(getApplicationContext(),
                                 "Autenticación cancelada", Toast.LENGTH_SHORT).show();
                         finishAffinity();
@@ -66,7 +75,8 @@ public class AuthCheckActivity extends AppCompatActivity {
                 .setTitle("Autenticación Requerida")
                 .setSubtitle("Confirma tu identidad para continuar")
                 .setDescription("Usa tu huella digital, patrón o PIN para desbloquear la app.")
-                .setDeviceCredentialAllowed(true)
+                .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_WEAK |
+                        BiometricManager.Authenticators.DEVICE_CREDENTIAL)
                 .build();
     }
 
@@ -85,8 +95,18 @@ public class AuthCheckActivity extends AppCompatActivity {
         if (canAuth == BiometricManager.BIOMETRIC_SUCCESS) {
             biometricPrompt.authenticate(promptInfo);
         } else {
-            Toast.makeText(this, "Tu dispositivo no tiene seguridad configurada.", Toast.LENGTH_LONG).show();
-            finishAffinity();
+            FirebaseUser currentUser = mAuth.getCurrentUser();
+            if (currentUser != null) {
+                Intent currentIntent = getIntent();
+                if (currentIntent != null && currentIntent.hasExtra(EXTRA_WIDGET_TRANSACTION_TYPE)) {
+                    int type = currentIntent.getIntExtra(EXTRA_WIDGET_TRANSACTION_TYPE, -1);
+                    goToAddTransaction(type);
+                } else {
+                    goToHome();
+                }
+            } else {
+                goToLogin();
+            }
         }
     }
 
@@ -98,6 +118,13 @@ public class AuthCheckActivity extends AppCompatActivity {
 
     private void goToHome() {
         Intent intent = new Intent(AuthCheckActivity.this, HomeActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
+    private void goToAddTransaction(int type) {
+        Intent intent = new Intent(AuthCheckActivity.this, addTransaction.class);
+        intent.putExtra(EXTRA_WIDGET_TRANSACTION_TYPE, type);
         startActivity(intent);
         finish();
     }

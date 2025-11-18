@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#20000000"
+    android:orientation="horizontal"
+    android:padding="8dp">
+
+    <TextView
+        android:id="@+id/widget_balance"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:text="@string/saldo_actual_placeholder"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/btn_nuevo_gasto"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:text="@string/nuevo_gasto"
+        android:backgroundTint="#FF4444"
+        android:textColor="@android:color/white"
+        android:layout_marginStart="8dp" />
+
+    <Button
+        android:id="@+id/btn_nuevo_ingreso"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:text="@string/nuevo_ingreso"
+        android:backgroundTint="#4CAF50"
+        android:textColor="@android:color/white"
+        android:layout_marginStart="8dp" />
+
+</LinearLayout>

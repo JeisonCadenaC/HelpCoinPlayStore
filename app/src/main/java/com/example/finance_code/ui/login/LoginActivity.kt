@@ -14,17 +14,19 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.edit
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.finance_code.R
 import com.example.finance_code.databinding.ActivityLoginBinding
 import com.example.finance_code.ui.home.HomeActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.Scopes
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.Scope
 import com.google.api.services.drive.DriveScopes
@@ -54,6 +56,18 @@ class LoginActivity : AppCompatActivity() {
         private const val PREF_KEY_EMAIL = "saved_email"
         private const val PREF_KEY_REMEMBER = "remember_email"
         private const val KEY_USER_NAME = "user_name"
+    }
+
+    private val googleSignInLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            try {
+                val cuenta = task.getResult(ApiException::class.java)
+                firebaseAuthWithGoogle(cuenta)
+            } catch (e: ApiException) {
+                showAlert("Error", "Error en Google Sign-In: ${e.message}")
+            }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -95,8 +109,8 @@ class LoginActivity : AppCompatActivity() {
         sharedPreferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         termsAndConditionsCheckbox.movementMethod = LinkMovementMethod.getInstance()
 
-        loginButton.setOnClickListener { Login() }
-        registerButton.setOnClickListener { Register() }
+        loginButton.setOnClickListener { login() }
+        registerButton.setOnClickListener { register() }
 
         binding.tvForgotPassword.setOnClickListener {
             showRecoverPasswordDialog()
@@ -111,7 +125,7 @@ class LoginActivity : AppCompatActivity() {
                     .build()
 
                 val googleClient = GoogleSignIn.getClient(this, googleConf)
-                startActivityForResult(googleClient.signInIntent, 100)
+                googleSignInLauncher.launch(googleClient.signInIntent)
             } else {
                 showAlert("Términos y Condiciones", getString(R.string.error_accept_terms))
             }
@@ -128,9 +142,8 @@ class LoginActivity : AppCompatActivity() {
 
             button.setOnClickListener {
                 val nuevoEstado = !themePreferences.getBoolean("modo_oscuro", false)
-                with(themePreferences.edit()) {
+                themePreferences.edit {
                     putBoolean("modo_oscuro", nuevoEstado)
-                    apply()
                 }
                 aplicarModoOscuro(nuevoEstado)
                 actualizarIconoModoOscuro(nuevoEstado)
@@ -157,7 +170,7 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    private fun Login() {
+    private fun login() {
         if (!termsAndConditionsCheckbox.isChecked) {
             showAlert("Términos y Condiciones", getString(R.string.error_accept_terms))
             return
@@ -166,15 +179,15 @@ class LoginActivity : AppCompatActivity() {
         val email = emailEditText.text.toString()
         val password = passwordEditText.text.toString()
 
-        val editor = sharedPreferences.edit()
-        if (rememberEmailCheckbox.isChecked) {
-            editor.putString(PREF_KEY_EMAIL, email)
-            editor.putBoolean(PREF_KEY_REMEMBER, true)
-        } else {
-            editor.remove(PREF_KEY_EMAIL)
-            editor.putBoolean(PREF_KEY_REMEMBER, false)
+        sharedPreferences.edit {
+            if (rememberEmailCheckbox.isChecked) {
+                putString(PREF_KEY_EMAIL, email)
+                putBoolean(PREF_KEY_REMEMBER, true)
+            } else {
+                remove(PREF_KEY_EMAIL)
+                putBoolean(PREF_KEY_REMEMBER, false)
+            }
         }
-        editor.apply()
 
         if (email.isNotEmpty() && password.isNotEmpty()) {
             auth.signInWithEmailAndPassword(email, password)
@@ -193,7 +206,7 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    private fun Register() {
+    private fun register() {
         if (!termsAndConditionsCheckbox.isChecked) {
             showAlert("Términos y Condiciones", getString(R.string.error_accept_terms))
             return
@@ -260,58 +273,47 @@ class LoginActivity : AppCompatActivity() {
             }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
+    private fun firebaseAuthWithGoogle(cuenta: GoogleSignInAccount) {
+        val credential = GoogleAuthProvider.getCredential(cuenta.idToken, null)
+        auth.signInWithCredential(credential).addOnCompleteListener(this) { firebaseTask ->
+            if (firebaseTask.isSuccessful) {
 
-        if (requestCode == 100) {
-            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
-            try {
-                val cuenta = task.getResult(ApiException::class.java)
-                val credential = GoogleAuthProvider.getCredential(cuenta.idToken, null)
-                auth.signInWithCredential(credential).addOnCompleteListener(this) { firebaseTask ->
-                    if (firebaseTask.isSuccessful) {
+                val user = auth.currentUser
+                val userUID = user?.uid
+                val googlePhotoUrl = cuenta.photoUrl
+                val googleDisplayName = cuenta.displayName
 
-                        val user = auth.currentUser
-                        val userUID = user?.uid
-                        val googlePhotoUrl = cuenta.photoUrl
-                        val googleDisplayName = cuenta.displayName
+                if (userUID != null) {
+                    val prefsName = "${userUID}_UserProfilePrefs"
+                    val userPrefs = getSharedPreferences(prefsName, Context.MODE_PRIVATE)
 
-                        if (userUID != null) {
-                            val prefsName = "${userUID}_UserProfilePrefs"
-                            val userPrefs = getSharedPreferences(prefsName, Context.MODE_PRIVATE)
-
-                            with(userPrefs.edit()) {
-                                if (googlePhotoUrl != null) {
-                                    putString("google_photo_url", googlePhotoUrl.toString())
-                                }
-                                if (googleDisplayName != null) {
-                                    putString(KEY_USER_NAME, googleDisplayName)
-                                }
-                                apply()
-                            }
+                    userPrefs.edit {
+                        if (googlePhotoUrl != null) {
+                            putString("google_photo_url", googlePhotoUrl.toString())
                         }
-
-                        showPrincipalView()
-                        val usuario = auth.currentUser
-                        Toast.makeText(
-                            this,
-                            "Bienvenido ${usuario?.displayName ?: "Usuario"}",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    } else {
-                        val exception = firebaseTask.exception
-                        if (exception is FirebaseAuthUserCollisionException) {
-                            showAlert(
-                                "Error de Inicio",
-                                "Ya existe una cuenta con este correo electrónico. Por favor, inicie sesión con su método original."
-                            )
-                        } else {
-                            showAlert("Error", "No se pudo autenticar con Google: ${exception?.message}")
+                        if (googleDisplayName != null) {
+                            putString(KEY_USER_NAME, googleDisplayName)
                         }
                     }
                 }
-            } catch (e: ApiException) {
-                showAlert("Error", "Error en Google Sign-In: ${e.message}")
+
+                showPrincipalView()
+                val usuario = auth.currentUser
+                Toast.makeText(
+                    this,
+                    "Bienvenido ${usuario?.displayName ?: "Usuario"}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } else {
+                val exception = firebaseTask.exception
+                if (exception is FirebaseAuthUserCollisionException) {
+                    showAlert(
+                        "Error de Inicio",
+                        "Ya existe una cuenta con este correo electrónico. Por favor, inicie sesión con su método original."
+                    )
+                } else {
+                    showAlert("Error", "No se pudo autenticar con Google: ${exception?.message}")
+                }
             }
         }
     }

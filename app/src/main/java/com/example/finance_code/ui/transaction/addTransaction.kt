@@ -1,14 +1,21 @@
 package com.example.finance_code.ui.transaction
 
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import com.example.finance_code.FinanceWidgetProvider
 import com.example.finance_code.R
 import com.example.finance_code.data.AppDB
+import com.example.finance_code.data.EXTRA_WIDGET_TRANSACTION_TYPE
 import com.example.finance_code.data.Movimiento
 import com.example.finance_code.data.MovimientoRepository
+import com.example.finance_code.data.TYPE_EGRESO
+import com.example.finance_code.data.TYPE_INGRESO
 import com.example.finance_code.viewmodel.MovimientoViewModel
 import com.example.finance_code.viewmodel.MovimientoViewModelFactory
 import java.text.SimpleDateFormat
@@ -44,6 +51,18 @@ class addTransaction : AppCompatActivity() {
         val repository = MovimientoRepository(database.movimientoDao())
         val factory = MovimientoViewModelFactory(repository)
         viewModel = ViewModelProvider(this, factory)[MovimientoViewModel::class.java]
+
+        val transactionTypeFromWidget = intent.getIntExtra(EXTRA_WIDGET_TRANSACTION_TYPE, -1)
+        if (transactionTypeFromWidget != -1) {
+            val buttonId = if (transactionTypeFromWidget == TYPE_INGRESO) {
+                R.id.ingreso
+            } else {
+                R.id.egreso
+            }
+            if (buttonId != -1) {
+                btnregistrarOpcion.check(buttonId)
+            }
+        }
 
         toolbar.setNavigationOnClickListener {
             finish()
@@ -88,15 +107,26 @@ class addTransaction : AppCompatActivity() {
                 categoria = ""
             )
 
-            viewModel.insertar(nuevoMovimiento)
+            val job = viewModel.insertar(nuevoMovimiento)
 
-            Toast.makeText(
-                this,
-                "✅ Transacción guardada",
-                Toast.LENGTH_SHORT
-            ).show()
+            job.invokeOnCompletion {
+                val intent = Intent(applicationContext, FinanceWidgetProvider::class.java)
+                intent.action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                val ids = AppWidgetManager.getInstance(applicationContext).getAppWidgetIds(
+                    ComponentName(applicationContext, FinanceWidgetProvider::class.java)
+                )
+                intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
+                sendBroadcast(intent)
 
-            finish()
+                runOnUiThread {
+                    Toast.makeText(
+                        this@addTransaction,
+                        "✅ Transacción guardada",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    finish()
+                }
+            }
         }
     }
 }

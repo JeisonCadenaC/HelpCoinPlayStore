@@ -17,4 +17,8 @@
     <string name="theme_toggle_description">Botón para alternar tema oscuro y claro</string>
     <string name="accept_terms_and_conditions">Acepto los <a href="http://helpcoinuan.site/TyC">Términos y Condiciones</a></string>
     <string name="error_accept_terms">Debe aceptar los Términos y Condiciones para continuar.</string>
+    <string name="saldo_actual_placeholder">Saldo Actual: $ --</string>
+    <string name="nuevo_gasto">Gasto</string>
+    <string name="nuevo_ingreso">Ingreso</string>
+
 </resources>
