@@ -3,6 +3,7 @@ package com.example.finance_code.ui.home
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.app.ProgressDialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -209,32 +210,52 @@ class PerfilFragment : Fragment() {
         }
     }
 
+    private fun reiniciarApp() {
+        val intent = Intent(requireContext(), SplashActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        startActivity(intent)
+        requireActivity().finish()
+        Runtime.getRuntime().exit(0)
+    }
+
     private fun proceedWithBackup(googleAccount: GoogleSignInAccount) {
         if (userEmail == null) {
             Toast.makeText(requireContext(), "Error: No se encontró Email de usuario", Toast.LENGTH_SHORT).show()
             return
         }
 
+        val progressDialog = ProgressDialog(requireContext())
+        progressDialog.setMessage("Guardando copia de seguridad...")
+        progressDialog.setCancelable(false)
+        progressDialog.show()
+
         val dbIdentifier = getDbIdentifier(userEmail!!)
         val dbName = "finance_db_$dbIdentifier"
         val dbFile = requireContext().getDatabasePath(dbName)
 
-        AppDB.closeInstance()
-
-        if (!dbFile.exists()) {
-            Toast.makeText(requireContext(), "Error: No se encontró la base de datos local", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val driveService = DriveService(requireContext(), googleAccount, dbIdentifier)
-        Toast.makeText(requireContext(), "Iniciando copia de seguridad...", Toast.LENGTH_SHORT).show()
-
         viewLifecycleOwner.lifecycleScope.launch {
-            val fileId = driveService.uploadBackup(dbFile)
-            if (fileId != null) {
-                Toast.makeText(requireContext(), "Copia de seguridad completada", Toast.LENGTH_LONG).show()
-            } else {
-                Toast.makeText(requireContext(), "Error al realizar la copia", Toast.LENGTH_LONG).show()
+            try {
+                AppDB.checkpointAndClose(requireContext(), userEmail!!)
+
+                if (!dbFile.exists()) {
+                    progressDialog.dismiss()
+                    Toast.makeText(requireContext(), "Error: No se encontró la base de datos local", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+
+                val driveService = DriveService(requireContext(), googleAccount, dbIdentifier)
+                val fileId = driveService.uploadBackup(dbFile)
+
+                progressDialog.dismiss()
+
+                if (fileId != null) {
+                    Toast.makeText(requireContext(), "Copia de seguridad actualizada correctamente", Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(requireContext(), "Error al subir el archivo a Drive", Toast.LENGTH_LONG).show()
+                }
+            } catch (e: Exception) {
+                progressDialog.dismiss()
+                Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -256,6 +277,11 @@ class PerfilFragment : Fragment() {
             return
         }
 
+        val progressDialog = ProgressDialog(requireContext())
+        progressDialog.setMessage("Restaurando copia de seguridad...")
+        progressDialog.setCancelable(false)
+        progressDialog.show()
+
         val dbIdentifier = getDbIdentifier(userEmail!!)
         val dbName = "finance_db_$dbIdentifier"
         val dbFile = requireContext().getDatabasePath(dbName)
@@ -264,25 +290,28 @@ class PerfilFragment : Fragment() {
         val walFile = File("$dbPath-wal")
         val shmFile = File("$dbPath-shm")
 
-        AppDB.closeInstance()
-
-        if (walFile.exists()) {
-            walFile.delete()
-        }
-        if (shmFile.exists()) {
-            shmFile.delete()
-        }
-
-        val driveService = DriveService(requireContext(), googleAccount, dbIdentifier)
-        Toast.makeText(requireContext(), "Iniciando restauración...", Toast.LENGTH_SHORT).show()
-
         viewLifecycleOwner.lifecycleScope.launch {
-            val exito = driveService.downloadRestore(dbFile)
-            if (exito) {
-                Toast.makeText(requireContext(), "Restauración completada. Reinicia la app.", Toast.LENGTH_LONG).show()
-                activity?.finish()
-            } else {
-                Toast.makeText(requireContext(), "Error al restaurar o no se encontró copia", Toast.LENGTH_LONG).show()
+            try {
+                AppDB.closeInstance()
+
+                if (walFile.exists()) walFile.delete()
+                if (shmFile.exists()) shmFile.delete()
+                if (dbFile.exists()) dbFile.delete()
+
+                val driveService = DriveService(requireContext(), googleAccount, dbIdentifier)
+                val exito = driveService.downloadRestore(dbFile)
+
+                progressDialog.dismiss()
+
+                if (exito) {
+                    Toast.makeText(requireContext(), "Restauración completada. Reiniciando...", Toast.LENGTH_LONG).show()
+                    reiniciarApp()
+                } else {
+                    Toast.makeText(requireContext(), "No se encontró copia para este usuario", Toast.LENGTH_LONG).show()
+                }
+            } catch (e: Exception) {
+                progressDialog.dismiss()
+                Toast.makeText(requireContext(), "Error al restaurar: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
     }

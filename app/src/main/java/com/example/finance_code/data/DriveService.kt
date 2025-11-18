@@ -41,66 +41,82 @@ class DriveService(
     suspend fun uploadBackup(databaseFile: java.io.File): String? {
         return try {
             withContext(Dispatchers.IO) {
-                val existingFileId = findBackupFileId()
-
+                val matchingFiles = findBackupFiles()
                 val fileMetadata = File().apply {
                     name = BACKUP_FILE_NAME
-                    if (existingFileId == null) {
-                        parents = listOf("appDataFolder")
-                    }
                 }
                 val mediaContent = FileContent("application/x-sqlite3", databaseFile)
 
-                val file: File = if (existingFileId != null) {
-                    Log.d("DriveService", "Actualizando backup existente...")
-                    driveService.files().update(existingFileId, fileMetadata, mediaContent).execute()
+                val fileIdToReturn: String
+
+                if (matchingFiles.isEmpty()) {
+                    fileMetadata.parents = listOf("appDataFolder")
+                    val createdFile = driveService.files().create(fileMetadata, mediaContent)
+                        .setFields("id")
+                        .execute()
+                    fileIdToReturn = createdFile.id
                 } else {
-                    Log.d("DriveService", "Creando nuevo backup...")
-                    driveService.files().create(fileMetadata, mediaContent).setFields("id").execute()
+                    val mainFileId = matchingFiles[0].id
+                    driveService.files().update(mainFileId, fileMetadata, mediaContent).execute()
+                    fileIdToReturn = mainFileId
+
+                    if (matchingFiles.size > 1) {
+                        for (i in 1 until matchingFiles.size) {
+                            try {
+                                driveService.files().delete(matchingFiles[i].id).execute()
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                        }
+                    }
                 }
-                Log.d("DriveService", "Backup completado. File ID: ${file.id}")
-                file.id
+                fileIdToReturn
             }
         } catch (e: Exception) {
-            Log.e("DriveService", "Error al subir backup", e)
+            e.printStackTrace()
             null
         }
     }
 
-    private fun findBackupFileId(): String? {
-        return try {
-            val result = driveService.files().list()
-                .setSpaces("appDataFolder")
-                .setFields("files(id, name)")
-                .execute()
+    private fun findBackupFiles(): List<File> {
+        val foundFiles = mutableListOf<File>()
+        try {
+            var pageToken: String? = null
+            do {
+                val result = driveService.files().list()
+                    .setSpaces("appDataFolder")
+                    .setQ("name = '$BACKUP_FILE_NAME' and trashed = false")
+                    .setFields("nextPageToken, files(id, name)")
+                    .setPageToken(pageToken)
+                    .execute()
 
-            result.files.find { it.name == BACKUP_FILE_NAME }?.id
+                foundFiles.addAll(result.files)
+                pageToken = result.nextPageToken
+            } while (pageToken != null)
         } catch (e: Exception) {
-            Log.e("DriveService", "Error al buscar backup", e)
-            null
+            e.printStackTrace()
         }
+        return foundFiles
     }
 
     suspend fun downloadRestore(destinationFile: java.io.File): Boolean {
         return withContext(Dispatchers.IO) {
-            val fileId = findBackupFileId()
-            if (fileId == null) {
-                Log.d("DriveService", "No se encontró ningún backup para restaurar.")
+            val matchingFiles = findBackupFiles()
+            if (matchingFiles.isEmpty()) {
                 false
             } else {
                 try {
+                    val fileId = matchingFiles[0].id
                     val outputStream: OutputStream = FileOutputStream(destinationFile)
-                    Log.d("DriveService", "Descargando backup de $fileId...")
 
                     driveService.files().get(fileId)
                         .executeMediaAndDownloadTo(outputStream)
 
                     outputStream.flush()
                     outputStream.close()
-                    Log.d("DriveService", "Restauración completada.")
                     true
                 } catch (e: Exception) {
-                    Log.e("DriveService", "Error al descargar restauración", e)
+                    e.printStackTrace()
                     false
                 }
             }

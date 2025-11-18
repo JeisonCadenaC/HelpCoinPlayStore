@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import java.util.Objects
 
 @Database(
     entities = [Movimiento::class, MetaDB::class, Recordatorio::class],
@@ -51,6 +50,19 @@ abstract class AppDB : RoomDatabase() {
                 CURRENT_DB_NAME = dbName
                 instance
             }
+        }
+
+        fun checkpointAndClose(context: Context, email: String) {
+            val db = getDatabase(context, email)
+            if (db.isOpen) {
+                try {
+                    val checkpointQuery = "PRAGMA wal_checkpoint(FULL)"
+                    db.openHelper.writableDatabase.query(checkpointQuery).close()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            closeInstance()
         }
 
         fun closeInstance() {
