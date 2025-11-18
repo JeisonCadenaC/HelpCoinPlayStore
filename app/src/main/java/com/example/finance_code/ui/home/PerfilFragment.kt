@@ -1,3 +1,4 @@
+@file:Suppress("DEPRECATION")
 package com.example.finance_code.ui.home
 
 import android.app.Activity
@@ -218,6 +219,8 @@ class PerfilFragment : Fragment() {
         val dbName = "finance_db_$dbIdentifier"
         val dbFile = requireContext().getDatabasePath(dbName)
 
+        AppDB.closeInstance()
+
         if (!dbFile.exists()) {
             Toast.makeText(requireContext(), "Error: No se encontró la base de datos local", Toast.LENGTH_SHORT).show()
             return
@@ -257,7 +260,18 @@ class PerfilFragment : Fragment() {
         val dbName = "finance_db_$dbIdentifier"
         val dbFile = requireContext().getDatabasePath(dbName)
 
+        val dbPath = dbFile.absolutePath
+        val walFile = File("$dbPath-wal")
+        val shmFile = File("$dbPath-shm")
+
         AppDB.closeInstance()
+
+        if (walFile.exists()) {
+            walFile.delete()
+        }
+        if (shmFile.exists()) {
+            shmFile.delete()
+        }
 
         val driveService = DriveService(requireContext(), googleAccount, dbIdentifier)
         Toast.makeText(requireContext(), "Iniciando restauración...", Toast.LENGTH_SHORT).show()
