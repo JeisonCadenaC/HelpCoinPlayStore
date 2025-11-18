@@ -91,5 +91,6 @@ dependencies {
     implementation(libs.google.api.client)
     implementation(libs.google.api.services.drive)
     implementation(libs.google.api.client.android)
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
     implementation("com.google.api-client:google-api-client-android:2.2.0")
 }
