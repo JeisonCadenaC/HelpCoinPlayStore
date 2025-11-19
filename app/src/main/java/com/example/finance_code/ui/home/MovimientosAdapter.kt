@@ -11,6 +11,7 @@ import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.finance_code.R
 import com.example.finance_code.data.Movimiento
+import com.example.finance_code.DiscreetModeManager
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -37,30 +38,46 @@ class MovimientosAdapter(
     override fun onBindViewHolder(holder: MovimientoViewHolder, position: Int) {
         val movimiento = movimientos[position]
 
-        holder.tvNombre.text = movimiento.descripcion
-        holder.tvFecha.text = movimiento.fecha
+        if (DiscreetModeManager.isDiscreetModeActive) {
 
-        val locale = Locale.Builder().setLanguage("es").setRegion("CO").build()
-        val formatter = NumberFormat.getCurrencyInstance(locale)
-        formatter.maximumFractionDigits = 0
-        val montoFormateado = formatter.format(movimiento.cantidad)
+            holder.tvNombre.text = "***********"
+            holder.tvFecha.text = "--/--/----"
+            holder.tvMonto.text = "•••••"
 
-        if (movimiento.tipo == 1) {
-            holder.tvMonto.text = "+ $montoFormateado"
-            val verde = Color.parseColor("#4CAF50")
-            holder.tvMonto.setTextColor(verde)
+            holder.tvMonto.setTextColor(Color.parseColor("#9E9E9E"))
 
-            holder.ivIcono.setImageResource(R.drawable.ic_arrow_up)
-            holder.ivIcono.imageTintList = ColorStateList.valueOf(verde)
-            holder.iconContainer.setCardBackgroundColor(Color.parseColor("#E8F5E9"))
+            val grisClaro = Color.parseColor("#9E9E9E")
+            val grisFondo = Color.parseColor("#EEEEEE")
+            holder.ivIcono.setImageResource(R.drawable.ic_tag)
+            holder.ivIcono.imageTintList = ColorStateList.valueOf(grisClaro)
+            holder.iconContainer.setCardBackgroundColor(grisFondo)
+
         } else {
-            holder.tvMonto.text = "- $montoFormateado"
-            val rojo = Color.parseColor("#F44336")
-            holder.tvMonto.setTextColor(rojo)
+            holder.tvNombre.text = movimiento.descripcion
+            holder.tvFecha.text = movimiento.fecha
 
-            holder.ivIcono.setImageResource(R.drawable.ic_arrow_down)
-            holder.ivIcono.imageTintList = ColorStateList.valueOf(rojo)
-            holder.iconContainer.setCardBackgroundColor(Color.parseColor("#FFEBEE"))
+            val locale = Locale.Builder().setLanguage("es").setRegion("CO").build()
+            val formatter = NumberFormat.getCurrencyInstance(locale)
+            formatter.maximumFractionDigits = 0
+            val montoFormateado = formatter.format(movimiento.cantidad)
+
+            if (movimiento.tipo == 1) {
+                holder.tvMonto.text = "+ $montoFormateado"
+                val verde = Color.parseColor("#4CAF50")
+                holder.tvMonto.setTextColor(verde)
+
+                holder.ivIcono.setImageResource(R.drawable.ic_arrow_up)
+                holder.ivIcono.imageTintList = ColorStateList.valueOf(verde)
+                holder.iconContainer.setCardBackgroundColor(Color.parseColor("#E8F5E9"))
+            } else {
+                holder.tvMonto.text = "- $montoFormateado"
+                val rojo = Color.parseColor("#F44336")
+                holder.tvMonto.setTextColor(rojo)
+
+                holder.ivIcono.setImageResource(R.drawable.ic_arrow_down)
+                holder.ivIcono.imageTintList = ColorStateList.valueOf(rojo)
+                holder.iconContainer.setCardBackgroundColor(Color.parseColor("#FFEBEE"))
+            }
         }
 
         holder.itemView.setOnLongClickListener {
@@ -78,5 +95,9 @@ class MovimientosAdapter(
 
     fun setOnItemLongClickListener(listener: (Movimiento) -> Unit) {
         onItemLongClickListener = listener
+    }
+
+    fun updateDiscreetMode() {
+        notifyDataSetChanged()
     }
 }

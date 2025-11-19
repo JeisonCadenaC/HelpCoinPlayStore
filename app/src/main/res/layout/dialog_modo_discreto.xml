@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Modo Discreto (Shake to Hide)"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/purple_500" />
+
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/animation_shake"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="16dp"
+        app:lottie_rawRes="@raw/shake_animation"
+        app:lottie_autoPlay="true"
+        app:lottie_loop="true" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Esta aplicación cuenta con una función de privacidad que te permite ocultar el saldo y los movimientos de la pantalla rápidamente."
+        android:textSize="16sp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Para activarlo o desactivarlo, simplemente: ¡Agita tu teléfono!"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/btnEntendido"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:layout_gravity="end"
+        android:text="ENTENDIDO" />
+
+</LinearLayout>

@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.finance_code.R
 import com.example.finance_code.data.MetaDB
+import com.example.finance_code.DiscreetModeManager
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.progressindicator.CircularProgressIndicator
@@ -27,6 +28,10 @@ class MetasAdapter(
 
     fun setData(newMetas: List<MetaDB>) {
         metas = newMetas
+        notifyDataSetChanged()
+    }
+
+    fun updateDiscreetMode() {
         notifyDataSetChanged()
     }
 
@@ -80,18 +85,26 @@ class MetasAdapter(
             val colorSurfaceAttrId = com.google.android.material.R.attr.colorSurface
             val colorSurface = resolveThemeColor(itemView.context, colorSurfaceAttrId)
 
+            val colorPrimary = resolveThemeColor(itemView.context, com.google.android.material.R.attr.colorPrimary)
+            val colorGray = ContextCompat.getColor(itemView.context, R.color.gray)
+
             if (esInvitacion) {
                 layoutNormal.visibility = View.GONE
                 layoutInvitacion.visibility = View.VISIBLE
 
-                cardView.strokeColor = ContextCompat.getColor(itemView.context, R.color.colorPrimary)
+                cardView.strokeColor = colorPrimary
                 cardView.strokeWidth = 4
                 cardView.setCardBackgroundColor(colorSurface)
 
                 tvInviteTitulo.text = meta.nombre
                 val remitente = meta.usuarios.firstOrNull() ?: "Alguien"
                 tvInviteRemitente.text = "Invitado por: $remitente"
-                tvInviteMonto.text = "Objetivo: ${formatoMoneda.format(meta.montoObjetivo)}"
+
+                if (DiscreetModeManager.isDiscreetModeActive) {
+                    tvInviteMonto.text = "Objetivo: •••••••••••"
+                } else {
+                    tvInviteMonto.text = "Objetivo: ${formatoMoneda.format(meta.montoObjetivo)}"
+                }
 
                 btnAceptar.setOnClickListener { onAceptar(meta) }
                 btnRechazar.setOnClickListener { onRechazar(meta) }
@@ -100,20 +113,30 @@ class MetasAdapter(
                 layoutInvitacion.visibility = View.GONE
                 layoutNormal.visibility = View.VISIBLE
 
-                tvNombre.text = meta.nombre
+                if (DiscreetModeManager.isDiscreetModeActive) {
+                    tvNombre.text = "•••••••••••"
+                    val censuraMontos = "••••••••••• / •••••••••••"
+                    tvMonto.text = censuraMontos
+                    tvPorcentaje.text = "••%"
 
-                val actualStr = formatoMoneda.format(meta.montoActual)
-                val objetivoStr = formatoMoneda.format(meta.montoObjetivo)
-                tvMonto.text = "$actualStr / $objetivoStr"
+                    progressBar.setIndicatorColor(colorGray)
+                    progressBar.progress = 0
+                } else {
+                    tvNombre.text = meta.nombre
+                    val actualStr = formatoMoneda.format(meta.montoActual)
+                    val objetivoStr = formatoMoneda.format(meta.montoObjetivo)
+                    tvMonto.text = "$actualStr / $objetivoStr"
 
-                val progreso = if (meta.montoObjetivo > 0) (meta.montoActual / meta.montoObjetivo * 100).toInt() else 0
-                progressBar.progress = progreso
-                tvPorcentaje.text = "$progreso%"
+                    val progreso = if (meta.montoObjetivo > 0) (meta.montoActual / meta.montoObjetivo * 100).toInt() else 0
+                    tvPorcentaje.text = "$progreso%"
+
+                    progressBar.setIndicatorColor(colorPrimary)
+                    progressBar.progress = progreso
+                }
 
                 cardView.strokeWidth = 0
-
                 if (meta.completada) {
-                    cardView.setCardBackgroundColor(ContextCompat.getColor(itemView.context, R.color.gray))
+                    cardView.setCardBackgroundColor(colorGray)
                 } else {
                     cardView.setCardBackgroundColor(colorSurface)
                 }

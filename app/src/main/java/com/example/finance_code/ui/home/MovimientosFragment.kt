@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.view.LayoutInflater
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
@@ -33,6 +34,9 @@ class MovimientosFragment : Fragment(R.layout.fragment_movimientos) {
     private var isBalanceVisible = true
     private var currentBalance = 0.0
     private var currentUserName: String = "USUARIO"
+
+    private val PREFS_NAME = "MovimientosFragmentPrefs"
+    private val SHAKE_DIALOG_SHOWN_KEY = "shake_dialog_shown"
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -96,6 +100,8 @@ class MovimientosFragment : Fragment(R.layout.fragment_movimientos) {
             currentBalance = saldo ?: 0.0
             updateBalanceDisplay(tvSaldoTotal, tvUserName, btnHideBalance)
         }
+
+        mostrarDialogoModoDiscreto()
     }
 
     private fun updateBalanceDisplay(tvSaldo: TextView, tvName: TextView, btnIcon: ImageButton) {
@@ -139,5 +145,25 @@ class MovimientosFragment : Fragment(R.layout.fragment_movimientos) {
     private fun eliminarMovimiento(movimiento: Movimiento) {
         viewModel.eliminar(movimiento)
         Toast.makeText(requireContext(), "Movimiento eliminado", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun mostrarDialogoModoDiscreto() {
+        val prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val dialogShown = prefs.getBoolean(SHAKE_DIALOG_SHOWN_KEY, false)
+
+        if (!dialogShown) {
+            val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_modo_discreto, null)
+            val builder = AlertDialog.Builder(requireContext())
+            builder.setView(view)
+            val dialog = builder.create()
+
+            val btnEntendido = view.findViewById<android.widget.Button>(R.id.btnEntendido)
+            btnEntendido.setOnClickListener {
+                dialog.dismiss()
+                prefs.edit().putBoolean(SHAKE_DIALOG_SHOWN_KEY, true).apply()
+            }
+
+            dialog.show()
+        }
     }
 }

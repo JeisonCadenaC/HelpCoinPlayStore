@@ -2,10 +2,16 @@ package com.example.finance_code.ui.home
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.hardware.Sensor
+import android.hardware.SensorManager
+import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.speech.RecognizerIntent
 import android.view.LayoutInflater
 import android.view.View
@@ -25,9 +31,12 @@ import com.example.finance_code.data.MetaDB
 import com.example.finance_code.databinding.FragmentMetasBinding
 import com.example.finance_code.viewmodel.MetaViewModel
 import com.example.finance_code.viewmodel.MetaViewModelFactory
+import com.example.finance_code.DiscreetModeManager
+import com.example.finance_code.ShakeDetector
 import java.text.NumberFormat
 import java.util.Locale
 import java.util.UUID
+import androidx.core.content.ContextCompat
 
 class MetasFragment : Fragment() {
 
@@ -42,6 +51,10 @@ class MetasFragment : Fragment() {
 
     private var currentNombreInput: EditText? = null
     private var currentMontoInput: EditText? = null
+
+    private var sensorManager: SensorManager? = null
+    private var accelerometer: Sensor? = null
+    private lateinit var shakeDetector: ShakeDetector
 
     private val speechLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -58,6 +71,8 @@ class MetasFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentMetasBinding.inflate(inflater, container, false)
+
+        DiscreetModeManager.initialize(requireContext().applicationContext)
 
         val myEmail = metaViewModel.userEmail
 
@@ -96,7 +111,60 @@ class MetasFragment : Fragment() {
             mostrarDialogoMeta(null)
         }
 
+        setupSensors()
+
+        DiscreetModeManager.modeChangeListener = {
+            metasAdapter.updateDiscreetMode()
+        }
+        metasAdapter.updateDiscreetMode()
+
         return binding.root
+    }
+
+    private fun setupSensors() {
+        sensorManager = requireContext().getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        accelerometer = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+
+        val vibrator = ContextCompat.getSystemService(requireContext(), Vibrator::class.java)
+
+        shakeDetector = ShakeDetector {
+            DiscreetModeManager.toggleMode()
+
+            if (vibrator != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE))
+                } else {
+                    vibrator.vibrate(100)
+                }
+            }
+
+            val mensaje = if (DiscreetModeManager.isDiscreetModeActive) "Modo Discreto Activado" else "Modo Visible Activado"
+            Toast.makeText(requireContext(), mensaje, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        accelerometer?.also { accel ->
+            sensorManager?.registerListener(shakeDetector, accel, SensorManager.SENSOR_DELAY_UI)
+        }
+
+        DiscreetModeManager.modeChangeListener = {
+            metasAdapter.updateDiscreetMode()
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        sensorManager?.unregisterListener(shakeDetector)
+    }
+
+    override fun onDestroyView() {
+        DiscreetModeManager.modeChangeListener = null
+        super.onDestroyView()
+        _binding = null
+        currentNombreInput = null
+        currentMontoInput = null
     }
 
     private fun mostrarDialogoHistorial(metaDB: MetaDB) {
@@ -207,7 +275,8 @@ class MetasFragment : Fragment() {
         btnVoice.setOnClickListener { startVoiceInput() }
         val builder = AlertDialog.Builder(requireContext()).setView(dialogView)
 
-        val formatoMoneda = NumberFormat.getCurrencyInstance(Locale("es", "CO")).apply {
+        val localeCO = Locale.Builder().setLanguage("es").setRegion("CO").build()
+        val formatoMoneda = NumberFormat.getCurrencyInstance(localeCO).apply {
             maximumFractionDigits = 0
         }
 
@@ -355,12 +424,5 @@ class MetasFragment : Fragment() {
         }
 
         btnCancel.setOnClickListener { dialog.dismiss() }
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-        currentNombreInput = null
-        currentMontoInput = null
     }
 }
