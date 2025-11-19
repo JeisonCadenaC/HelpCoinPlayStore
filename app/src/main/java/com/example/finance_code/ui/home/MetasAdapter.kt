@@ -4,11 +4,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.finance_code.R
 import com.example.finance_code.data.MetaDB
+import com.google.android.material.progressindicator.CircularProgressIndicator // IMPORTANTE: Usar este import
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -21,7 +21,7 @@ class MetasAdapter(
         val tvNombre: TextView = itemView.findViewById(R.id.tvNombreMeta)
         val tvMontos: TextView = itemView.findViewById(R.id.tvMontos)
         val tvPorcentaje: TextView = itemView.findViewById(R.id.tvPorcentaje)
-        val progress: ProgressBar = itemView.findViewById(R.id.progressMeta)
+        val progress: CircularProgressIndicator = itemView.findViewById(R.id.progressMeta)
         val btnActualizar: Button = itemView.findViewById(R.id.btnActualizar)
     }
 
@@ -50,7 +50,9 @@ class MetasAdapter(
             else 0.0
 
         holder.tvPorcentaje.text = "${porcentaje.toInt()}%"
-        holder.progress.progress = porcentaje.toInt()
+
+        holder.progress.isIndeterminate = false
+        holder.progress.setProgressCompat(porcentaje.toInt(), true)
 
         holder.btnActualizar.setOnClickListener {
             onActualizarClick(meta)

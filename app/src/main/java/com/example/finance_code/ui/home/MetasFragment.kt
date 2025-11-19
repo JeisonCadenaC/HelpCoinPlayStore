@@ -139,10 +139,15 @@ class MetasFragment : Fragment() {
         val etNombre = dialogView.findViewById<EditText>(R.id.etNombreMeta)
         val etMontoObjetivo = dialogView.findViewById<EditText>(R.id.etMontoObjetivo)
         val etMontoActual = dialogView.findViewById<EditText>(R.id.etMontoActual)
+
+        val etMontoOperacion = dialogView.findViewById<EditText>(R.id.etMontoOperacion)
+        val btnSumar = dialogView.findViewById<View>(R.id.btnSumar)
+        val btnRestar = dialogView.findViewById<View>(R.id.btnRestar)
+        val layoutOperaciones = dialogView.findViewById<View>(R.id.layoutOperaciones)
+
         val btnEliminar = dialogView.findViewById<Button>(R.id.btnEliminarMeta)
         val dialogTitle = dialogView.findViewById<TextView>(R.id.dialog_title)
         val btnVoice = dialogView.findViewById<ImageButton>(R.id.btnVoiceInputMeta)
-
         val btnSave = dialogView.findViewById<Button>(R.id.btnSave)
         val btnCancel = dialogView.findViewById<Button>(R.id.btnCancel)
 
@@ -157,15 +162,46 @@ class MetasFragment : Fragment() {
             .setView(dialogView)
 
         if (metaDBExistente != null) {
-            dialogTitle.text = "Editar meta"
+            dialogTitle.text = "Gestionar meta"
             etNombre.setText(metaDBExistente.nombre)
-            etMontoObjetivo.setText(metaDBExistente.montoObjetivo.toLong().toString())
-            etMontoActual.setText(metaDBExistente.montoActual.toLong().toString())
+            etMontoObjetivo.setText(if (metaDBExistente.montoObjetivo % 1.0 == 0.0) metaDBExistente.montoObjetivo.toLong().toString() else metaDBExistente.montoObjetivo.toString())
+            etMontoActual.setText(if (metaDBExistente.montoActual % 1.0 == 0.0) metaDBExistente.montoActual.toLong().toString() else metaDBExistente.montoActual.toString())
+
             btnEliminar.visibility = View.VISIBLE
+            layoutOperaciones.visibility = View.VISIBLE
         } else {
             dialogTitle.text = "Nueva Meta"
+            etMontoActual.setText("0")
+
             btnEliminar.visibility = View.GONE
+            layoutOperaciones.visibility = View.GONE
         }
+
+        val realizarOperacion = { sumar: Boolean ->
+            val montoOperacionStr = etMontoOperacion.text.toString()
+                .replace(",", "").replace(".", "")
+            val montoActualStr = etMontoActual.text.toString()
+                .replace(",", "").replace(".", "")
+
+            val valorOperacion = montoOperacionStr.toDoubleOrNull() ?: 0.0
+            val valorActual = montoActualStr.toDoubleOrNull() ?: 0.0
+
+            if (valorOperacion > 0) {
+                val nuevoTotal = if (sumar) valorActual + valorOperacion else valorActual - valorOperacion
+                val totalFinal = if (nuevoTotal < 0) 0.0 else nuevoTotal
+
+                if (totalFinal % 1.0 == 0.0) {
+                    etMontoActual.setText(totalFinal.toLong().toString())
+                } else {
+                    etMontoActual.setText(totalFinal.toString())
+                }
+
+                etMontoOperacion.setText("")
+            }
+        }
+
+        btnSumar.setOnClickListener { realizarOperacion(true) }
+        btnRestar.setOnClickListener { realizarOperacion(false) }
 
         val dialog = builder.create()
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
@@ -187,7 +223,6 @@ class MetasFragment : Fragment() {
             if (nombre.isNotEmpty() && montoObjetivo > 0) {
                 if (metaDBExistente == null) {
                     val fechaCreacion = System.currentTimeMillis()
-
                     val nuevaMetaDB = MetaDB(
                         nombre = nombre,
                         montoObjetivo = montoObjetivo,
@@ -195,20 +230,10 @@ class MetasFragment : Fragment() {
                         fechaCreacion = fechaCreacion
                     )
                     metaViewModel.insert(nuevaMetaDB)
-
                     if (activity != null) {
-                        ReminderHelper.scheduleWeeklyMetaNotification(
-                            requireContext(),
-                            nuevaMetaDB.nombre,
-                            fechaCreacion
-                        )
+                        ReminderHelper.scheduleWeeklyMetaNotification(requireContext(), nuevaMetaDB.nombre, fechaCreacion)
                     }
-
-                    Toast.makeText(
-                        requireContext(),
-                        "Meta creada exitosamente",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    Toast.makeText(requireContext(), "Meta creada exitosamente", Toast.LENGTH_SHORT).show()
 
                 } else {
                     val eraCompletada = metaDBExistente.completada
@@ -224,17 +249,9 @@ class MetasFragment : Fragment() {
 
                     if (esCompletadaAhora && !eraCompletada) {
                         if (actualizada.fechaCreacion != null) {
-                            ReminderHelper.cancelWeeklyMetaNotification(
-                                requireContext(),
-                                actualizada.nombre,
-                                actualizada.fechaCreacion
-                            )
+                            ReminderHelper.cancelWeeklyMetaNotification(requireContext(), actualizada.nombre, actualizada.fechaCreacion)
                         }
-                        Toast.makeText(
-                            requireContext(),
-                            "¡Meta completada!",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        Toast.makeText(requireContext(), "¡Meta completada!", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -245,7 +262,6 @@ class MetasFragment : Fragment() {
             dialog.dismiss()
         }
 
-
         if (metaDBExistente != null) {
             btnEliminar.setOnClickListener {
                 AlertDialog.Builder(requireContext())
@@ -253,11 +269,7 @@ class MetasFragment : Fragment() {
                     .setMessage("¿Eliminar '${metaDBExistente.nombre}'?")
                     .setPositiveButton("Eliminar") { _, _ ->
                         if (metaDBExistente.fechaCreacion != null) {
-                            ReminderHelper.cancelWeeklyMetaNotification(
-                                requireContext(),
-                                metaDBExistente.nombre,
-                                metaDBExistente.fechaCreacion
-                            )
+                            ReminderHelper.cancelWeeklyMetaNotification(requireContext(), metaDBExistente.nombre, metaDBExistente.fechaCreacion)
                         }
                         metaViewModel.delete(metaDBExistente)
                         dialog.dismiss()
