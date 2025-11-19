@@ -19,12 +19,15 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.finance_code.R
 import com.example.finance_code.data.MetaDB
 import com.example.finance_code.databinding.FragmentMetasBinding
 import com.example.finance_code.viewmodel.MetaViewModel
 import com.example.finance_code.viewmodel.MetaViewModelFactory
+import java.text.NumberFormat
 import java.util.Locale
+import java.util.UUID
 
 class MetasFragment : Fragment() {
 
@@ -56,9 +59,29 @@ class MetasFragment : Fragment() {
     ): View {
         _binding = FragmentMetasBinding.inflate(inflater, container, false)
 
-        metasAdapter = MetasAdapter(onActualizarClick = { meta ->
-            mostrarDialogoMeta(meta)
-        })
+        val myEmail = metaViewModel.userEmail
+
+        metasAdapter = MetasAdapter(
+            currentUserEmail = myEmail,
+            onMetaClick = { meta ->
+                mostrarDialogoMeta(meta)
+            },
+            onAceptarClick = { meta ->
+                metaViewModel.aceptarInvitacion(meta)
+                Toast.makeText(context, "¡Bienvenido a la meta!", Toast.LENGTH_SHORT).show()
+            },
+            onRechazarClick = { meta ->
+                AlertDialog.Builder(requireContext())
+                    .setTitle("Rechazar invitación")
+                    .setMessage("¿Seguro que deseas rechazar esta meta?")
+                    .setPositiveButton("Sí, rechazar") { _, _ ->
+                        metaViewModel.rechazarInvitacion(meta)
+                        Toast.makeText(context, "Invitación eliminada", Toast.LENGTH_SHORT).show()
+                    }
+                    .setNegativeButton("Cancelar", null)
+                    .show()
+            }
+        )
 
         binding.rvMetas.apply {
             layoutManager = LinearLayoutManager(requireContext())
@@ -76,6 +99,33 @@ class MetasFragment : Fragment() {
         return binding.root
     }
 
+    private fun mostrarDialogoHistorial(metaDB: MetaDB) {
+        val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_historial_metas, null)
+        val rvHistorial = dialogView.findViewById<RecyclerView>(R.id.rvHistorialAportes)
+        val tvHistorialTitle = dialogView.findViewById<TextView>(R.id.tvHistorialTitle)
+        val btnCerrar = dialogView.findViewById<Button>(R.id.btnCerrarHistorial)
+
+        tvHistorialTitle.text = "Historial de Aportes: ${metaDB.nombre}"
+
+        val adapter = AporteAdapter()
+        rvHistorial.layoutManager = LinearLayoutManager(context)
+        rvHistorial.adapter = adapter
+
+        metaViewModel.getAportesLog(metaDB.id).observe(viewLifecycleOwner) { aportes ->
+            adapter.setData(aportes)
+        }
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+        btnCerrar.setOnClickListener { dialog.dismiss() }
+
+        dialog.show()
+    }
+
     private fun startVoiceInput() {
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
@@ -91,20 +141,16 @@ class MetasFragment : Fragment() {
 
     private fun procesarTextoVozMeta(textoOriginal: String) {
         var texto = textoOriginal.lowercase(Locale.getDefault()).trim()
-
         val numerosMap = mapOf(
             "cero" to "0", "un" to "1", "uno" to "1", "una" to "1",
             "dos" to "2", "tres" to "3", "cuatro" to "4", "cinco" to "5",
             "seis" to "6", "siete" to "7", "ocho" to "8", "nueve" to "9", "diez" to "10"
         )
-
         numerosMap.forEach { (palabra, digito) ->
             texto = texto.replace(Regex("\\b$palabra\\b"), digito)
         }
-
         var multiplicador = 1.0
         var textoLimpio = texto
-
         if (texto.contains("millones") || texto.contains("millón") || texto.contains("millon")) {
             multiplicador = 1000000.0
             textoLimpio = texto.replace(Regex("millon(es)?"), "").trim()
@@ -112,27 +158,16 @@ class MetasFragment : Fragment() {
             multiplicador = 1000.0
             textoLimpio = texto.replace(Regex("mil"), "").trim()
         }
-
         val regex = Regex("([0-9]+[.,]?[0-9]*[.,]?[0-9]*)")
         val matchResult = regex.findAll(textoLimpio).lastOrNull()
-
         if (matchResult != null) {
             var numeroString = matchResult.value.replace(",", "").replace(".", "")
-
             val valorNumerico = numeroString.toDoubleOrNull() ?: 0.0
             val valorFinal = valorNumerico * multiplicador
-
-            val textoMonto = if (valorFinal % 1.0 == 0.0) {
-                valorFinal.toLong().toString()
-            } else {
-                valorFinal.toString()
-            }
-
+            val textoMonto = if (valorFinal % 1.0 == 0.0) valorFinal.toLong().toString() else valorFinal.toString()
             val descripcion = textoOriginal.substring(0, textoOriginal.indexOf(matchResult.value)).trim()
                 .replace(Regex("millon(es)?|mil$"), "").trim()
-
             currentMontoInput?.setText(textoMonto)
-
             if (descripcion.isNotEmpty()) {
                 if (currentNombreInput?.text.isNullOrEmpty() || currentNombreInput?.text.toString() == "Nueva Meta") {
                     currentNombreInput?.setText(descripcion.replaceFirstChar { it.uppercase() })
@@ -146,38 +181,37 @@ class MetasFragment : Fragment() {
 
     private fun mostrarDialogoMeta(metaDBExistente: MetaDB?) {
         val dialogView = layoutInflater.inflate(R.layout.dialog_meta, null)
-
         val contenedorFormulario = dialogView.findViewById<View>(R.id.contenedorFormulario)
         val contenedorConfirmacion = dialogView.findViewById<View>(R.id.contenedorConfirmacion)
-
         val etNombre = dialogView.findViewById<EditText>(R.id.etNombreMeta)
         val etMontoObjetivo = dialogView.findViewById<EditText>(R.id.etMontoObjetivo)
         val etMontoActual = dialogView.findViewById<EditText>(R.id.etMontoActual)
         val etMontoOperacion = dialogView.findViewById<EditText>(R.id.etMontoOperacion)
-
+        val etEmailCompartido = dialogView.findViewById<EditText>(R.id.etEmailCompartido)
+        val emailLayout = dialogView.findViewById<View>(R.id.emailCompartidoLayout)
         val btnSumar = dialogView.findViewById<View>(R.id.btnSumar)
         val btnRestar = dialogView.findViewById<View>(R.id.btnRestar)
         val layoutOperaciones = dialogView.findViewById<View>(R.id.layoutOperaciones)
-
         val btnEliminar = dialogView.findViewById<Button>(R.id.btnEliminarMeta)
         val dialogTitle = dialogView.findViewById<TextView>(R.id.dialog_title)
         val btnVoice = dialogView.findViewById<ImageButton>(R.id.btnVoiceInputMeta)
         val btnSave = dialogView.findViewById<Button>(R.id.btnSave)
         val btnCancel = dialogView.findViewById<Button>(R.id.btnCancel)
-
         val tvMensajeConfirmacion = dialogView.findViewById<TextView>(R.id.tvMensajeConfirmacion)
         val btnCancelarDelete = dialogView.findViewById<Button>(R.id.btnCancelarDelete)
         val btnConfirmarDelete = dialogView.findViewById<Button>(R.id.btnConfirmarDelete)
+        val btnVerHistorial = dialogView.findViewById<Button>(R.id.btnVerHistorial)
 
         currentNombreInput = etNombre
         currentMontoInput = etMontoObjetivo
+        btnVoice.setOnClickListener { startVoiceInput() }
+        val builder = AlertDialog.Builder(requireContext()).setView(dialogView)
 
-        btnVoice.setOnClickListener {
-            startVoiceInput()
+        val formatoMoneda = NumberFormat.getCurrencyInstance(Locale("es", "CO")).apply {
+            maximumFractionDigits = 0
         }
 
-        val builder = AlertDialog.Builder(requireContext())
-            .setView(dialogView)
+        val originalMontoActual = metaDBExistente?.montoActual ?: 0.0
 
         if (metaDBExistente != null) {
             dialogTitle.text = "Gestionar meta"
@@ -187,53 +221,74 @@ class MetasFragment : Fragment() {
 
             btnEliminar.visibility = View.VISIBLE
             layoutOperaciones.visibility = View.VISIBLE
+            emailLayout.visibility = View.GONE
             tvMensajeConfirmacion.text = "¿Eliminar '${metaDBExistente.nombre}'?"
+            btnVerHistorial.visibility = View.VISIBLE
+            btnVerHistorial.setOnClickListener { mostrarDialogoHistorial(metaDBExistente) }
         } else {
             dialogTitle.text = "Nueva Meta"
             etMontoActual.setText("0")
             btnEliminar.visibility = View.GONE
             layoutOperaciones.visibility = View.GONE
+            emailLayout.visibility = View.VISIBLE
+            btnVerHistorial.visibility = View.GONE
+        }
+
+        val dialog = builder.create()
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+        val observer = androidx.lifecycle.Observer<List<MetaDB>> { metas ->
+            val metaActualizada = metas.find { it.id == metaDBExistente?.id }
+            if (metaActualizada != null && dialog.isShowing) {
+                val monto = metaActualizada.montoActual
+                etMontoActual.setText(if (monto % 1.0 == 0.0) monto.toLong().toString() else monto.toString())
+            }
+        }
+
+        if (metaDBExistente != null) {
+            metaViewModel.allMetas.observe(viewLifecycleOwner, observer)
+        }
+
+        dialog.setOnDismissListener {
+            if (metaDBExistente != null) {
+                metaViewModel.allMetas.removeObserver(observer)
+            }
         }
 
         val realizarOperacion = { sumar: Boolean ->
-            val montoOperacionStr = etMontoOperacion.text.toString()
-                .replace(",", "").replace(".", "")
-            val montoActualStr = etMontoActual.text.toString()
-                .replace(",", "").replace(".", "")
-
-            val valorOperacion = montoOperacionStr.toDoubleOrNull() ?: 0.0
-            val valorActual = montoActualStr.toDoubleOrNull() ?: 0.0
+            val montoOperacionStr = etMontoOperacion.text.toString().trim()
+            val valorOperacion = montoOperacionStr.replace(",", "").replace(".", "").toDoubleOrNull() ?: 0.0
 
             if (valorOperacion > 0) {
-                val nuevoTotal = if (sumar) valorActual + valorOperacion else valorActual - valorOperacion
+
+                val valorActualStr = etMontoActual.text.toString().replace(",", "").replace(".", "").toDoubleOrNull() ?: 0.0
+                val montoCambio = if (sumar) valorOperacion else -valorOperacion
+
+                val nuevoTotal = valorActualStr + montoCambio
                 val totalFinal = if (nuevoTotal < 0) 0.0 else nuevoTotal
 
-                if (totalFinal % 1.0 == 0.0) {
-                    etMontoActual.setText(totalFinal.toLong().toString())
-                } else {
-                    etMontoActual.setText(totalFinal.toString())
-                }
+                etMontoActual.setText(if (totalFinal % 1.0 == 0.0) totalFinal.toLong().toString() else totalFinal.toString())
+
                 etMontoOperacion.setText("")
+
+            } else if (metaDBExistente == null) {
+                Toast.makeText(requireContext(), "Guarda la meta primero para registrar movimientos.", Toast.LENGTH_SHORT).show()
             }
         }
 
         btnSumar.setOnClickListener { realizarOperacion(true) }
         btnRestar.setOnClickListener { realizarOperacion(false) }
 
-        val dialog = builder.create()
-        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         dialog.show()
 
         btnEliminar.setOnClickListener {
             contenedorFormulario.visibility = View.GONE
             contenedorConfirmacion.visibility = View.VISIBLE
         }
-
         btnCancelarDelete.setOnClickListener {
             contenedorConfirmacion.visibility = View.GONE
             contenedorFormulario.visibility = View.VISIBLE
         }
-
         btnConfirmarDelete.setOnClickListener {
             if (metaDBExistente != null) {
                 if (metaDBExistente.fechaCreacion != null) {
@@ -247,32 +302,59 @@ class MetasFragment : Fragment() {
         btnSave.setOnClickListener {
             val nombre = etNombre.text.toString().trim()
             val montoObjetivo = etMontoObjetivo.text.toString().replace(",", "").replace(".", "").toDoubleOrNull() ?: 0.0
-            val montoActual = etMontoActual.text.toString().replace(",", "").replace(".", "").toDoubleOrNull() ?: 0.0
+            val emailsInvitados = etEmailCompartido.text.toString()
+            val userName = metaViewModel.userEmail.substringBefore('@')
 
             if (nombre.isNotEmpty() && montoObjetivo > 0) {
                 if (metaDBExistente == null) {
                     val fechaCreacion = System.currentTimeMillis()
-                    val nuevaMetaDB = MetaDB(nombre = nombre, montoObjetivo = montoObjetivo, montoActual = montoActual, fechaCreacion = fechaCreacion)
-                    metaViewModel.insert(nuevaMetaDB)
+                    val montoActual = etMontoActual.text.toString().replace(",", "").replace(".", "").toDoubleOrNull() ?: 0.0
+
+                    val nuevaMetaDB = MetaDB(id = UUID.randomUUID().toString(), nombre = nombre, montoObjetivo = montoObjetivo, montoActual = montoActual, fechaCreacion = fechaCreacion)
+
+                    metaViewModel.insert(nuevaMetaDB, emailsInvitados)
+
                     if (activity != null) ReminderHelper.scheduleWeeklyMetaNotification(requireContext(), nuevaMetaDB.nombre, fechaCreacion)
-                    Toast.makeText(requireContext(), "Meta creada exitosamente", Toast.LENGTH_SHORT).show()
-                } else {
-                    val eraCompletada = metaDBExistente.completada
-                    val esCompletadaAhora = montoActual >= montoObjetivo
-                    val actualizada = metaDBExistente.copy(nombre = nombre, montoObjetivo = montoObjetivo, montoActual = montoActual, completada = esCompletadaAhora)
-                    metaViewModel.update(actualizada)
-                    if (esCompletadaAhora && !eraCompletada) {
-                        if (actualizada.fechaCreacion != null) ReminderHelper.cancelWeeklyMetaNotification(requireContext(), actualizada.nombre, actualizada.fechaCreacion)
-                        Toast.makeText(requireContext(), "¡Meta completada!", Toast.LENGTH_SHORT).show()
+
+                    val invitadosSeparados = emailsInvitados.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+
+                    val toastMessage = if (invitadosSeparados.isNotEmpty()) {
+                        "Meta creada. Invitaciones enviadas a: ${invitadosSeparados.joinToString(", ")}"
+                    } else {
+                        "Meta creada exitosamente."
                     }
+                    Toast.makeText(requireContext(), toastMessage, Toast.LENGTH_LONG).show()
+
+                } else {
+                    val nuevoMontoActual = etMontoActual.text.toString().replace(",", "").replace(".", "").toDoubleOrNull() ?: 0.0
+                    val montoNetoCambio = nuevoMontoActual - originalMontoActual
+
+                    if (Math.abs(montoNetoCambio) > 0.001) {
+                        val tipo = if (montoNetoCambio > 0) "APORTE" else "RETIRO"
+                        val montoAbsoluto = formatoMoneda.format(Math.abs(montoNetoCambio))
+                        val accion = if (montoNetoCambio > 0) "agregó" else "restó"
+
+                        metaViewModel.registrarAporte(metaDBExistente, montoNetoCambio, tipo)
+
+                        Toast.makeText(requireContext(), "${userName} ${accion} ${montoAbsoluto}.", Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(requireContext(), "Meta '${nombre}' actualizada.", Toast.LENGTH_SHORT).show()
+                    }
+
+                    val esCompletadaAhora = nuevoMontoActual >= montoObjetivo
+                    val actualizada = metaDBExistente.copy(
+                        nombre = nombre,
+                        montoObjetivo = montoObjetivo,
+                        completada = esCompletadaAhora,
+                        montoActual = nuevoMontoActual
+                    )
+                    metaViewModel.update(actualizada)
                 }
             }
             dialog.dismiss()
         }
 
-        btnCancel.setOnClickListener {
-            dialog.dismiss()
-        }
+        btnCancel.setOnClickListener { dialog.dismiss() }
     }
 
     override fun onDestroyView() {

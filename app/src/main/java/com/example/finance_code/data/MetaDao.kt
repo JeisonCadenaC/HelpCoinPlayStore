@@ -11,19 +11,15 @@ import androidx.room.Update
 @Dao
 interface MetaDao {
 
-    // Obtener todas las metas (ordenadas: primero las no completadas)
-    @Query("SELECT * FROM metas_table ORDER BY completada ASC, fechaLimite IS NULL, fechaLimite")
-    fun getAllMetas(): LiveData<List<MetaDB>>
+    @Query("SELECT * FROM metas_table WHERE usuarios = '' OR usuarios = '[]' ORDER BY completada ASC, fechaLimite IS NULL, fechaLimite")
+    fun getAllLocalMetas(): LiveData<List<MetaDB>>
 
-    // Insertar una nueva meta
-    @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(metaDB: MetaDB)
 
-    // Actualizar una meta existente
     @Update
     suspend fun update(metaDB: MetaDB)
 
-    // Eliminar una meta
     @Delete
     suspend fun delete(metaDB: MetaDB)
 }

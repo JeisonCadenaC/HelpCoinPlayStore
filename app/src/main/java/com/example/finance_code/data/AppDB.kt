@@ -4,17 +4,19 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 
 @Database(
-    entities = [Movimiento::class, MetaDB::class, Recordatorio::class],
-    version = 4,
+    entities = [Movimiento::class, Recordatorio::class, MetaDB::class],
+    version = 8,
     exportSchema = false
 )
+@TypeConverters(Converters::class)
 abstract class AppDB : RoomDatabase() {
 
     abstract fun movimientoDao(): MovimientoDao
-    abstract fun metaDao(): MetaDao
     abstract fun recordatorioDao(): RecordatorioDao
+    abstract fun metaDao(): MetaDao
 
     companion object {
         @Volatile
@@ -44,7 +46,7 @@ abstract class AppDB : RoomDatabase() {
                     AppDB::class.java,
                     dbName
                 )
-                    .fallbackToDestructiveMigration(true)
+                    .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
                 CURRENT_DB_NAME = dbName

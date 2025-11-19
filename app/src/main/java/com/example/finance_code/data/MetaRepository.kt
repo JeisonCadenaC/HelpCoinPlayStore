@@ -4,7 +4,7 @@ import androidx.lifecycle.LiveData
 
 class MetaRepository(private val metaDao: MetaDao) {
 
-    val allMetas: LiveData<List<MetaDB>> = metaDao.getAllMetas()
+    val allLocalMetas: LiveData<List<MetaDB>> = metaDao.getAllLocalMetas()
 
     suspend fun insert(metaDB: MetaDB) = metaDao.insert(metaDB)
 

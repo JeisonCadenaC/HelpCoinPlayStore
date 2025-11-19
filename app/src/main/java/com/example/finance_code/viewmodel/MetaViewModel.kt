@@ -2,38 +2,214 @@ package com.example.finance_code.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MediatorLiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.example.finance_code.data.AppDB
 import com.example.finance_code.data.MetaDB
+import com.example.finance_code.data.AporteDB
+import com.example.finance_code.data.AppDB
 import com.example.finance_code.data.MetaRepository
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 class MetaViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repository: MetaRepository
-    val allMetas: androidx.lifecycle.LiveData<List<MetaDB>>
-    private val userEmail: String
+    private val db = FirebaseFirestore.getInstance()
+    private val auth = FirebaseAuth.getInstance()
+    private val metaRepository: MetaRepository
+
+    private val liveDataLocalMetas: LiveData<List<MetaDB>>
+    private val liveDataSharedMetas = MutableLiveData<List<MetaDB>>()
+
+    private val _allMetas = MediatorLiveData<List<MetaDB>>()
+    val allMetas: LiveData<List<MetaDB>> = _allMetas
+
+    private var listaInvitaciones = listOf<MetaDB>()
+
+    val userEmail: String get() = auth.currentUser?.email ?: ""
 
     init {
-        userEmail = FirebaseAuth.getInstance().currentUser?.email
-            ?: throw IllegalStateException("ViewModel: Email de usuario no puede ser nulo")
-
         val metaDao = AppDB.getDatabase(application, userEmail).metaDao()
-        repository = MetaRepository(metaDao)
-        allMetas = repository.allMetas
+        metaRepository = MetaRepository(metaDao)
+        liveDataLocalMetas = metaRepository.allLocalMetas
+
+        setupHybridMetas()
+        listenToSharedMetas()
     }
 
-    fun insert(metaDB: MetaDB) = viewModelScope.launch(Dispatchers.IO) {
-        repository.insert(metaDB)
+    private fun setupHybridMetas() {
+        _allMetas.addSource(liveDataLocalMetas) { localMetas ->
+            combineMetas(localMetas, liveDataSharedMetas.value ?: emptyList())
+        }
+        _allMetas.addSource(liveDataSharedMetas) { sharedMetas ->
+            combineMetas(liveDataLocalMetas.value ?: emptyList(), sharedMetas)
+        }
+    }
+
+    private fun combineMetas(local: List<MetaDB>, shared: List<MetaDB>) {
+        val todasLasMetas = (local + shared)
+            .sortedWith(
+                compareBy<MetaDB> { !it.invitaciones.contains(userEmail) }
+                    .thenBy { it.completada }
+            )
+        _allMetas.value = todasLasMetas
+    }
+
+    private fun listenToSharedMetas() {
+        val email = userEmail
+        if (email.isEmpty()) return
+
+        db.collection("metas")
+            .whereArrayContains("usuarios", email)
+            .addSnapshotListener { value, _ ->
+                val activeMetas = value?.toObjects(MetaDB::class.java) ?: emptyList()
+                combineShared(activeMetas, listaInvitaciones)
+            }
+
+        db.collection("metas")
+            .whereArrayContains("invitaciones", email)
+            .addSnapshotListener { value, _ ->
+                listaInvitaciones = value?.toObjects(MetaDB::class.java) ?: emptyList()
+                db.collection("metas")
+                    .whereArrayContains("usuarios", email)
+                    .get()
+                    .addOnSuccessListener { activeSnapshot ->
+                        val activeMetas = activeSnapshot.toObjects(MetaDB::class.java)
+                        combineShared(activeMetas, listaInvitaciones)
+                    }
+            }
+    }
+
+    private fun combineShared(active: List<MetaDB>, invites: List<MetaDB>) {
+        val todasLasMetas = (active + invites)
+            .distinctBy { it.id }
+            .filter { it.usuarios.isNotEmpty() }
+        liveDataSharedMetas.value = todasLasMetas
+    }
+
+    fun getAportesLog(metaId: String): LiveData<List<AporteDB>> {
+        val liveData = MutableLiveData<List<AporteDB>>()
+        db.collection("metas").document(metaId).collection("aportes")
+            .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
+            .addSnapshotListener { value, error ->
+                if (error == null && value != null) {
+                    liveData.value = value.toObjects(AporteDB::class.java)
+                }
+            }
+        return liveData
+    }
+
+    fun insert(metaDB: MetaDB, emailsInvitados: String = "") = viewModelScope.launch(Dispatchers.IO) {
+        val currentUserEmail = userEmail
+
+        val invitadosList = emailsInvitados.split(",")
+            .map { it.trim() }
+            .filter { it.isNotEmpty() && it != currentUserEmail }
+            .distinct()
+
+        if (invitadosList.isEmpty()) {
+            metaRepository.insert(metaDB.copy(usuarios = emptyList(), invitaciones = emptyList()))
+        } else {
+            val listaUsuarios = listOf(currentUserEmail)
+            val nuevaMeta = metaDB.copy(
+                id = UUID.randomUUID().toString(),
+                usuarios = listaUsuarios,
+                invitaciones = invitadosList
+            )
+            db.collection("metas").document(nuevaMeta.id).set(nuevaMeta)
+        }
+    }
+
+    fun registrarAporte(metaDBExistente: MetaDB, montoCambio: Double, tipoOperacion: String) = viewModelScope.launch(Dispatchers.IO) {
+        if (metaDBExistente.usuarios.isEmpty()) {
+            val nuevoMonto = metaDBExistente.montoActual + montoCambio
+            val montoFinal = if (nuevoMonto < 0) 0.0 else nuevoMonto
+            val esCompletadaAhora = montoFinal >= metaDBExistente.montoObjetivo
+            metaRepository.update(metaDBExistente.copy(montoActual = montoFinal, completada = esCompletadaAhora))
+            return@launch
+        }
+
+        val email = userEmail
+        val metaId = metaDBExistente.id
+        if (email.isEmpty() || metaId.isEmpty() || montoCambio == 0.0) return@launch
+
+        val metaRef = db.collection("metas").document(metaId)
+        val aportesRef = metaRef.collection("aportes")
+
+        val nuevoAporte = AporteDB(
+            id = UUID.randomUUID().toString(),
+            metaId = metaId,
+            userId = email,
+            monto = montoCambio,
+            tipo = tipoOperacion
+        )
+
+        db.runTransaction { transaction ->
+            val snapshot = transaction.get(metaRef)
+            val metaDB = snapshot.toObject(MetaDB::class.java)
+
+            if (metaDB != null) {
+                val nuevoMontoActual = metaDB.montoActual + montoCambio
+                val montoFinal = if (nuevoMontoActual < 0) 0.0 else nuevoMontoActual
+
+                val esCompletadaAhora = montoFinal >= metaDB.montoObjetivo
+
+                transaction.update(
+                    metaRef,
+                    mapOf(
+                        "montoActual" to montoFinal,
+                        "completada" to esCompletadaAhora
+                    )
+                )
+                transaction.set(aportesRef.document(nuevoAporte.id), nuevoAporte)
+            }
+            null
+        }
+    }
+
+    fun aceptarInvitacion(metaDB: MetaDB) = viewModelScope.launch(Dispatchers.IO) {
+        val email = userEmail
+        db.collection("metas").document(metaDB.id)
+            .update(
+                mapOf(
+                    "usuarios" to FieldValue.arrayUnion(email),
+                    "invitaciones" to FieldValue.arrayRemove(email)
+                )
+            )
+    }
+
+    fun rechazarInvitacion(metaDB: MetaDB) = viewModelScope.launch(Dispatchers.IO) {
+        val email = userEmail
+        db.collection("metas").document(metaDB.id)
+            .update("invitaciones", FieldValue.arrayRemove(email))
     }
 
     fun update(metaDB: MetaDB) = viewModelScope.launch(Dispatchers.IO) {
-        repository.update(metaDB)
+        if (metaDB.usuarios.isEmpty()) {
+            metaRepository.update(metaDB)
+        } else {
+            db.collection("metas").document(metaDB.id)
+                .update(
+                    mapOf(
+                        "nombre" to metaDB.nombre,
+                        "montoObjetivo" to metaDB.montoObjetivo,
+                        "completada" to metaDB.completada,
+                        "fechaLimite" to metaDB.fechaLimite
+                    )
+                )
+        }
     }
 
     fun delete(metaDB: MetaDB) = viewModelScope.launch(Dispatchers.IO) {
-        repository.delete(metaDB)
+        if (metaDB.usuarios.isEmpty()) {
+            metaRepository.delete(metaDB)
+        } else {
+            db.collection("metas").document(metaDB.id).delete()
+        }
     }
 }

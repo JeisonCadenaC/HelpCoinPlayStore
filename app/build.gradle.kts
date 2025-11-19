@@ -15,7 +15,7 @@ android {
         minSdk = 28
         targetSdk = 36
         versionCode = 2
-        versionName = "1.23"
+        versionName = "1.23.07"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         packaging {
@@ -93,4 +93,5 @@ dependencies {
     implementation(libs.google.api.client.android)
     implementation("androidx.work:work-runtime-ktx:2.9.0")
     implementation("com.google.api-client:google-api-client-android:2.2.0")
+    implementation("com.google.firebase:firebase-firestore")
 }

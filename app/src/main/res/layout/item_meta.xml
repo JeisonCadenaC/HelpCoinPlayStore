@@ -3,105 +3,192 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/cardMeta"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="16dp"
     android:layout_marginVertical="8dp"
     app:cardCornerRadius="16dp"
-    app:cardElevation="2dp"
+    app:cardElevation="4dp"
     app:cardBackgroundColor="?attr/colorSurface"
     app:strokeWidth="0dp"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:layout_height="wrap_content">
 
-        <com.google.android.material.progressindicator.CircularProgressIndicator
-            android:id="@+id/progressMeta"
-            android:layout_width="wrap_content"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/layoutNormal"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:indicatorSize="60dp"
-            app:trackThickness="5dp"
-            app:trackColor="#E0E0E0"
-            app:indicatorColor="?attr/colorPrimary"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            android:max="100"
-            tools:progress="65" />
+            android:padding="16dp"
+            android:visibility="visible">
 
-        <TextView
-            android:id="@+id/tvPorcentaje"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:textColor="?attr/colorOnSurface"
-            app:layout_constraintTop_toTopOf="@id/progressMeta"
-            app:layout_constraintBottom_toBottomOf="@id/progressMeta"
-            app:layout_constraintStart_toStartOf="@id/progressMeta"
-            app:layout_constraintEnd_toEndOf="@id/progressMeta"
-            tools:text="65%" />
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="8dp"
-            app:layout_constraintStart_toEndOf="@id/progressMeta"
-            app:layout_constraintEnd_toStartOf="@id/btnActualizar"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent">
+            <com.google.android.material.progressindicator.CircularProgressIndicator
+                android:id="@+id/progressMeta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:indicatorSize="60dp"
+                app:trackThickness="5dp"
+                app:trackColor="#E0E0E0"
+                app:indicatorColor="?attr/colorPrimary"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:max="100"
+                tools:progress="65" />
 
             <TextView
-                android:id="@+id/tvNombreMeta"
-                android:layout_width="match_parent"
+                android:id="@+id/tvPorcentaje"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                tools:text="Viaje a la playa"
-                android:textSize="16sp"
+                android:textSize="12sp"
                 android:textStyle="bold"
                 android:textColor="?attr/colorOnSurface"
-                android:ellipsize="end"
-                android:maxLines="1" />
+                app:layout_constraintTop_toTopOf="@id/progressMeta"
+                app:layout_constraintBottom_toBottomOf="@id/progressMeta"
+                app:layout_constraintStart_toStartOf="@id/progressMeta"
+                app:layout_constraintEnd_toEndOf="@id/progressMeta"
+                tools:text="65%" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="8dp"
+                app:layout_constraintStart_toEndOf="@id/progressMeta"
+                app:layout_constraintEnd_toStartOf="@id/btnActualizar"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent">
+
+                <TextView
+                    android:id="@+id/tvNombreMeta"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    tools:text="Viaje a la playa"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorOnSurface"
+                    android:ellipsize="end"
+                    android:maxLines="1" />
+
+                <TextView
+                    android:id="@+id/tvMontos"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    tools:text="$200k / $500k"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:textSize="14sp"
+                    android:layout_marginTop="4dp" />
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnActualizar"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:padding="0dp"
+                app:cornerRadius="25dp"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                app:icon="@drawable/ic_add"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconSize="24dp"
+                app:strokeColor="?attr/colorPrimary"
+                app:iconTint="?attr/colorPrimary"
+                app:strokeWidth="2dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:tooltipText="Abonar a meta" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <LinearLayout
+            android:id="@+id/layoutInvitacion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:background="#F5F5F5"
+            android:visibility="gone">
 
             <TextView
-                android:id="@+id/tvMontos"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📩 Invitación Pendiente"
+                android:textSize="12sp"
+                android:textAllCaps="true"
+                android:textStyle="bold"
+                android:textColor="?attr/colorPrimary"/>
+
+            <TextView
+                android:id="@+id/tvInviteTitulo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                tools:text="$200k / $500k"
-                android:textColor="?android:attr/textColorSecondary"
+                tools:text="Viaje a Europa"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginTop="4dp"
+                android:textColor="@android:color/black"/>
+
+            <TextView
+                android:id="@+id/tvInviteRemitente"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                tools:text="Invitado por: jeison@email.com"
                 android:textSize="14sp"
-                android:layout_marginTop="4dp" />
+                android:layout_marginTop="2dp"
+                android:textColor="@android:color/darker_gray"/>
+
+            <TextView
+                android:id="@+id/tvInviteMonto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                tools:text="Meta de: $15.000.000"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginTop="8dp"
+                android:textColor="@android:color/black"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="16dp"
+                android:gravity="end">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnRechazar"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Rechazar"
+                    android:textColor="#D32F2F"
+                    app:strokeColor="#D32F2F"
+                    app:icon="@drawable/ic_close"
+                    app:iconTint="#D32F2F"
+                    android:layout_marginEnd="12dp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAceptar"
+                    style="@style/Widget.MaterialComponents.Button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Aceptar"
+                    app:backgroundTint="#4CAF50"
+                    app:icon="@drawable/ic_check"
+                    app:iconTint="@android:color/white"/>
+            </LinearLayout>
+
         </LinearLayout>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnActualizar"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:padding="0dp"
-            app:cornerRadius="25dp"
-            android:insetLeft="0dp"
-            android:insetTop="0dp"
-            android:insetRight="0dp"
-            android:insetBottom="0dp"
-            app:icon="@drawable/ic_add"
-            app:iconGravity="textStart"
-            app:iconPadding="0dp"
-            app:iconSize="24dp"
-            app:strokeColor="?attr/colorPrimary"
-            app:iconTint="?attr/colorPrimary"
-            app:strokeWidth="2dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            android:tooltipText="Abonar a meta" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
+    </FrameLayout>
 </com.google.android.material.card.MaterialCardView>

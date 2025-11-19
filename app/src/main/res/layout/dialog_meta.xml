@@ -106,6 +106,28 @@
                     android:textStyle="bold"/>
             </com.google.android.material.textfield.TextInputLayout>
 
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/emailCompartidoLayout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="Invitar Colaboradores (Emails)"
+                app:helperText="Separa múltiples correos con comas (ej: cata@e.com, frank@e.com)"
+                app:startIconDrawable="@drawable/ic_perfil"
+                app:hintTextColor="?attr/colorOnSurface"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etEmailCompartido"
+                    android:inputType="textEmailAddress|textMultiLine"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
@@ -209,12 +231,26 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <Button
+                android:id="@+id/btnVerHistorial"
+                style="@style/Widget.MaterialComponents.Button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Ver Historial de Aportes"
+                android:layout_marginTop="16dp"
+                android:textColor="@android:color/white"
+                app:backgroundTint="?attr/colorPrimary"
+                app:icon="@drawable/ic_calendar"
+                app:iconTint="@android:color/white"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <Button
                 android:id="@+id/btnEliminarMeta"
                 style="@style/Widget.MaterialComponents.Button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Eliminar Meta"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="8dp"
                 android:textColor="@android:color/white"
                 android:textStyle="bold"
                 app:icon="@drawable/ic_delete"
