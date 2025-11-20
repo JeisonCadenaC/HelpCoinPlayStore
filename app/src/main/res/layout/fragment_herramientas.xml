@@ -38,7 +38,7 @@
                 android:layout_width="32dp"
                 android:layout_height="32dp"
                 android:src="@drawable/ic_ahorro"
-                app:tint="#6200EE"
+                app:tint="?attr/colorPrimary"
                 android:layout_marginEnd="16dp"
                 android:contentDescription="@string/calculadora_ahorro_title" />
 
@@ -50,6 +50,18 @@
                 android:textSize="16sp"
                 android:fontFamily="@font/montserrat_medium"
                 android:textColor="?attr/colorOnSurface"/>
+
+            <ImageView
+                android:id="@+id/btn_info_ahorro"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="8dp"
+                android:src="@drawable/ic_info"
+                app:tint="?attr/colorOnSurface"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="Información Ahorro"/>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
@@ -74,7 +86,7 @@
                 android:layout_width="32dp"
                 android:layout_height="32dp"
                 android:src="@drawable/ic_prestamo"
-                app:tint="#6200EE"
+                app:tint="?attr/colorPrimary"
                 android:layout_marginEnd="16dp"
                 android:contentDescription="@string/calculadora_prestamo_title" />
 
@@ -86,6 +98,18 @@
                 android:textSize="16sp"
                 android:fontFamily="@font/montserrat_medium"
                 android:textColor="?attr/colorOnSurface"/>
+
+            <ImageView
+                android:id="@+id/btn_info_prestamo"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="8dp"
+                android:src="@drawable/ic_info"
+                app:tint="?attr/colorOnSurface"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="Información Préstamo"/>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
@@ -110,7 +134,7 @@
                 android:layout_width="32dp"
                 android:layout_height="32dp"
                 android:src="@drawable/ic_amortizacion"
-                app:tint="#6200EE"
+                app:tint="?attr/colorPrimary"
                 android:layout_marginEnd="16dp"
                 android:contentDescription="@string/calculadora_amortizacion_title" />
 
@@ -122,6 +146,18 @@
                 android:textSize="16sp"
                 android:fontFamily="@font/montserrat_medium"
                 android:textColor="?attr/colorOnSurface"/>
+
+            <ImageView
+                android:id="@+id/btn_info_amortizacion"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="8dp"
+                android:src="@drawable/ic_info"
+                app:tint="?attr/colorOnSurface"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="Información Amortización"/>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
@@ -146,7 +182,7 @@
                 android:layout_width="32dp"
                 android:layout_height="32dp"
                 android:src="@drawable/ic_presupuesto"
-                app:tint="#6200EE"
+                app:tint="?attr/colorPrimary"
                 android:layout_marginEnd="16dp"
                 android:contentDescription="@string/calculadora_presupuesto_title" />
 
@@ -158,6 +194,18 @@
                 android:textSize="16sp"
                 android:fontFamily="@font/montserrat_medium"
                 android:textColor="?attr/colorOnSurface"/>
+
+            <ImageView
+                android:id="@+id/btn_info_presupuesto"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="8dp"
+                android:src="@drawable/ic_info"
+                app:tint="?attr/colorOnSurface"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="Información Presupuesto"/>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 

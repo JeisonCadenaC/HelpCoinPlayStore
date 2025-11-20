@@ -51,7 +51,7 @@
             android:layout_height="wrap_content"
             android:hint="@string/ingreso_mensual_neto_hint"
             app:startIconDrawable="@drawable/ic_ahorro"
-            app:startIconTint="#6200EE"
+            app:startIconTint="?attr/colorPrimary"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_marginBottom="24dp">
             <com.google.android.material.textfield.TextInputEditText
@@ -73,8 +73,9 @@
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            app:cardBackgroundColor="?attr/colorSurface"
             app:cardCornerRadius="12dp"
-            app:cardElevation="6dp">
+            app:cardElevation="4dp">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -85,48 +86,51 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/necesidades_label"
-                    android:textSize="16sp"
-                    android:textColor="?attr/colorOnSurface"/>
+                    android:textSize="14sp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:alpha="0.7"/>
                 <TextView
                     android:id="@+id/tv_resultado_necesidades"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="$0"
-                    android:textSize="24sp"
+                    android:textSize="20sp"
                     android:textStyle="bold"
-                    android:textColor="#6200EE"
+                    android:textColor="?attr/colorOnSurface"
                     android:layout_marginBottom="16dp"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/deseos_label"
-                    android:textSize="16sp"
-                    android:textColor="?attr/colorOnSurface"/>
+                    android:textSize="14sp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:alpha="0.7"/>
                 <TextView
                     android:id="@+id/tv_resultado_deseos"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="$0"
-                    android:textSize="24sp"
+                    android:textSize="20sp"
                     android:textStyle="bold"
-                    android:textColor="#6200EE"
+                    android:textColor="?attr/colorOnSurface"
                     android:layout_marginBottom="16dp"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/ahorro_deuda_label"
-                    android:textSize="16sp"
-                    android:textColor="?attr/colorOnSurface"/>
+                    android:textSize="14sp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:alpha="0.7"/>
                 <TextView
                     android:id="@+id/tv_resultado_ahorro_deuda"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="$0"
-                    android:textSize="24sp"
+                    android:textSize="20sp"
                     android:textStyle="bold"
-                    android:textColor="#6200EE"/>
+                    android:textColor="?attr/colorOnSurface"/>
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

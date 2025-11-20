@@ -51,7 +51,7 @@
             android:layout_height="wrap_content"
             android:hint="@string/monto_prestamo_hint"
             app:startIconDrawable="@drawable/ic_prestamo"
-            app:startIconTint="#6200EE"
+            app:startIconTint="?attr/colorPrimary"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_marginBottom="12dp">
             <com.google.android.material.textfield.TextInputEditText
@@ -69,7 +69,7 @@
             android:hint="@string/tasa_mensual_hint"
             app:suffixText="%"
             app:startIconDrawable="@drawable/ic_tag"
-            app:startIconTint="#6200EE"
+            app:startIconTint="?attr/colorPrimary"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_marginBottom="12dp">
             <com.google.android.material.textfield.TextInputEditText
@@ -86,7 +86,7 @@
             android:layout_height="wrap_content"
             android:hint="@string/plazo_meses_hint"
             app:startIconDrawable="@drawable/ic_calendar"
-            app:startIconTint="#6200EE"
+            app:startIconTint="?attr/colorPrimary"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_marginBottom="12dp">
             <com.google.android.material.textfield.TextInputEditText
@@ -103,7 +103,7 @@
             android:layout_height="wrap_content"
             android:hint="@string/monto_extra_mensual_hint"
             app:startIconDrawable="@drawable/ic_add"
-            app:startIconTint="#6200EE"
+            app:startIconTint="?attr/colorPrimary"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_marginBottom="24dp">
             <com.google.android.material.textfield.TextInputEditText
@@ -113,7 +113,6 @@
                 android:inputType="numberDecimal"
                 android:text="100000"/>
         </com.google.android.material.textfield.TextInputLayout>
-
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_calcular_pago_rapido"
@@ -126,8 +125,9 @@
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            app:cardBackgroundColor="?attr/colorSurface"
             app:cardCornerRadius="12dp"
-            app:cardElevation="6dp">
+            app:cardElevation="4dp">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -138,32 +138,34 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/ahorro_intereses_label"
-                    android:textSize="16sp"
-                    android:textColor="?attr/colorOnSurface"/>
+                    android:textSize="14sp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:alpha="0.7"/>
                 <TextView
                     android:id="@+id/tv_ahorro_intereses_total"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="$0"
-                    android:textSize="24sp"
+                    android:textSize="20sp"
                     android:textStyle="bold"
-                    android:textColor="#6200EE"
+                    android:textColor="?attr/colorOnSurface"
                     android:layout_marginBottom="16dp"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/reduccion_plazo_label"
-                    android:textSize="16sp"
-                    android:textColor="?attr/colorOnSurface"/>
+                    android:textSize="14sp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:alpha="0.7"/>
                 <TextView
                     android:id="@+id/tv_reduccion_plazo_total"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="0 meses (0.0 años) ahorrados"
-                    android:textSize="18sp"
+                    android:text="0 meses (0.0 años)"
+                    android:textSize="20sp"
                     android:textStyle="bold"
-                    android:textColor="#6200EE"/>
+                    android:textColor="?attr/colorOnSurface"/>
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

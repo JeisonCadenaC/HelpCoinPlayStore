@@ -51,7 +51,7 @@
             android:layout_height="wrap_content"
             android:hint="@string/monto_prestamo_hint"
             app:startIconDrawable="@drawable/ic_prestamo"
-            app:startIconTint="#6200EE"
+            app:startIconTint="?attr/colorPrimary"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_marginBottom="12dp">
             <com.google.android.material.textfield.TextInputEditText
@@ -69,7 +69,7 @@
             android:hint="@string/tasa_mensual_hint"
             app:suffixText="%"
             app:startIconDrawable="@drawable/ic_tag"
-            app:startIconTint="#6200EE"
+            app:startIconTint="?attr/colorPrimary"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_marginBottom="12dp">
             <com.google.android.material.textfield.TextInputEditText
@@ -86,7 +86,7 @@
             android:layout_height="wrap_content"
             android:hint="@string/plazo_meses_hint"
             app:startIconDrawable="@drawable/ic_calendar"
-            app:startIconTint="#6200EE"
+            app:startIconTint="?attr/colorPrimary"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_marginBottom="12dp">
             <com.google.android.material.textfield.TextInputEditText
@@ -103,7 +103,7 @@
             android:layout_height="wrap_content"
             android:hint="@string/cuota_manejo_hint"
             app:startIconDrawable="@drawable/ic_tag"
-            app:startIconTint="#6200EE"
+            app:startIconTint="?attr/colorPrimary"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_marginBottom="24dp">
             <com.google.android.material.textfield.TextInputEditText
@@ -125,8 +125,9 @@
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            app:cardBackgroundColor="?attr/colorSurface"
             app:cardCornerRadius="12dp"
-            app:cardElevation="6dp">
+            app:cardElevation="4dp">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -137,25 +138,28 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/resultado_pmt"
-                    android:textStyle="bold"
-                    android:textSize="16sp"
-                    android:textColor="?attr/colorOnSurface"/>
+                    android:textStyle="normal"
+                    android:textSize="14sp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:alpha="0.7"/>
                 <TextView
                     android:id="@+id/tv_cuota_total"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="$0"
-                    android:textSize="28sp"
-                    android:textColor="#6200EE"
-                    android:layout_marginTop="8dp"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorOnSurface"
+                    android:layout_marginTop="4dp"
                     android:layout_marginBottom="24dp"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/total_intereses_pagados"
-                    android:textSize="16sp"
-                    android:textColor="?attr/colorOnSurface"/>
+                    android:textSize="14sp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:alpha="0.7"/>
                 <TextView
                     android:id="@+id/tv_total_intereses"
                     android:layout_width="wrap_content"
@@ -163,31 +167,33 @@
                     android:text="$0"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    android:textColor="#6200EE"
+                    android:textColor="?attr/colorOnSurface"
                     android:layout_marginBottom="16dp"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/total_pagado_final"
-                    android:textSize="16sp"
-                    android:textColor="?attr/colorOnSurface"/>
+                    android:textSize="14sp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:alpha="0.7"/>
                 <TextView
                     android:id="@+id/tv_pago_total_final"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="$0"
-                    android:textSize="20sp"
+                    android:textSize="18sp"
                     android:textStyle="bold"
-                    android:textColor="#6200EE"
-                    android:layout_marginBottom="24dp"/>
+                    android:textColor="?attr/colorOnSurface"
+                    android:layout_marginBottom="16dp"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Interés estimado 1er mes:"
                     android:textSize="14sp"
-                    android:textColor="?attr/colorOnSurface"/>
+                    android:textColor="?attr/colorOnSurface"
+                    android:alpha="0.7"/>
                 <TextView
                     android:id="@+id/tv_interes_estimado"
                     android:layout_width="wrap_content"
@@ -195,7 +201,7 @@
                     android:text="$0"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    android:textColor="#6200EE"/>
+                    android:textColor="?attr/colorOnSurface"/>
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

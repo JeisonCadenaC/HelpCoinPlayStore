@@ -56,4 +56,17 @@
     <string name="total_intereses_pagados">Total de Intereses Pagados:</string>
     <string name="total_pagado_final">Pago Total Final (Capital + Intereses + Cuotas):</string>
 
+    <string name="info_ahorro_titulo">Calculadora de Ahorro</string>
+    <string name="info_prestamo_titulo">Calculadora de Préstamo</string>
+    <string name="info_amortizacion_titulo">Pago Rápido de Deuda</string>
+    <string name="info_presupuesto_titulo">Regla 50/30/20</string>
+
+    <string name="info_ahorro_mensaje">Esta herramienta te ayuda a proyectar cuánto dinero tendrás en el futuro.\n\n<b>¿Cómo se usa?</b>\nIngresa tu capital inicial, cuánto planeas ahorrar mensualmente, la tasa de interés anual estimada y el tiempo. La app calculará el valor futuro de tu inversión.</string>
+
+    <string name="info_prestamo_mensaje">Calcula el valor de la cuota mensual de un crédito.\n\n<b>¿Cómo se usa?</b>\nIntroduce el monto del préstamo, la tasa de interés mensual y el plazo en meses. Podrás ver cuánto pagarás de cuota y el total de intereses al final del crédito.</string>
+
+    <string name="info_amortizacion_mensaje">Descubre cuánto tiempo e intereses puedes ahorrar si haces abonos extra a tus deudas.\n\n<b>¿Cómo se usa?</b>\nIngresa los datos de tu deuda actual y un "Abono Extra Mensual" que podrías pagar. La app te dirá cuántos meses antes terminarás de pagar.</string>
+
+    <string name="info_presupuesto_mensaje">Una guía para distribuir tus ingresos basada en la regla 50/30/20.\n\n<b>¿Cómo se usa?</b>\nSolo ingresa tu ingreso mensual neto. La app te sugerirá cuánto destinar a:\n• 50% Necesidades básicas\n• 30% Deseos o gustos\n• 20% Ahorro o deudas.</string>
+
 </resources>
