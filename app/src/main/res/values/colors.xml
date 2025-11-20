@@ -47,4 +47,7 @@
     <color name="card_text_primary">#212121</color>
     <color name="card_text_secondary">#616161</color>
     <color name="card_logo_tint">#424242</color>
+
+    <color name="transaction_expense">#D32F2F</color> <color name="transaction_income">#388E3C</color>  <color name="transaction_expense_pastel">#FFEBEE</color> <color name="transaction_income_pastel">#E8F5E9</color>  <color name="stroke_inactive">#E0E0E0</color>
+    <color name="icon_inactive">#757575</color>
 </resources>
