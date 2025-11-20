@@ -1,24 +1,59 @@
 <resources>
     <string name="app_name">Help Coin</string>
-    <string name="logo_description">Logo</string>
-    <string name="email_hint">Email</string>
+
+    <string name="title_inicio">Inicio</string>
+    <string name="title_movimientos">Movimientos</string>
+    <string name="title_metas">Metas</string>
+    <string name="title_calendario">Calendario</string>
+    <string name="title_perfil">Perfil</string>
+
+    <string name="login_success_text">Inicio de sesión exitoso</string>
+    <string name="theme_toggle_description">Cambiar tema</string>
+    <string name="logo_description">Logo de la aplicación</string>
+    <string name="email_hint">Correo electrónico</string>
     <string name="password_hint">Contraseña</string>
+    <string name="accept_terms_and_conditions">Acepto términos y condiciones</string>
     <string name="login_button_text">Iniciar Sesión</string>
     <string name="register_button_text">Registrarse</string>
-    <string name="facebook_button_description">Botón Facebook</string>
-    <string name="google_button_description">Botón Google</string>
-    <string name="social_button_description">Botón Red Social</string>
-    <string name="login_success_text">¡FUNCIONA EL LOGIN!</string>
+    <string name="google_button_description">Iniciar con Google</string>
+    <string name="error_accept_terms">Debes aceptar los términos y condiciones.</string>
 
-    <string name="default_web_client_id">
-        548171447107-tadj0thvoc3cf4hf0jad3lv7m554jun9.apps.googleusercontent.com
-    </string>
-    <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="theme_toggle_description">Botón para alternar tema oscuro y claro</string>
-    <string name="accept_terms_and_conditions">Acepto los <a href="http://helpcoinuan.site/TyC">Términos y Condiciones</a></string>
-    <string name="error_accept_terms">Debe aceptar los Términos y Condiciones para continuar.</string>
-    <string name="saldo_actual_placeholder">Saldo Actual: $ --</string>
-    <string name="nuevo_gasto">Gasto</string>
-    <string name="nuevo_ingreso">Ingreso</string>
+    <string name="saldo_actual_placeholder">Saldo Actual</string>
+    <string name="nuevo_gasto">Nuevo Gasto</string>
+    <string name="nuevo_ingreso">Nuevo Ingreso</string>
+
+    <string name="title_herramientas">Herramientas</string>
+
+    <string name="calculadora_ahorro_title">Calculadora de Ahorro</string>
+    <string name="calculadora_prestamo_title">Calculadora de Préstamo</string>
+    <string name="calculadora_amortizacion_title">Calculadora de Pago Rápido de Préstamo</string>
+    <string name="calculadora_presupuesto_title">Guía de Presupuesto</string>
+
+    <string name="calcular_btn">Calcular</string>
+    <string name="tasa_anual_hint">Tasa Anual (%)</string>
+    <string name="tasa_mensual_hint">Tasa Mensual (%)</string>
+    <string name="plazo_meses_hint">Plazo (Meses)</string>
+    <string name="cuota_manejo_hint">Cuota de Manejo</string>
+
+    <string name="capital_inicial_hint">Capital Inicial</string>
+    <string name="aporte_mensual_hint">Aporte Mensual</string>
+    <string name="periodo_anos_hint">Años</string>
+    <string name="resultado_fv">Valor Futuro:</string>
+
+    <string name="monto_prestamo_hint">Monto Préstamo</string>
+    <string name="resultado_pmt">Cuota Mensual:</string>
+
+    <string name="monto_extra_mensual_hint">Abono Extra Mensual</string>
+    <string name="ahorro_intereses_label">Ahorro en Intereses:</string>
+    <string name="reduccion_plazo_label">Tiempo Ahorrado:</string>
+    <string name="meses_ahorrados">%d meses ahorrados</string>
+
+    <string name="ingreso_mensual_neto_hint">Ingreso Neto</string>
+    <string name="distribuir_btn">Calcular</string>
+    <string name="necesidades_label">Necesidades (50%)</string>
+    <string name="deseos_label">Deseos (30%)</string>
+    <string name="ahorro_deuda_label">Ahorro (20%)</string>
+    <string name="total_intereses_pagados">Total de Intereses Pagados:</string>
+    <string name="total_pagado_final">Pago Total Final (Capital + Intereses + Cuotas):</string>
 
 </resources>

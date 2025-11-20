@@ -8,43 +8,88 @@
     <fragment
         android:id="@+id/inicioFragment"
         android:name="com.example.finance_code.ui.home.InicioFragment"
-        android:label="Inicio"
-        tools:layout="@layout/fragment_inicio" >
+        android:label="@string/title_inicio"
+        tools:layout="@layout/fragment_inicio">
         <action
             android:id="@+id/action_inicioFragment_to_calendarioFragment"
             app:destination="@id/calendarioFragment" />
     </fragment>
 
     <fragment
+        android:id="@+id/movimientosFragment"
+        android:name="com.example.finance_code.ui.home.MovimientosFragment"
+        android:label="@string/title_movimientos"
+        tools:layout="@layout/fragment_movimientos">
+        <action
+            android:id="@+id/action_movimientosFragment_to_eTransactionFragment"
+            app:destination="@id/eTransactionFragment" />
+    </fragment>
+
+    <fragment
         android:id="@+id/metasFragment"
         android:name="com.example.finance_code.ui.home.MetasFragment"
-        android:label="Metas"
+        android:label="@string/title_metas"
         tools:layout="@layout/fragment_metas" />
 
     <fragment
-        android:id="@+id/movimientosFragment"
-        android:name="com.example.finance_code.ui.home.MovimientosFragment"
-        android:label="Movimientos"
-        tools:layout="@layout/fragment_movimientos"><action
-        android:id="@+id/action_movimientosFragment_to_eTransactionFragment"
-        app:destination="@id/eTransactionFragment" />
-    </fragment>
-
+        android:id="@+id/calendarioFragment"
+        android:name="com.example.finance_code.ui.home.calendarioFragment"
+        android:label="@string/title_calendario"
+        tools:layout="@layout/fragment_calendario" />
 
     <fragment
         android:id="@+id/perfilFragment"
         android:name="com.example.finance_code.ui.home.PerfilFragment"
-        android:label="Perfil"
+        android:label="@string/title_perfil"
         tools:layout="@layout/fragment_perfil" />
+
     <fragment
         android:id="@+id/eTransactionFragment"
         android:name="com.example.finance_code.ui.transaction.ETransactionFragment"
-        android:label="Editar Movimiento"
+        android:label="Transacción"
         tools:layout="@layout/fragment_e_transaction" />
-    <fragment
-        android:id="@+id/calendarioFragment"
-        android:name="com.example.finance_code.ui.home.CalendarioFragment"
-        android:label="Calendario"
-        tools:layout="@layout/fragment_calendario" />
 
+    <fragment
+        android:id="@+id/calculadoraAhorroFragment"
+        android:name="com.example.finance_code.ui.home.CalculadoraAhorroFragment"
+        android:label="@string/calculadora_ahorro_title"
+        tools:layout="@layout/fragment_calculadora_ahorro" />
+
+    <fragment
+        android:id="@+id/calculadoraPrestamoFragment"
+        android:name="com.example.finance_code.ui.home.CalculadoraPrestamoFragment"
+        android:label="@string/calculadora_prestamo_title"
+        tools:layout="@layout/fragment_calculadora_prestamo" />
+
+    <fragment
+        android:id="@+id/calculadoraAmortizacionFragment"
+        android:name="com.example.finance_code.ui.home.CalculadoraAmortizacionFragment"
+        android:label="@string/calculadora_amortizacion_title"
+        tools:layout="@layout/fragment_calculadora_amortizacion" />
+
+    <fragment
+        android:id="@+id/calculadoraPresupuestoFragment"
+        android:name="com.example.finance_code.ui.home.CalculadoraPresupuestoFragment"
+        android:label="@string/calculadora_presupuesto_title"
+        tools:layout="@layout/fragment_calculadora_presupuesto" />
+
+    <fragment
+        android:id="@+id/herramientasFragment"
+        android:name="com.example.finance_code.ui.home.HerramientasFragment"
+        android:label="@string/title_herramientas"
+        tools:layout="@layout/fragment_herramientas">
+
+        <action
+            android:id="@+id/action_herramientasFragment_to_calculadoraAhorroFragment"
+            app:destination="@id/calculadoraAhorroFragment" />
+        <action
+            android:id="@+id/action_herramientasFragment_to_calculadoraPrestamoFragment"
+            app:destination="@id/calculadoraPrestamoFragment" />
+        <action
+            android:id="@+id/action_herramientasFragment_to_pagoRapidoPrestamo"
+            app:destination="@id/calculadoraAmortizacionFragment" />
+        <action
+            android:id="@+id/action_herramientasFragment_to_calculadoraPresupuestoFragment"
+            app:destination="@id/calculadoraPresupuestoFragment" />
+    </fragment>
 </navigation>

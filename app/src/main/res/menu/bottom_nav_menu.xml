@@ -14,6 +14,10 @@
         android:icon="@drawable/ic_metas"
         android:title="Metas" />
     <item
+        android:id="@+id/herramientasFragment"
+        android:icon="@drawable/ic_rocket"
+        android:title="@string/title_herramientas" />
+    <item
         android:id="@+id/perfilFragment"
         android:icon="@drawable/ic_perfil"
         android:title="Perfil" />
