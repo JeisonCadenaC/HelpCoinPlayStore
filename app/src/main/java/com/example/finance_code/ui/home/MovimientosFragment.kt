@@ -3,9 +3,15 @@ package com.example.finance_code.ui.home
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
+import android.hardware.Sensor
+import android.hardware.SensorManager
+import android.os.Build
 import android.os.Bundle
-import android.view.View
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.view.LayoutInflater
+import android.view.View
+import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
@@ -23,8 +29,14 @@ import com.example.finance_code.viewmodel.MovimientoViewModel
 import com.example.finance_code.viewmodel.MovimientoViewModelFactory
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
+import com.example.finance_code.DiscreetModeManager
+import com.example.finance_code.ShakeDetector
 import java.text.NumberFormat
 import java.util.Locale
+import androidx.core.content.ContextCompat
+
+import com.example.finance_code.ui.home.MovimientosAdapter
+
 
 class MovimientosFragment : Fragment(R.layout.fragment_movimientos) {
 
@@ -35,11 +47,17 @@ class MovimientosFragment : Fragment(R.layout.fragment_movimientos) {
     private var currentBalance = 0.0
     private var currentUserName: String = "USUARIO"
 
-    private val PREFS_NAME = "MovimientosFragmentPrefs"
-    private val SHAKE_DIALOG_SHOWN_KEY = "shake_dialog_shown"
+    private var sensorManager: SensorManager? = null
+    private var accelerometer: Sensor? = null
+    private lateinit var shakeDetector: ShakeDetector
+
+    private val PREFS_FILE = "DiscreetModePrefs"
+    private val HAS_SEEN_INFO_KEY = "has_seen_discreet_info"
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        DiscreetModeManager.initialize(requireContext().applicationContext)
 
         val user = FirebaseAuth.getInstance().currentUser
         val userEmail = user?.email
@@ -81,8 +99,10 @@ class MovimientosFragment : Fragment(R.layout.fragment_movimientos) {
 
         btnHideBalance.setOnClickListener {
             isBalanceVisible = !isBalanceVisible
-            updateBalanceDisplay(tvSaldoTotal, tvUserName, btnHideBalance)
+            updateAllUI(tvSaldoTotal, tvUserName, btnHideBalance)
         }
+
+        setupSensors()
 
         adapter = MovimientosAdapter(emptyList())
         recyclerView.adapter = adapter
@@ -92,20 +112,75 @@ class MovimientosFragment : Fragment(R.layout.fragment_movimientos) {
             mostrarMenuOpciones(movimiento)
         }
 
+        DiscreetModeManager.modeChangeListener = {
+            updateAllUI(tvSaldoTotal, tvUserName, btnHideBalance)
+        }
+
+        updateAllUI(tvSaldoTotal, tvUserName, btnHideBalance)
+
         viewModel.movimientos.observe(viewLifecycleOwner) { lista ->
             adapter.setData(lista)
+            updateAllUI(tvSaldoTotal, tvUserName, btnHideBalance)
         }
 
         viewModel.saldoTotal.observe(viewLifecycleOwner) { saldo ->
             currentBalance = saldo ?: 0.0
-            updateBalanceDisplay(tvSaldoTotal, tvUserName, btnHideBalance)
+            updateAllUI(tvSaldoTotal, tvUserName, btnHideBalance)
         }
 
-        mostrarDialogoModoDiscreto()
+        showDiscreetModeInfo()
     }
 
-    private fun updateBalanceDisplay(tvSaldo: TextView, tvName: TextView, btnIcon: ImageButton) {
-        if (isBalanceVisible) {
+    private fun showDiscreetModeInfo() {
+        val prefs = requireActivity().getSharedPreferences(PREFS_FILE, Context.MODE_PRIVATE)
+        val hasSeenInfo = prefs.getBoolean(HAS_SEEN_INFO_KEY, false)
+
+        if (!hasSeenInfo) {
+            val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_modo_discreto, null)
+            val btnEntendido = dialogView.findViewById<Button>(R.id.btnEntendido)
+
+            val dialog = AlertDialog.Builder(requireContext())
+                .setView(dialogView)
+                .setCancelable(false)
+                .create()
+
+            btnEntendido.setOnClickListener {
+                prefs.edit().putBoolean(HAS_SEEN_INFO_KEY, true).apply()
+                dialog.dismiss()
+            }
+
+            dialog.show()
+        }
+    }
+
+    private fun setupSensors() {
+        sensorManager = requireContext().getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        accelerometer = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+
+        val vibrator = ContextCompat.getSystemService(requireContext(), Vibrator::class.java)
+
+        shakeDetector = ShakeDetector {
+            DiscreetModeManager.toggleMode()
+
+            if (vibrator != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE))
+                } else {
+                    vibrator.vibrate(100)
+                }
+            }
+
+            val mensaje = if (DiscreetModeManager.isDiscreetModeActive) "Modo Discreto Activado" else "Modo Visible Activado"
+            Toast.makeText(requireContext(), mensaje, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun updateAllUI(tvSaldo: TextView, tvName: TextView, btnIcon: ImageButton) {
+        val isGlobalDiscreet = DiscreetModeManager.isDiscreetModeActive
+
+        val shouldCensorCard = isGlobalDiscreet || !isBalanceVisible
+
+        if (!shouldCensorCard) {
             val format = NumberFormat.getCurrencyInstance(Locale.getDefault())
             format.maximumFractionDigits = 0
             tvSaldo.text = format.format(currentBalance)
@@ -116,6 +191,30 @@ class MovimientosFragment : Fragment(R.layout.fragment_movimientos) {
             tvName.text = "••••••"
             btnIcon.setImageResource(R.drawable.ic_visibility_off)
         }
+
+        adapter.updateDiscreetMode()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        accelerometer?.also { accel ->
+            sensorManager?.registerListener(shakeDetector, accel, SensorManager.SENSOR_DELAY_UI)
+        }
+
+        val tvSaldoTotal = requireView().findViewById<TextView>(R.id.tvSaldoTotal)
+        val tvUserName = requireView().findViewById<TextView>(R.id.tvUserName)
+        val btnHideBalance = requireView().findViewById<ImageButton>(R.id.btnHideBalance)
+
+        DiscreetModeManager.modeChangeListener = {
+            updateAllUI(tvSaldoTotal, tvUserName, btnHideBalance)
+        }
+        updateAllUI(tvSaldoTotal, tvUserName, btnHideBalance)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        sensorManager?.unregisterListener(shakeDetector)
+        DiscreetModeManager.modeChangeListener = null
     }
 
     private fun mostrarMenuOpciones(movimiento: Movimiento) {
@@ -145,25 +244,5 @@ class MovimientosFragment : Fragment(R.layout.fragment_movimientos) {
     private fun eliminarMovimiento(movimiento: Movimiento) {
         viewModel.eliminar(movimiento)
         Toast.makeText(requireContext(), "Movimiento eliminado", Toast.LENGTH_SHORT).show()
-    }
-
-    private fun mostrarDialogoModoDiscreto() {
-        val prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val dialogShown = prefs.getBoolean(SHAKE_DIALOG_SHOWN_KEY, false)
-
-        if (!dialogShown) {
-            val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_modo_discreto, null)
-            val builder = AlertDialog.Builder(requireContext())
-            builder.setView(view)
-            val dialog = builder.create()
-
-            val btnEntendido = view.findViewById<android.widget.Button>(R.id.btnEntendido)
-            btnEntendido.setOnClickListener {
-                dialog.dismiss()
-                prefs.edit().putBoolean(SHAKE_DIALOG_SHOWN_KEY, true).apply()
-            }
-
-            dialog.show()
-        }
     }
 }
