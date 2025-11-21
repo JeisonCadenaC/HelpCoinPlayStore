@@ -82,6 +82,10 @@ class DriveService(
                 savePrefsToJson(context, "AppPrefe", appPrefsFile)
                 addFileToZip(zipOutputStream, appPrefsFile, "app_prefs.json")
 
+                val loginPrefsFile = java.io.File(context.cacheDir, "login_prefs.json")
+                savePrefsToJson(context, "LoginPrefs", loginPrefsFile)
+                addFileToZip(zipOutputStream, loginPrefsFile, "login_prefs.json")
+
                 zipOutputStream.close()
 
                 val matchingFiles = findBackupFiles()
@@ -109,6 +113,7 @@ class DriveService(
                 if(zipFile.exists()) zipFile.delete()
                 if(userPrefsFile.exists()) userPrefsFile.delete()
                 if(appPrefsFile.exists()) appPrefsFile.delete()
+                if(loginPrefsFile.exists()) loginPrefsFile.delete()
 
                 fileIdToReturn
             } catch (e: Exception) {
@@ -162,6 +167,7 @@ class DriveService(
 
                 restorePrefsFromJson(context, "${userUid}_UserProfilePrefs", java.io.File(tempDir, "user_prefs.json"))
                 restorePrefsFromJson(context, "AppPrefe", java.io.File(tempDir, "app_prefs.json"))
+                restorePrefsFromJson(context, "LoginPrefs", java.io.File(tempDir, "login_prefs.json"))
 
                 if (destImgFile.exists()) {
                     val prefs = context.getSharedPreferences("${userUid}_UserProfilePrefs", Context.MODE_PRIVATE)
