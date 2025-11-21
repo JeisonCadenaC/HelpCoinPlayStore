@@ -33,7 +33,7 @@
 
     <fragment
         android:id="@+id/calendarioFragment"
-        android:name="com.example.finance_code.ui.home.calendarioFragment"
+        android:name="com.example.finance_code.ui.home.CalendarioFragment"
         android:label="@string/title_calendario"
         tools:layout="@layout/fragment_calendario" />
 

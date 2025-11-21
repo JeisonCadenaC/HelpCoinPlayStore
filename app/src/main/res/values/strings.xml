@@ -12,7 +12,7 @@
     <string name="logo_description">Logo de la aplicación</string>
     <string name="email_hint">Correo electrónico</string>
     <string name="password_hint">Contraseña</string>
-    <string name="accept_terms_and_conditions">Acepto términos y condiciones</string>
+    <string name="accept_terms_and_conditions">Acepto <a href="https://helpcoinuan.site/tyc">términos y condiciones</a></string>
     <string name="login_button_text">Iniciar Sesión</string>
     <string name="register_button_text">Registrarse</string>
     <string name="google_button_description">Iniciar con Google</string>
