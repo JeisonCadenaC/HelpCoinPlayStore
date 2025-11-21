@@ -89,6 +89,7 @@ class MovimientosFragment : Fragment(R.layout.fragment_movimientos) {
         val tvUserName = view.findViewById<TextView>(R.id.tvUserName)
         val btnHideBalance = view.findViewById<ImageButton>(R.id.btnHideBalance)
         val fabAdd = view.findViewById<FloatingActionButton>(R.id.fabAddTransaction)
+        val btnDiscreetModeManual = view.findViewById<ImageButton>(R.id.btnDiscreetModeManual)
 
         tvUserName.text = currentUserName
 
@@ -100,6 +101,12 @@ class MovimientosFragment : Fragment(R.layout.fragment_movimientos) {
         btnHideBalance.setOnClickListener {
             isBalanceVisible = !isBalanceVisible
             updateAllUI(tvSaldoTotal, tvUserName, btnHideBalance)
+        }
+
+        btnDiscreetModeManual.setOnClickListener {
+            DiscreetModeManager.toggleMode()
+            val message = if (DiscreetModeManager.isDiscreetModeActive) "Modo Discreto Activado" else "Modo Visible Activado"
+            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
         }
 
         setupSensors()
@@ -114,9 +121,11 @@ class MovimientosFragment : Fragment(R.layout.fragment_movimientos) {
 
         DiscreetModeManager.modeChangeListener = {
             updateAllUI(tvSaldoTotal, tvUserName, btnHideBalance)
+            updateDiscreetModeButtonIcon(btnDiscreetModeManual)
         }
 
         updateAllUI(tvSaldoTotal, tvUserName, btnHideBalance)
+        updateDiscreetModeButtonIcon(btnDiscreetModeManual)
 
         viewModel.movimientos.observe(viewLifecycleOwner) { lista ->
             adapter.setData(lista)
@@ -195,6 +204,14 @@ class MovimientosFragment : Fragment(R.layout.fragment_movimientos) {
         adapter.updateDiscreetMode()
     }
 
+    private fun updateDiscreetModeButtonIcon(btnIcon: ImageButton) {
+        val drawableRes = if (DiscreetModeManager.isDiscreetModeActive)
+            R.drawable.ic_visibility_off
+        else
+            R.drawable.ic_visibility
+        btnIcon.setImageResource(drawableRes)
+    }
+
     override fun onResume() {
         super.onResume()
         accelerometer?.also { accel ->
@@ -204,11 +221,14 @@ class MovimientosFragment : Fragment(R.layout.fragment_movimientos) {
         val tvSaldoTotal = requireView().findViewById<TextView>(R.id.tvSaldoTotal)
         val tvUserName = requireView().findViewById<TextView>(R.id.tvUserName)
         val btnHideBalance = requireView().findViewById<ImageButton>(R.id.btnHideBalance)
+        val btnDiscreetModeManual = requireView().findViewById<ImageButton>(R.id.btnDiscreetModeManual)
 
         DiscreetModeManager.modeChangeListener = {
             updateAllUI(tvSaldoTotal, tvUserName, btnHideBalance)
+            updateDiscreetModeButtonIcon(btnDiscreetModeManual)
         }
         updateAllUI(tvSaldoTotal, tvUserName, btnHideBalance)
+        updateDiscreetModeButtonIcon(btnDiscreetModeManual)
     }
 
     override fun onPause() {

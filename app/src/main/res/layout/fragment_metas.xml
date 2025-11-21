@@ -17,9 +17,22 @@
         android:textStyle="bold"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-
+        app:layout_constraintEnd_toStartOf="@+id/btnDiscreetModeManual"
         android:textColor="?attr/colorOnBackground" />
+
+    <ImageButton
+        android:id="@+id/btnDiscreetModeManual"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@drawable/ic_visibility_off"
+        android:background="?selectableItemBackgroundBorderless"
+        android:padding="8dp"
+        android:scaleType="fitCenter"
+        app:tint="?attr/colorControlNormal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/tvTituloMetas"
+        app:layout_constraintBottom_toBottomOf="@id/tvTituloMetas"
+        android:contentDescription="Toggle Modo Discreto" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvMetas"

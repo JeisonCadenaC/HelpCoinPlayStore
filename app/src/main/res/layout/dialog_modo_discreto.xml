@@ -9,7 +9,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Modo Discreto (Shake to Hide)"
+        android:text="Modo Discreto (Shake &amp; Botón Manual)"
         android:textSize="20sp"
         android:textStyle="bold"
         android:textColor="@color/purple_500" />
@@ -35,9 +35,24 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Para activarlo o desactivarlo, simplemente: ¡Agita tu teléfono!"
+        android:text="El Modo Discreto se activa/desactiva de dos formas:"
         android:textSize="16sp"
         android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginStart="8dp"
+        android:text="• Agitando el teléfono."
+        android:textSize="16sp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="• Presionando el ícono del 'ojo' en la esquina superior de las pantallas Movimientos y Metas."
+        android:textSize="16sp" />
 
     <Button
         android:id="@+id/btnEntendido"

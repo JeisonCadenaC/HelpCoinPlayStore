@@ -111,12 +111,20 @@ class MetasFragment : Fragment() {
             mostrarDialogoMeta(null)
         }
 
+        binding.btnDiscreetModeManual.setOnClickListener {
+            DiscreetModeManager.toggleMode()
+            val message = if (DiscreetModeManager.isDiscreetModeActive) "Modo Discreto Activado" else "Modo Visible Activado"
+            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+        }
+
         setupSensors()
 
         DiscreetModeManager.modeChangeListener = {
             metasAdapter.updateDiscreetMode()
+            updateDiscreetModeButtonIcon(binding.btnDiscreetModeManual)
         }
         metasAdapter.updateDiscreetMode()
+        updateDiscreetModeButtonIcon(binding.btnDiscreetModeManual)
 
         return binding.root
     }
@@ -143,6 +151,14 @@ class MetasFragment : Fragment() {
         }
     }
 
+    private fun updateDiscreetModeButtonIcon(btnIcon: ImageButton) {
+        val drawableRes = if (DiscreetModeManager.isDiscreetModeActive)
+            R.drawable.ic_visibility_off
+        else
+            R.drawable.ic_visibility
+        btnIcon.setImageResource(drawableRes)
+    }
+
     override fun onResume() {
         super.onResume()
         accelerometer?.also { accel ->
@@ -151,7 +167,9 @@ class MetasFragment : Fragment() {
 
         DiscreetModeManager.modeChangeListener = {
             metasAdapter.updateDiscreetMode()
+            updateDiscreetModeButtonIcon(binding.btnDiscreetModeManual)
         }
+        updateDiscreetModeButtonIcon(binding.btnDiscreetModeManual)
     }
 
     override fun onPause() {

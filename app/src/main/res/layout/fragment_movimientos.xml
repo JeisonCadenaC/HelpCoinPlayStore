@@ -21,6 +21,21 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <ImageButton
+        android:id="@+id/btnDiscreetModeManual"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@drawable/ic_visibility_off"
+        android:background="?selectableItemBackgroundBorderless"
+        android:padding="8dp"
+        android:scaleType="fitCenter"
+        app:tint="?attr/colorControlNormal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/tvHeader"
+        app:layout_constraintBottom_toBottomOf="@id/tvHeader"
+        android:layout_marginEnd="16dp"
+        android:contentDescription="Toggle Modo Discreto" />
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/cardSaldoContainer"
         android:layout_width="match_parent"
@@ -54,8 +69,8 @@
             android:textAllCaps="true"
             android:letterSpacing="0.1"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            android:layout_marginTop="60dp"/>
+            android:layout_marginTop="60dp"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/tvSaldoTotal"
