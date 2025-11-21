@@ -12,6 +12,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
@@ -28,15 +29,19 @@ import com.example.finance_code.R
 import com.example.finance_code.data.AppDB
 import com.example.finance_code.data.DriveService
 import com.example.finance_code.databinding.FragmentPerfilBinding
-import com.example.finance_code.ui.login.LoginActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.Scope
+import com.google.android.material.textfield.TextInputEditText
 import com.google.api.services.drive.DriveScopes
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
+import com.example.finance_code.ui.login.LoginActivity
 import java.io.File
 import java.io.FileOutputStream
 import kotlinx.coroutines.launch
@@ -161,6 +166,110 @@ class PerfilFragment : Fragment() {
         binding.btnRestaurar.setOnClickListener {
             iniciarProcesoRestauracion()
         }
+
+        if (esUsuarioGoogle()) {
+            binding.btnCambiarContrasena.visibility = View.GONE
+        } else {
+            binding.btnCambiarContrasena.visibility = View.VISIBLE
+            binding.btnCambiarContrasena.setOnClickListener {
+                mostrarDialogoCambiarContrasena()
+            }
+        }
+    }
+
+    private fun mostrarDialogoCambiarContrasena() {
+        val user = auth.currentUser
+        if (user == null || userEmail == null) {
+            Toast.makeText(requireContext(), "Error de sesión", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_cambiar_contrasena, null)
+
+        val etContrasenaActual = dialogView.findViewById<TextInputEditText>(R.id.etContrasenaActual)
+        val etNuevaContrasena = dialogView.findViewById<TextInputEditText>(R.id.etNuevaContrasena)
+        val etConfirmarContrasena = dialogView.findViewById<TextInputEditText>(R.id.etConfirmarContrasena)
+        val btnGuardar = dialogView.findViewById<Button>(R.id.btnGuardarContrasena)
+        val btnCancelar = dialogView.findViewById<Button>(R.id.btnCancelarCambioContrasena)
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.show()
+
+        btnCancelar.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        btnGuardar.setOnClickListener {
+            val actualPass = etContrasenaActual.text.toString()
+            val nuevaPass = etNuevaContrasena.text.toString()
+            val confirmarPass = etConfirmarContrasena.text.toString()
+
+            if (actualPass.isEmpty() || nuevaPass.isEmpty() || confirmarPass.isEmpty()) {
+                Toast.makeText(requireContext(), "Por favor, completa todos los campos.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            if (nuevaPass.length < 6) {
+                Toast.makeText(requireContext(), "La nueva contraseña debe tener al menos 6 caracteres.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            if (nuevaPass != confirmarPass) {
+                Toast.makeText(requireContext(), "La nueva contraseña y la confirmación no coinciden.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            actualizarContrasenaEnFirebase(actualPass, nuevaPass, dialog)
+        }
+    }
+
+    private fun actualizarContrasenaEnFirebase(actualPass: String, nuevaPass: String, dialog: AlertDialog) {
+        val user = auth.currentUser
+        val progressDialog = ProgressDialog(requireContext())
+        progressDialog.setMessage("Verificando credenciales y actualizando contraseña...")
+        progressDialog.setCancelable(false)
+        progressDialog.show()
+
+        val credential = EmailAuthProvider.getCredential(userEmail!!, actualPass)
+
+        user?.reauthenticate(credential)
+            ?.addOnCompleteListener { reauthTask ->
+                progressDialog.dismiss()
+                if (reauthTask.isSuccessful) {
+                    actualizarContrasena(user, nuevaPass, progressDialog, dialog)
+                } else {
+                    try {
+                        throw reauthTask.exception!!
+                    } catch (e: Exception) {
+                        Toast.makeText(requireContext(), "Error de autenticación: Contraseña actual incorrecta.", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+    }
+
+    private fun actualizarContrasena(user: FirebaseUser, nuevaPass: String, progressDialog: ProgressDialog, dialog: AlertDialog) {
+        progressDialog.setMessage("Cambiando contraseña...")
+        progressDialog.show()
+
+        user.updatePassword(nuevaPass)
+            .addOnCompleteListener { updateTask ->
+                progressDialog.dismiss()
+                if (updateTask.isSuccessful) {
+                    Toast.makeText(requireContext(), "Contraseña actualizada exitosamente.", Toast.LENGTH_LONG).show()
+                    dialog.dismiss()
+                } else {
+                    try {
+                        throw updateTask.exception!!
+                    } catch (e: FirebaseAuthRecentLoginRequiredException) {
+                        Toast.makeText(requireContext(), "Error de sesión. Por favor, vuelve a iniciar sesión.", Toast.LENGTH_LONG).show()
+                        cerrarSesion()
+                    } catch (e: Exception) {
+                        Toast.makeText(requireContext(), "Error al actualizar: ${e.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
     }
 
     private fun getDbIdentifier(email: String): String {
