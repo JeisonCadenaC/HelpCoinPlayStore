@@ -96,4 +96,6 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore")
 
     implementation("com.airbnb.android:lottie:6.0.0")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.1")
 }
