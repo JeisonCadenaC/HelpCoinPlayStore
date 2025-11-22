@@ -9,7 +9,7 @@ import kotlin.math.sqrt
 class ShakeDetector(private val onShake: () -> Unit) : SensorEventListener {
 
     private var lastShakeTime: Long = 0
-    private val SHAKE_THRESHOLD_GRAVITY = 10F
+    private val SHAKE_THRESHOLD_GRAVITY = 9F
     private val SHAKE_SLOP_TIME_MS = 1000
 
     override fun onSensorChanged(event: SensorEvent) {

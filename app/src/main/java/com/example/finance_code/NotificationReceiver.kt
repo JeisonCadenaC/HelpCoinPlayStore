@@ -7,8 +7,13 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import com.example.finance_code.ui.home.ReminderHelper
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 
 class NotificationReceiver : BroadcastReceiver() {
+
+    companion object {
+        const val ACTION_NOTIFICATION_RECEIVED = "com.example.finance_code.NOTIFICATION_RECEIVED"
+    }
 
     override fun onReceive(context: Context, intent: Intent) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -19,6 +24,13 @@ class NotificationReceiver : BroadcastReceiver() {
         val channelId = intent.getStringExtra("EXTRA_CHANNEL_ID") ?: "pagos_channel_id"
 
         val targetFragment = intent.getStringExtra(ReminderHelper.EXTRA_TARGET_FRAGMENT)
+
+        val localIntent = Intent(ACTION_NOTIFICATION_RECEIVED).apply {
+            putExtra("EXTRA_MESSAGE", message)
+            putExtra("EXTRA_TITLE", title)
+            putExtra(ReminderHelper.EXTRA_TARGET_FRAGMENT, targetFragment)
+        }
+        LocalBroadcastManager.getInstance(context).sendBroadcast(localIntent)
 
         val launchIntent = Intent(context, com.example.finance_code.ui.home.HomeActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK

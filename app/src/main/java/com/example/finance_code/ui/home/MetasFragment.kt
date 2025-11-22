@@ -309,12 +309,23 @@ class MetasFragment : Fragment() {
     }
 
     private fun mostrarFelicitaciones(nombreMeta: String) {
-        AlertDialog.Builder(requireContext())
-            .setTitle("¡Excelente!")
-            .setMessage("¡Felicidades! Has completado tu meta: $nombreMeta. \n¡Sigue así!")
-            .setIcon(R.drawable.ic_rocket)
-            .setPositiveButton("Gracias", null)
-            .show()
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_congratulations, null)
+        val tvNombreMeta = dialogView.findViewById<TextView>(R.id.tvNombreMetaDestacado)
+        val btnGracias = dialogView.findViewById<Button>(R.id.btnGracias)
+        tvNombreMeta.text = nombreMeta
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .setCancelable(false)
+            .create()
+
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+        btnGracias.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     private fun mostrarDialogoMeta(metaDBExistente: MetaDB?) {

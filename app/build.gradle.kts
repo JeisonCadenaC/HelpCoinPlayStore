@@ -98,4 +98,5 @@ dependencies {
     implementation("com.airbnb.android:lottie:6.0.0")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.1")
+    implementation("androidx.localbroadcastmanager:localbroadcastmanager:1.0.0")
 }

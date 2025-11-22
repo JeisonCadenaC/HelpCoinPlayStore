@@ -14,7 +14,6 @@ import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import com.example.finance_code.NotificationReceiver
 import com.example.finance_code.R
-import com.example.finance_code.ui.login.AuthCheckActivity
 import java.util.Calendar
 import java.util.TimeZone
 
@@ -46,7 +45,7 @@ object ReminderHelper {
 
             val nameColaboracion = "Actualizaciones de Metas Colaborativas"
             val descriptionTextColaboracion = "Canal para notificaciones de actividad en metas compartidas."
-            val importanceColaboracion = NotificationManager.IMPORTANCE_DEFAULT
+            val importanceColaboracion = NotificationManager.IMPORTANCE_HIGH
             val channelColaboracion = NotificationChannel(COLABORACION_CHANNEL_ID, nameColaboracion, importanceColaboracion).apply {
                 description = descriptionTextColaboracion
             }
@@ -86,7 +85,6 @@ object ReminderHelper {
 
             triggerTimeMillis = now + 60000L
         }
-
 
         val tiempos = listOf(
             triggerTimeMillis - (7 * dayInMillis),
@@ -189,8 +187,7 @@ object ReminderHelper {
         val title = "¡Meta Creada!"
         val message = "Te recordaremos semanalmente sobre tu meta: '$nombreMeta'."
         val notificationId = (System.currentTimeMillis() % 10000).toInt()
-
-        val intent = Intent(context, AuthCheckActivity::class.java).apply {
+        val intent = Intent(context, com.example.finance_code.ui.home.HomeActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             putExtra(EXTRA_TARGET_FRAGMENT, TARGET_METAS)
         }
@@ -283,7 +280,7 @@ object ReminderHelper {
         val message = "$collaboratorName ha $action la invitación a la meta '$nombreMeta'."
         val notificationId = (System.currentTimeMillis() % 10000).toInt() + 10000
 
-        val intent = Intent(context, AuthCheckActivity::class.java).apply {
+        val intent = Intent(context, com.example.finance_code.ui.home.HomeActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             putExtra(EXTRA_TARGET_FRAGMENT, TARGET_METAS)
         }
@@ -299,7 +296,7 @@ object ReminderHelper {
             .setSmallIcon(R.drawable.ic_metas)
             .setContentTitle(title)
             .setContentText(message)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .build()
@@ -317,7 +314,7 @@ object ReminderHelper {
         val message = "$collaboratorName $accion $montoAbsoluto de la meta."
         val notificationId = (System.currentTimeMillis() % 10000).toInt() + 20000
 
-        val intent = Intent(context, AuthCheckActivity::class.java).apply {
+        val intent = Intent(context, com.example.finance_code.ui.home.HomeActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             putExtra(EXTRA_TARGET_FRAGMENT, TARGET_METAS)
         }
@@ -350,7 +347,7 @@ object ReminderHelper {
         val message = "$inviterName te ha invitado a colaborar en la meta '$nombreMeta'."
         val notificationId = (System.currentTimeMillis() % 10000).toInt() + 40000
 
-        val intent = Intent(context, AuthCheckActivity::class.java).apply {
+        val intent = Intent(context, com.example.finance_code.ui.home.HomeActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             putExtra(EXTRA_TARGET_FRAGMENT, TARGET_METAS)
         }
