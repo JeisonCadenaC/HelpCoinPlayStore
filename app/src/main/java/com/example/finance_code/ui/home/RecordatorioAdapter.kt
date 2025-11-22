@@ -1,6 +1,7 @@
 package com.example.finance_code.ui.home
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -8,12 +9,14 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.finance_code.data.Recordatorio
 import com.example.finance_code.databinding.ItemRecordatorioBinding
 import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
-
 
 class RecordatorioAdapter(
     private val onEliminarClicked: (Recordatorio) -> Unit
 ) : ListAdapter<Recordatorio, RecordatorioAdapter.RecordatorioViewHolder>(RecordatorioDiffCallback()) {
+
+    private var idItemSeleccionado: Long? = null
 
     inner class RecordatorioViewHolder(private val binding: ItemRecordatorioBinding) :
         RecyclerView.ViewHolder(binding.root) {
@@ -21,13 +24,37 @@ class RecordatorioAdapter(
         fun bind(recordatorio: Recordatorio) {
             binding.txtNombreRecordatorio.text = recordatorio.nombre
 
+            val sdf = SimpleDateFormat("EEEE d, MMM yyyy", Locale("es", "ES"))
+            binding.txtFechaRecordatorio.text = sdf.format(Date(recordatorio.fechaMillis)).replaceFirstChar { it.uppercase() }
 
-            val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-            binding.txtFechaRecordatorio.text = sdf.format(recordatorio.fechaMillis)
+            if (recordatorio.id.toLong() == idItemSeleccionado) {
+                binding.btnEliminar.visibility = View.VISIBLE
+            } else {
+                binding.btnEliminar.visibility = View.GONE
+            }
 
+            binding.root.setOnLongClickListener {
+                val recId = recordatorio.id.toLong()
+                if (idItemSeleccionado == recId) {
+                    idItemSeleccionado = null
+                } else {
+                    idItemSeleccionado = recId
+                }
+                notifyDataSetChanged()
+                true
+            }
+
+            binding.root.setOnClickListener {
+                if (idItemSeleccionado != null) {
+                    idItemSeleccionado = null
+                    notifyDataSetChanged()
+                }
+            }
 
             binding.btnEliminar.setOnClickListener {
                 onEliminarClicked(recordatorio)
+                idItemSeleccionado = null
+                notifyDataSetChanged()
             }
         }
     }
@@ -45,7 +72,6 @@ class RecordatorioAdapter(
         holder.bind(getItem(position))
     }
 }
-
 
 class RecordatorioDiffCallback : DiffUtil.ItemCallback<Recordatorio>() {
     override fun areItemsTheSame(oldItem: Recordatorio, newItem: Recordatorio): Boolean {
