@@ -69,4 +69,20 @@
 
     <string name="info_presupuesto_mensaje">Una guía para distribuir tus ingresos basada en la regla 50/30/20.\n\n<b>¿Cómo se usa?</b>\nSolo ingresa tu ingreso mensual neto. La app te sugerirá cuánto destinar a:\n• 50% Necesidades básicas\n• 30% Deseos o gustos\n• 20% Ahorro o deudas.</string>
 
+    <string name="calculadora_impuestos_title">Calculadora de Impuestos e IVA</string>
+    <string name="info_impuestos_titulo">¿Cómo Funciona la Calculadora?</string>
+    <string name="info_impuestos_mensaje">
+        <![CDATA[
+        Esta herramienta te ayuda a entender la diferencia entre el precio base y el precio con impuestos (como el IVA) que se usa en las tiendas.<br/><br/>
+
+        <b>1. CALCULAR TOTAL (Sumar Impuestos):</b><br/>
+        <b>Uso:</b> Lo usas cuando tienes el precio de un producto <u>sin el IVA</u> (el costo base) y quieres saber el precio final que pagarás.<br/>
+        <b>Ejemplo:</b> Si tu producto cuesta $10.000, al sumarle el 19%% de IVA, el total es $11.900.<br/><br/>
+
+        <b>2. DESGLOSAR IVA (Quitar Impuestos):</b><br/>
+        <b>Uso:</b> Lo usas cuando ves un precio final en la tienda (el total que pagas) y quieres saber exactamente cuánto de ese dinero se va en el impuesto.<br/>
+        <b>Ejemplo:</b> Si pagaste $11.900, la calculadora te dice que $1.900 son solo de IVA y el precio real era $10.000.
+        ]]>
+    </string>
+
 </resources>

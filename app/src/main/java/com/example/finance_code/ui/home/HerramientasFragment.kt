@@ -43,6 +43,11 @@ class HerramientasFragment : Fragment() {
             findNavController().navigate(R.id.action_herramientasFragment_to_calculadoraPresupuestoFragment)
         }
 
+        // NUEVA FUNCIÓN: Calculadora de Impuestos e IVA
+        binding.tarjetaCalculadoraImpuestos.setOnClickListener {
+            findNavController().navigate(R.id.action_herramientasFragment_to_calculadoraImpuestosFragment)
+        }
+
 
         binding.btnInfoAhorro.setOnClickListener {
             mostrarInformacion(getString(R.string.info_ahorro_titulo), getString(R.string.info_ahorro_mensaje))
@@ -58,6 +63,10 @@ class HerramientasFragment : Fragment() {
 
         binding.btnInfoPresupuesto.setOnClickListener {
             mostrarInformacion(getString(R.string.info_presupuesto_titulo), getString(R.string.info_presupuesto_mensaje))
+        }
+
+        binding.btnInfoImpuestos.setOnClickListener {
+            mostrarInformacion(getString(R.string.info_impuestos_titulo), getString(R.string.info_impuestos_mensaje))
         }
     }
 

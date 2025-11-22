@@ -91,5 +91,15 @@
         <action
             android:id="@+id/action_herramientasFragment_to_calculadoraPresupuestoFragment"
             app:destination="@id/calculadoraPresupuestoFragment" />
+
+        <action
+            android:id="@+id/action_herramientasFragment_to_calculadoraImpuestosFragment"
+            app:destination="@id/calculadoraImpuestosFragment" />
     </fragment>
+
+    <fragment
+        android:id="@+id/calculadoraImpuestosFragment"
+        android:name="com.example.finance_code.ui.home.CalculadoraImpuestosFragment"
+        android:label="Calculadora de Impuestos e IVA"
+        tools:layout="@layout/fragment_calculadora_impuestos" />
 </navigation>
