@@ -1,6 +1,8 @@
 package com.example.finance_code.ui.transaction
 
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.TypedValue
 import android.view.View
 import android.widget.Button
@@ -39,6 +41,8 @@ class ETransactionFragment : Fragment(R.layout.fragment_e_transaction) {
     private lateinit var tvIngresoText: TextView
     private lateinit var etMonto: EditText
 
+    private var isUpdating = false
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -71,6 +75,42 @@ class ETransactionFragment : Fragment(R.layout.fragment_e_transaction) {
             actualizarEstiloBotones()
         }
 
+        etMonto.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+            override fun afterTextChanged(editable: Editable) {
+                if (isUpdating) return
+
+                isUpdating = true
+
+                val text = editable.toString()
+                val cleanString = text.replace(".", "").replace(",", "")
+
+                if (cleanString.isNotEmpty()) {
+                    try {
+                        val parsed = cleanString.toLong()
+
+                        val symbols = DecimalFormatSymbols(Locale("es", "CO"))
+                        symbols.groupingSeparator = '.'
+                        symbols.decimalSeparator = ','
+
+                        val localFormatter = DecimalFormat("#,##0", symbols)
+
+                        val formatted = localFormatter.format(parsed)
+
+                        etMonto.setText(formatted)
+                        etMonto.setSelection(formatted.length)
+
+                    } catch (e: NumberFormatException) {
+                    }
+                }
+
+                isUpdating = false
+            }
+        })
+
         val userEmail = FirebaseAuth.getInstance().currentUser?.email
         if (userEmail == null) {
             Toast.makeText(requireContext(), "Error: Usuario no autenticado", Toast.LENGTH_LONG).show()
@@ -85,7 +125,7 @@ class ETransactionFragment : Fragment(R.layout.fragment_e_transaction) {
 
         btnGuardar.setOnClickListener {
             val descripcionTexto = etDescripcion.text.toString()
-            val montoTexto = etMonto.text.toString().replace(".", "").replace(",", ".")
+            val montoTextoLimpio = etMonto.text.toString().replace(".", "").replace(",", ".")
             val nuevaCantidad: Double
 
             if (descripcionTexto.isEmpty()) {
@@ -94,7 +134,7 @@ class ETransactionFragment : Fragment(R.layout.fragment_e_transaction) {
             }
 
             try {
-                nuevaCantidad = montoTexto.toDouble()
+                nuevaCantidad = montoTextoLimpio.toDouble()
                 if (nuevaCantidad <= 0) {
                     Toast.makeText(requireContext(), "El monto debe ser un valor positivo.", Toast.LENGTH_SHORT).show()
                     return@setOnClickListener

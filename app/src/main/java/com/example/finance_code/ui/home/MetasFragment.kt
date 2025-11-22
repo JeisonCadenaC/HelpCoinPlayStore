@@ -13,6 +13,8 @@ import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.speech.RecognizerIntent
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -22,6 +24,7 @@ import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -33,10 +36,11 @@ import com.example.finance_code.viewmodel.MetaViewModel
 import com.example.finance_code.viewmodel.MetaViewModelFactory
 import com.example.finance_code.DiscreetModeManager
 import com.example.finance_code.ShakeDetector
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 import java.text.NumberFormat
 import java.util.Locale
 import java.util.UUID
-import androidx.core.content.ContextCompat
 
 class MetasFragment : Fragment() {
 
@@ -51,6 +55,7 @@ class MetasFragment : Fragment() {
 
     private var currentNombreInput: EditText? = null
     private var currentMontoInput: EditText? = null
+    private var isUpdating = false
 
     private var sensorManager: SensorManager? = null
     private var accelerometer: Sensor? = null
@@ -185,6 +190,44 @@ class MetasFragment : Fragment() {
         currentMontoInput = null
     }
 
+    private fun applyNumberFormatting(editText: EditText) {
+        editText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+            override fun afterTextChanged(editable: Editable) {
+                if (isUpdating) return
+
+                isUpdating = true
+
+                val text = editable.toString()
+                val cleanString = text.replace(".", "").replace(",", "")
+
+                if (cleanString.isNotEmpty()) {
+                    try {
+                        val parsed = cleanString.toLong()
+
+                        val symbols = DecimalFormatSymbols(Locale("es", "CO"))
+                        symbols.groupingSeparator = '.'
+                        symbols.decimalSeparator = ','
+
+                        val localFormatter = DecimalFormat("#,##0", symbols)
+
+                        val formatted = localFormatter.format(parsed)
+
+                        editText.setText(formatted)
+                        editText.setSelection(formatted.length)
+
+                    } catch (e: NumberFormatException) {
+                    }
+                }
+
+                isUpdating = false
+            }
+        })
+    }
+
     private fun mostrarDialogoHistorial(metaDB: MetaDB) {
         val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_historial_metas, null)
         val rvHistorial = dialogView.findViewById<RecyclerView>(R.id.rvHistorialAportes)
@@ -300,6 +343,11 @@ class MetasFragment : Fragment() {
         currentNombreInput = etNombre
         currentMontoInput = etMontoObjetivo
         btnVoice.setOnClickListener { startVoiceInput() }
+
+        applyNumberFormatting(etMontoObjetivo)
+        applyNumberFormatting(etMontoActual)
+        applyNumberFormatting(etMontoOperacion)
+
         val builder = AlertDialog.Builder(requireContext()).setView(dialogView)
 
         val localeCO = Locale.Builder().setLanguage("es").setRegion("CO").build()
@@ -307,13 +355,17 @@ class MetasFragment : Fragment() {
             maximumFractionDigits = 0
         }
 
+        val cleanAndParse = { editText: EditText ->
+            editText.text.toString().replace(".", "").replace(",", ".").toDoubleOrNull() ?: 0.0
+        }
+
         val originalMontoActual = metaDBExistente?.montoActual ?: 0.0
 
         if (metaDBExistente != null) {
             dialogTitle.text = "Gestionar meta"
             etNombre.setText(metaDBExistente.nombre)
-            etMontoObjetivo.setText(if (metaDBExistente.montoObjetivo % 1.0 == 0.0) metaDBExistente.montoObjetivo.toLong().toString() else metaDBExistente.montoObjetivo.toString())
-            etMontoActual.setText(if (metaDBExistente.montoActual % 1.0 == 0.0) metaDBExistente.montoActual.toLong().toString() else metaDBExistente.montoActual.toString())
+            etMontoObjetivo.setText(metaDBExistente.montoObjetivo.toLong().toString())
+            etMontoActual.setText(metaDBExistente.montoActual.toLong().toString())
 
             btnEliminar.visibility = View.VISIBLE
             layoutOperaciones.visibility = View.VISIBLE
@@ -337,7 +389,9 @@ class MetasFragment : Fragment() {
             val metaActualizada = metas.find { it.id == metaDBExistente?.id }
             if (metaActualizada != null && dialog.isShowing) {
                 val monto = metaActualizada.montoActual
-                etMontoActual.setText(if (monto % 1.0 == 0.0) monto.toLong().toString() else monto.toString())
+                if (!isUpdating) {
+                    etMontoActual.setText(monto.toLong().toString())
+                }
             }
         }
 
@@ -352,18 +406,17 @@ class MetasFragment : Fragment() {
         }
 
         val realizarOperacion = { sumar: Boolean ->
-            val montoOperacionStr = etMontoOperacion.text.toString().trim()
-            val valorOperacion = montoOperacionStr.replace(",", "").replace(".", "").toDoubleOrNull() ?: 0.0
+            val valorOperacion = cleanAndParse(etMontoOperacion)
 
             if (valorOperacion > 0) {
 
-                val valorActualStr = etMontoActual.text.toString().replace(",", "").replace(".", "").toDoubleOrNull() ?: 0.0
+                val valorActualStr = cleanAndParse(etMontoActual)
                 val montoCambio = if (sumar) valorOperacion else -valorOperacion
 
                 val nuevoTotal = valorActualStr + montoCambio
                 val totalFinal = if (nuevoTotal < 0) 0.0 else nuevoTotal
 
-                etMontoActual.setText(if (totalFinal % 1.0 == 0.0) totalFinal.toLong().toString() else totalFinal.toString())
+                etMontoActual.setText(totalFinal.toLong().toString())
 
                 etMontoOperacion.setText("")
 
@@ -397,14 +450,14 @@ class MetasFragment : Fragment() {
 
         btnSave.setOnClickListener {
             val nombre = etNombre.text.toString().trim()
-            val montoObjetivo = etMontoObjetivo.text.toString().replace(",", "").replace(".", "").toDoubleOrNull() ?: 0.0
+            val montoObjetivo = cleanAndParse(etMontoObjetivo)
             val emailsInvitados = etEmailCompartido.text.toString()
             val userName = metaViewModel.userEmail.substringBefore('@')
 
             if (nombre.isNotEmpty() && montoObjetivo > 0) {
                 if (metaDBExistente == null) {
                     val fechaCreacion = System.currentTimeMillis()
-                    val montoActual = etMontoActual.text.toString().replace(",", "").replace(".", "").toDoubleOrNull() ?: 0.0
+                    val montoActual = cleanAndParse(etMontoActual)
 
                     val nuevaMetaDB = MetaDB(id = UUID.randomUUID().toString(), nombre = nombre, montoObjetivo = montoObjetivo, montoActual = montoActual, fechaCreacion = fechaCreacion)
 
@@ -425,7 +478,7 @@ class MetasFragment : Fragment() {
                     Toast.makeText(requireContext(), toastMessage, Toast.LENGTH_LONG).show()
 
                 } else {
-                    val nuevoMontoActual = etMontoActual.text.toString().replace(",", "").replace(".", "").toDoubleOrNull() ?: 0.0
+                    val nuevoMontoActual = cleanAndParse(etMontoActual)
                     val montoNetoCambio = nuevoMontoActual - originalMontoActual
 
                     if (Math.abs(montoNetoCambio) > 0.001) {

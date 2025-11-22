@@ -30,12 +30,18 @@ import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.firebase.auth.FirebaseAuth
+import android.text.Editable
+import android.text.TextWatcher
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 
 class addTransaction : AppCompatActivity() {
 
     private lateinit var cdodescripcionT: TextInputEditText
     private lateinit var cdoValorT: TextInputEditText
     private lateinit var btnregistrarOpcion: MaterialButtonToggleGroup
+
+    private var isUpdating = false
 
     private val speechLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -91,6 +97,42 @@ class addTransaction : AppCompatActivity() {
             startVoiceInput()
         }
 
+        cdoValorT.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+            override fun afterTextChanged(editable: Editable) {
+                if (isUpdating) return
+
+                isUpdating = true
+
+                val text = editable.toString()
+                val cleanString = text.replace(".", "").replace(",", "")
+
+                if (cleanString.isNotEmpty()) {
+                    try {
+                        val parsed = cleanString.toLong()
+
+                        val symbols = DecimalFormatSymbols(Locale("es", "CO"))
+                        symbols.groupingSeparator = '.'
+                        symbols.decimalSeparator = ','
+
+                        val localFormatter = DecimalFormat("#,###", symbols)
+
+                        val formatted = localFormatter.format(parsed)
+
+                        cdoValorT.setText(formatted)
+                        cdoValorT.setSelection(formatted.length)
+
+                    } catch (e: NumberFormatException) {
+                    }
+                }
+
+                isUpdating = false
+            }
+        })
+
         btnGuardar.setOnClickListener {
             val descripcion = cdodescripcionT.text.toString()
             val cantidadTexto = cdoValorT.text.toString()
@@ -111,7 +153,11 @@ class addTransaction : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            val cantidad = cantidadTexto.replace(".", "").replace(",", ".").toDoubleOrNull()
+            val cleanCantidadTexto = cantidadTexto
+                .replace(".", "")
+                .replace(",", ".")
+
+            val cantidad = cleanCantidadTexto.toDoubleOrNull()
 
             if (cantidad == null || cantidad <= 0) {
                 Toast.makeText(this, "⚠️ Cantidad inválida", Toast.LENGTH_SHORT).show()
@@ -172,7 +218,7 @@ class addTransaction : AppCompatActivity() {
 
         if (matchResult != null) {
             val rawNumber = matchResult.value
-            val cleanNumber = rawNumber.replace(",", "").replace(".", "")
+            val cleanNumber = rawNumber.replace(".", "").replace(",", "")
 
             val descripcionStr = texto.substring(0, matchResult.range.first).trim()
 

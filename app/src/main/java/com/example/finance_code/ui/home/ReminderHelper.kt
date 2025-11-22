@@ -22,6 +22,10 @@ object ReminderHelper {
     const val PAGOS_CHANNEL_ID = "pagos_channel_id"
     const val METAS_CHANNEL_ID = "metas_channel_id"
 
+    const val EXTRA_TARGET_FRAGMENT = "EXTRA_TARGET_FRAGMENT"
+    const val TARGET_CALENDARIO = "CALENDARIO"
+    const val TARGET_METAS = "METAS"
+
     fun createNotificationChannels(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val namePagos = "Recordatorios de Pagos"
@@ -93,6 +97,7 @@ object ReminderHelper {
                 putExtra("EXTRA_TITLE", titulo)
                 putExtra("EXTRA_CHANNEL_ID", PAGOS_CHANNEL_ID)
                 putExtra("EXTRA_NOTIFICATION_ID", requestCode)
+                putExtra(EXTRA_TARGET_FRAGMENT, TARGET_CALENDARIO)
             }
 
             val pendingIntent = PendingIntent.getBroadcast(
@@ -145,6 +150,7 @@ object ReminderHelper {
             putExtra("EXTRA_TITLE", titulo)
             putExtra("EXTRA_CHANNEL_ID", METAS_CHANNEL_ID)
             putExtra("EXTRA_NOTIFICATION_ID", requestCode)
+            putExtra(EXTRA_TARGET_FRAGMENT, TARGET_METAS)
         }
 
         val pendingIntent = PendingIntent.getBroadcast(
@@ -174,12 +180,25 @@ object ReminderHelper {
         val message = "Te recordaremos semanalmente sobre tu meta: '$nombreMeta'."
         val notificationId = (System.currentTimeMillis() % 10000).toInt()
 
+        val intent = Intent(context, com.example.finance_code.ui.home.HomeActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra(EXTRA_TARGET_FRAGMENT, TARGET_METAS)
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            notificationId,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notification = NotificationCompat.Builder(context, METAS_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_metas)
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
             .build()
 
         notificationManager.notify(notificationId, notification)
@@ -254,12 +273,25 @@ object ReminderHelper {
         val message = "$collaboratorName ha $action la invitación a la meta '$nombreMeta'."
         val notificationId = (System.currentTimeMillis() % 10000).toInt() + 10000
 
+        val intent = Intent(context, com.example.finance_code.ui.home.HomeActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra(EXTRA_TARGET_FRAGMENT, TARGET_METAS)
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            notificationId,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notification = NotificationCompat.Builder(context, METAS_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_metas)
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
             .build()
 
         notificationManager.notify(notificationId, notification)
@@ -275,12 +307,25 @@ object ReminderHelper {
         val message = "$collaboratorName $accion $montoAbsoluto de la meta."
         val notificationId = (System.currentTimeMillis() % 10000).toInt() + 20000
 
+        val intent = Intent(context, com.example.finance_code.ui.home.HomeActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra(EXTRA_TARGET_FRAGMENT, TARGET_METAS)
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            notificationId,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notification = NotificationCompat.Builder(context, METAS_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_metas)
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
             .build()
 
         notificationManager.notify(notificationId, notification)
@@ -295,12 +340,25 @@ object ReminderHelper {
         val message = "$inviterName te ha invitado a colaborar en la meta '$nombreMeta'."
         val notificationId = (System.currentTimeMillis() % 10000).toInt() + 40000
 
+        val intent = Intent(context, com.example.finance_code.ui.home.HomeActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra(EXTRA_TARGET_FRAGMENT, TARGET_METAS)
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            notificationId,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notification = NotificationCompat.Builder(context, METAS_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_metas)
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
             .build()
 
         notificationManager.notify(notificationId, notification)
