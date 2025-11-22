@@ -265,6 +265,15 @@ class MetasFragment : Fragment() {
         }
     }
 
+    private fun mostrarFelicitaciones(nombreMeta: String) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("¡Excelente!")
+            .setMessage("¡Felicidades! Has completado tu meta: $nombreMeta. \n¡Sigue así!")
+            .setIcon(R.drawable.ic_rocket)
+            .setPositiveButton("Gracias", null)
+            .show()
+    }
+
     private fun mostrarDialogoMeta(metaDBExistente: MetaDB?) {
         val dialogView = layoutInflater.inflate(R.layout.dialog_meta, null)
         val contenedorFormulario = dialogView.findViewById<View>(R.id.contenedorFormulario)
@@ -401,7 +410,10 @@ class MetasFragment : Fragment() {
 
                     metaViewModel.insert(nuevaMetaDB, emailsInvitados)
 
-                    if (activity != null) ReminderHelper.scheduleWeeklyMetaNotification(requireContext(), nuevaMetaDB.nombre, fechaCreacion)
+                    if (activity != null) {
+                        ReminderHelper.scheduleWeeklyMetaNotification(requireContext(), nuevaMetaDB.nombre, fechaCreacion)
+                        ReminderHelper.showInstantMetaNotification(requireContext(), nuevaMetaDB.nombre)
+                    }
 
                     val invitadosSeparados = emailsInvitados.split(",").map { it.trim() }.filter { it.isNotEmpty() }
 
@@ -435,6 +447,11 @@ class MetasFragment : Fragment() {
                         completada = esCompletadaAhora,
                         montoActual = nuevoMontoActual
                     )
+
+                    if (esCompletadaAhora && !metaDBExistente.completada) {
+                        mostrarFelicitaciones(nombre)
+                    }
+
                     metaViewModel.update(actualizada)
                 }
             }
