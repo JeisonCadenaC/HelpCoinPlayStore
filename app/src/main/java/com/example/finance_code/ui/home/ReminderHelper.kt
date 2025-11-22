@@ -244,4 +244,65 @@ object ReminderHelper {
             Toast.makeText(context, "ERROR: No se encontró una aplicación de calendario para añadir el evento. Asegúrate de tener una aplicación de calendario instalada.", Toast.LENGTH_LONG).show()
         }
     }
+
+    fun showMetaCollaborationNotification(context: Context, nombreMeta: String, collaboratorEmail: String, action: String) {
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        val collaboratorName = collaboratorEmail.substringBefore('@').replaceFirstChar { it.uppercase() }
+
+        val title = "Actualización de Meta: $nombreMeta"
+        val message = "$collaboratorName ha $action la invitación a la meta '$nombreMeta'."
+        val notificationId = (System.currentTimeMillis() % 10000).toInt() + 10000
+
+        val notification = NotificationCompat.Builder(context, METAS_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_metas)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .build()
+
+        notificationManager.notify(notificationId, notification)
+    }
+
+    fun showAporteNotification(context: Context, nombreMeta: String, collaboratorEmail: String, montoAbsoluto: String, tipoOperacion: String) {
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        val collaboratorName = collaboratorEmail.substringBefore('@').replaceFirstChar { it.uppercase() }
+        val accion = if (tipoOperacion == "APORTE") "agregó" else "retiró"
+
+        val title = "Movimiento en '$nombreMeta'"
+        val message = "$collaboratorName $accion $montoAbsoluto de la meta."
+        val notificationId = (System.currentTimeMillis() % 10000).toInt() + 20000
+
+        val notification = NotificationCompat.Builder(context, METAS_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_metas)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .build()
+
+        notificationManager.notify(notificationId, notification)
+    }
+
+    fun showInvitationReceivedNotification(context: Context, nombreMeta: String, inviterEmail: String) {
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        val inviterName = inviterEmail.substringBefore('@').replaceFirstChar { it.uppercase() }
+
+        val title = "¡Nueva Invitación a Meta!"
+        val message = "$inviterName te ha invitado a colaborar en la meta '$nombreMeta'."
+        val notificationId = (System.currentTimeMillis() % 10000).toInt() + 40000
+
+        val notification = NotificationCompat.Builder(context, METAS_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_metas)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .build()
+
+        notificationManager.notify(notificationId, notification)
+    }
 }

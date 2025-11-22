@@ -13,9 +13,11 @@ import com.example.finance_code.data.MetaRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.example.finance_code.ui.home.ReminderHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.UUID
+import android.util.Log
 
 class MetaViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -68,13 +70,83 @@ class MetaViewModel(application: Application) : AndroidViewModel(application) {
             .whereArrayContains("usuarios", email)
             .addSnapshotListener { value, _ ->
                 val activeMetas = value?.toObjects(MetaDB::class.java) ?: emptyList()
+
+                value?.documents?.forEach { document ->
+                    val data = document.data
+                    val metaId = document.id
+                    val statusInv = data?.get("invitation_status") as? Map<String, Any>
+                    val statusAporte = data?.get("aporte_status") as? Map<String, Any>
+
+                    if (statusInv != null) {
+                        val recipientEmail = statusInv["recipient"] as? String ?: ""
+                        if (recipientEmail == email) {
+                            val collaboratorEmail = statusInv["by"] as? String ?: "Alguien"
+                            val action = statusInv["action"] as? String ?: "actualizado"
+                            val nombreMeta = data["nombre"] as? String ?: "una de tus metas"
+
+                            ReminderHelper.showMetaCollaborationNotification(
+                                getApplication(),
+                                nombreMeta,
+                                collaboratorEmail,
+                                action
+                            )
+
+                            viewModelScope.launch(Dispatchers.IO) {
+                                db.collection("metas").document(metaId)
+                                    .update("invitation_status", FieldValue.delete())
+                                    .addOnFailureListener {
+                                        Log.e("MetaVM", "Error al limpiar status de invitación: ${it.message}")
+                                    }
+                            }
+                        }
+                    }
+
+                    if (statusAporte != null) {
+                        val recipientEmail = statusAporte["recipient"] as? String ?: ""
+                        if (recipientEmail == email) {
+                            val collaboratorEmail = statusAporte["by"] as? String ?: "Alguien"
+                            val montoAbsoluto = statusAporte["monto"] as? String ?: ""
+                            val tipo = statusAporte["tipo"] as? String ?: ""
+                            val nombreMeta = data["nombre"] as? String ?: "una de tus metas"
+
+                            ReminderHelper.showAporteNotification(
+                                getApplication(),
+                                nombreMeta,
+                                collaboratorEmail,
+                                montoAbsoluto,
+                                tipo
+                            )
+
+                            viewModelScope.launch(Dispatchers.IO) {
+                                db.collection("metas").document(metaId)
+                                    .update("aporte_status", FieldValue.delete())
+                                    .addOnFailureListener {
+                                        Log.e("MetaVM", "Error al limpiar status de aporte: ${it.message}")
+                                    }
+                            }
+                        }
+                    }
+                }
+
                 combineShared(activeMetas, listaInvitaciones)
             }
 
         db.collection("metas")
             .whereArrayContains("invitaciones", email)
             .addSnapshotListener { value, _ ->
-                listaInvitaciones = value?.toObjects(MetaDB::class.java) ?: emptyList()
+                val nuevasInvitaciones = value?.toObjects(MetaDB::class.java) ?: emptyList()
+
+                val nuevasInvitacionesUnicas = nuevasInvitaciones.filter { nuevaMeta ->
+                    !listaInvitaciones.any { it.id == nuevaMeta.id }
+                }
+
+                nuevasInvitacionesUnicas.forEach { meta ->
+                    val inviterEmail = meta.usuarios.firstOrNull() ?: "Alguien"
+                    ReminderHelper.showInvitationReceivedNotification(getApplication(), meta.nombre, inviterEmail)
+                }
+
+                listaInvitaciones = nuevasInvitaciones
+
                 db.collection("metas")
                     .whereArrayContains("usuarios", email)
                     .get()
@@ -140,6 +212,7 @@ class MetaViewModel(application: Application) : AndroidViewModel(application) {
 
         val metaRef = db.collection("metas").document(metaId)
         val aportesRef = metaRef.collection("aportes")
+        val inviterEmail = metaDBExistente.usuarios.firstOrNull() ?: ""
 
         val nuevoAporte = AporteDB(
             id = UUID.randomUUID().toString(),
@@ -169,24 +242,62 @@ class MetaViewModel(application: Application) : AndroidViewModel(application) {
                 transaction.set(aportesRef.document(nuevoAporte.id), nuevoAporte)
             }
             null
+        }.addOnSuccessListener {
+            if (email != inviterEmail && inviterEmail.isNotEmpty()) {
+                val montoAbsoluto = "%.0f".format(kotlin.math.abs(montoCambio))
+
+                metaRef.update(
+                    "aporte_status", mapOf(
+                        "tipo" to tipoOperacion,
+                        "by" to email,
+                        "monto" to montoAbsoluto,
+                        "timestamp" to System.currentTimeMillis(),
+                        "recipient" to inviterEmail
+                    )
+                )
+            }
         }
     }
 
     fun aceptarInvitacion(metaDB: MetaDB) = viewModelScope.launch(Dispatchers.IO) {
         val email = userEmail
-        db.collection("metas").document(metaDB.id)
-            .update(
-                mapOf(
-                    "usuarios" to FieldValue.arrayUnion(email),
-                    "invitaciones" to FieldValue.arrayRemove(email)
+        val metaRef = db.collection("metas").document(metaDB.id)
+        val inviterEmail = metaDB.usuarios.firstOrNull() ?: ""
+
+        metaRef.update(
+            mapOf(
+                "usuarios" to FieldValue.arrayUnion(email),
+                "invitaciones" to FieldValue.arrayRemove(email)
+            )
+        ).addOnSuccessListener {
+            metaRef.update(
+                "invitation_status", mapOf(
+                    "action" to "aceptó",
+                    "by" to email,
+                    "timestamp" to System.currentTimeMillis(),
+                    "recipient" to inviterEmail
                 )
             )
+        }
     }
 
     fun rechazarInvitacion(metaDB: MetaDB) = viewModelScope.launch(Dispatchers.IO) {
         val email = userEmail
-        db.collection("metas").document(metaDB.id)
-            .update("invitaciones", FieldValue.arrayRemove(email))
+        val metaRef = db.collection("metas").document(metaDB.id)
+        val inviterEmail = metaDB.usuarios.firstOrNull() ?: ""
+
+        metaRef.update(
+            "invitaciones", FieldValue.arrayRemove(email)
+        ).addOnSuccessListener {
+            metaRef.update(
+                "invitation_status", mapOf(
+                    "action" to "denegó",
+                    "by" to email,
+                    "timestamp" to System.currentTimeMillis(),
+                    "recipient" to inviterEmail
+                )
+            )
+        }
     }
 
     fun update(metaDB: MetaDB) = viewModelScope.launch(Dispatchers.IO) {
