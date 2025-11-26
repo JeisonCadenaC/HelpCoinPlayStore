@@ -120,16 +120,6 @@ y HelpCoin crea la meta automáticamente.
 
 ---
 
-## 👤 Autores
-
-* Jeison Cadena
-* Santiago Rodríguez
-* Santiago Zipa
-* Esteban Totaitive
-* Yoseph Galvis
-
----
-
 ## 🌿 Branches & Flujo de Git (Rama del funcionamiento de la app)
 
 ```mermaid
@@ -316,3 +306,15 @@ Registra gastos en diferentes monedas según tu país o proyecto.
 
 * Gráficas avanzadas:
 Visualizaciones más completas, interactivas y con análisis automático.
+
+---
+
+## 👤 Autores
+
+* Jeison Cadena
+* Santiago Rodríguez
+* Santiago Zipa
+* Esteban Totaitive
+* Yoseph Galvis
+
+
