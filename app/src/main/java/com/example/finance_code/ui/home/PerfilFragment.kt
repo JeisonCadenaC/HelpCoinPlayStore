@@ -7,6 +7,8 @@ import android.app.ProgressDialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -139,6 +141,23 @@ class PerfilFragment : Fragment() {
         tvEmailUsuario = binding.tvEmailUsuario
         imgEditarNombre = binding.imgEditarNombre
         switchModoOscuro = binding.switchModoOscuro
+
+        // MOSTRAR LA VERSIÓN DE LA APP
+        val tvVersionApp = view.findViewById<TextView>(R.id.tvVersionApp)
+        if (tvVersionApp != null) {
+            try {
+                val packageInfo = requireContext().packageManager.getPackageInfo(requireContext().packageName, 0)
+                tvVersionApp.text = "Versión: ${packageInfo.versionName}"
+            } catch (e: Exception) {
+                tvVersionApp.text = "Versión: Desconocida"
+            }
+        } else {
+            try {
+                val packageInfo = requireContext().packageManager.getPackageInfo(requireContext().packageName, 0)
+                binding.tvVersionApp.text = "Versión: ${packageInfo.versionName}"
+            } catch (e: Exception) {
+            }
+        }
 
         cargarDatosUsuario()
         cargarPreferenciasModoOscuro()
@@ -334,10 +353,14 @@ class PerfilFragment : Fragment() {
             return
         }
 
-        val progressDialog = ProgressDialog(requireContext())
-        progressDialog.setMessage("Guardando copia de seguridad completa (imágenes, movimientos, datos y más)...")
-        progressDialog.setCancelable(false)
-        progressDialog.show()
+        // NUEVO DIÁLOGO PERSONALIZADO DE BACKUP
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_backup, null)
+        val builder = AlertDialog.Builder(requireContext())
+        builder.setView(dialogView)
+        builder.setCancelable(false)
+        val customProgressDialog = builder.create()
+        customProgressDialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        customProgressDialog.show()
 
         val dbIdentifier = getDbIdentifier(userEmail!!)
 
@@ -348,7 +371,7 @@ class PerfilFragment : Fragment() {
                 val driveService = DriveService(requireContext(), googleAccount, dbIdentifier)
                 val fileId = driveService.uploadFullBackup(userEmail!!, userUID!!)
 
-                progressDialog.dismiss()
+                customProgressDialog.dismiss()
 
                 if (fileId != null) {
                     Toast.makeText(requireContext(), "Copia de seguridad guardada exitosamente", Toast.LENGTH_LONG).show()
@@ -356,7 +379,7 @@ class PerfilFragment : Fragment() {
                     Toast.makeText(requireContext(), "Error al subir el archivo a Drive", Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
-                progressDialog.dismiss()
+                customProgressDialog.dismiss()
                 Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
@@ -379,10 +402,14 @@ class PerfilFragment : Fragment() {
             return
         }
 
-        val progressDialog = ProgressDialog(requireContext())
-        progressDialog.setMessage("Restaurando copia de seguridad completa (imágenes, movimientos, datos y más)...")
-        progressDialog.setCancelable(false)
-        progressDialog.show()
+        // NUEVO DIÁLOGO PERSONALIZADO DE RESTORE
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_restore, null)
+        val builder = AlertDialog.Builder(requireContext())
+        builder.setView(dialogView)
+        builder.setCancelable(false)
+        val customProgressDialog = builder.create()
+        customProgressDialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        customProgressDialog.show()
 
         val dbIdentifier = getDbIdentifier(userEmail!!)
 
@@ -393,7 +420,7 @@ class PerfilFragment : Fragment() {
                 val driveService = DriveService(requireContext(), googleAccount, dbIdentifier)
                 val exito = driveService.restoreFullBackup(userEmail!!, userUID!!)
 
-                progressDialog.dismiss()
+                customProgressDialog.dismiss()
 
                 if (exito) {
                     Toast.makeText(requireContext(), "Restauración completada. Reiniciando...", Toast.LENGTH_LONG).show()
@@ -402,7 +429,7 @@ class PerfilFragment : Fragment() {
                     Toast.makeText(requireContext(), "No se encontró copia completa para este usuario", Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
-                progressDialog.dismiss()
+                customProgressDialog.dismiss()
                 Toast.makeText(requireContext(), "Error al restaurar: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
@@ -519,6 +546,7 @@ class PerfilFragment : Fragment() {
         val modoOscuroActivado = sharedPreferences.getBoolean("modo_oscuro", false)
         switchModoOscuro.isChecked = modoOscuroActivado
     }
+
     private fun configurarModoOscuro(activado: Boolean) {
         val sharedPreferences = requireActivity().getSharedPreferences("AppPrefe", Context.MODE_PRIVATE)
         with(sharedPreferences.edit()) {

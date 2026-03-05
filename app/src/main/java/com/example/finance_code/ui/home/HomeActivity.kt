@@ -15,6 +15,7 @@ import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.example.finance_code.R
+import com.example.finance_code.UpdateManager
 import com.example.finance_code.databinding.ActivityHomeBinding
 import com.example.finance_code.ui.login.AuthCheckActivity
 
@@ -53,6 +54,9 @@ class HomeActivity : AppCompatActivity() {
         } else {
             handleIncomingNotificationIntent(intent)
         }
+
+        // Llamada de actualización si el usuario ya está logueado y entra directo al inicio
+        UpdateManager(this).checkForUpdates()
     }
 
     private fun solicitarPermisos() {

@@ -22,6 +22,7 @@ import androidx.core.content.edit
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.finance_code.R
+import com.example.finance_code.UpdateManager
 import com.example.finance_code.databinding.ActivityLoginBinding
 import com.example.finance_code.ui.home.HomeActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -90,6 +91,9 @@ class LoginActivity : AppCompatActivity() {
         }
 
         setup()
+
+        // Llamada de actualización si el usuario entra a la pantalla de Login
+        UpdateManager(this).checkForUpdates()
     }
 
     private fun setup() {

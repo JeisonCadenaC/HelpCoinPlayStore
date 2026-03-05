@@ -121,7 +121,7 @@
             android:paddingEnd="8dp"
             android:paddingTop="3dp"
             android:paddingBottom="4dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="16dp"
             app:layout_constraintTop_toBottomOf="@id/tvEmailUsuario"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
@@ -188,16 +188,29 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="28dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="4dp"
             android:gravity="center"
             android:text="Santiago Rodríguez • Esteban Totaitive • Santiago Zipa • Jeison Cadena • Yoseph Galvis"
             android:textColor="@color/gray"
             android:textSize="12sp"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/btnCerrarSesion"
-            app:layout_constraintVertical_bias="1.0" />
+            app:layout_constraintTop_toBottomOf="@id/btnCerrarSesion" />
+
+        <TextView
+            android:id="@+id/tvVersionApp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Versión: 1.0"
+            android:textSize="11sp"
+            android:fontFamily="@font/montserrat_regular"
+            android:textColor="@color/gray"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="16dp"
+            app:layout_constraintTop_toBottomOf="@id/tvWatermark"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

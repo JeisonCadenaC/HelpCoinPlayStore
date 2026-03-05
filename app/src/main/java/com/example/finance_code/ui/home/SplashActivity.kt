@@ -14,7 +14,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.example.finance_code.R
 import com.example.finance_code.ui.login.AuthCheckActivity
-import com.example.finance_code.ui.home.ReminderHelper
 
 class SplashActivity : AppCompatActivity() {
 
@@ -48,19 +47,13 @@ class SplashActivity : AppCompatActivity() {
 
 
         videoView.setOnErrorListener { _, what, extra ->
-
             Log.e("SplashActivity", "Error al reproducir video. Codigo: $what, Extra: $extra")
-
-
             saltarAlLogin()
-
-
             true
         }
 
 
         videoView.setOnCompletionListener {
-
             saltarAlLogin()
         }
 
@@ -69,7 +62,6 @@ class SplashActivity : AppCompatActivity() {
     }
 
     private fun saltarAlLogin() {
-
         val intent = Intent(this, AuthCheckActivity::class.java)
         startActivity(intent)
         finish()
