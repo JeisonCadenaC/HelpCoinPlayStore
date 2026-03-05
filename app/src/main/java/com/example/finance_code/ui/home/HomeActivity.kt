@@ -1,8 +1,16 @@
 package com.example.finance_code.ui.home
 
+import android.Manifest
+import android.app.AlarmManager
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
@@ -14,15 +22,22 @@ class HomeActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityHomeBinding
     private lateinit var navController: NavController
+
     companion object {
         var isSessionActive: Boolean = false
         var pendingTargetFragment: String? = null
     }
 
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        solicitarPermisos()
 
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_home) as NavHostFragment
         navController = navHostFragment.navController
@@ -37,6 +52,35 @@ class HomeActivity : AppCompatActivity() {
             }
         } else {
             handleIncomingNotificationIntent(intent)
+        }
+    }
+
+    private fun solicitarPermisos() {
+        val permisosNecesarios = mutableListOf<String>()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                permisosNecesarios.add(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
+            permisosNecesarios.add(Manifest.permission.READ_CALENDAR)
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
+            permisosNecesarios.add(Manifest.permission.WRITE_CALENDAR)
+        }
+
+        if (permisosNecesarios.isNotEmpty()) {
+            requestPermissionLauncher.launch(permisosNecesarios.toTypedArray())
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            if (!alarmManager.canScheduleExactAlarms()) {
+                val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                startActivity(intent)
+            }
         }
     }
 
