@@ -169,8 +169,9 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Anterior"
+                        android:gravity="center"
                         android:textAlignment="center"
-                        android:textSize="13sp"
+                        android:textSize="12sp"
                         android:textStyle="bold"
                         android:textColor="?attr/colorOnSurface"/>
 
@@ -191,8 +192,9 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Actual"
+                        android:gravity="center"
                         android:textAlignment="center"
-                        android:textSize="13sp"
+                        android:textSize="12sp"
                         android:textStyle="bold"
                         android:textColor="?attr/colorOnSurface"
                         android:visibility="gone"/>

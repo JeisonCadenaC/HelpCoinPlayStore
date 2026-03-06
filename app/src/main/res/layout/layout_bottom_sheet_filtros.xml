@@ -192,6 +192,24 @@
                 app:checkedIconVisible="false"
                 android:text="Este Año" />
 
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipCompHistorial"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/colorOnSurface"
+                app:checkedIconVisible="false"
+                android:text="Todo el Historial" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipCompPersonalizado"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/colorOnSurface"
+                app:checkedIconVisible="false"
+                android:text="Personalizado..." />
+
         </com.google.android.material.chip.ChipGroup>
     </HorizontalScrollView>
 
