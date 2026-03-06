@@ -17,6 +17,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.PickVisualMediaRequest
@@ -46,6 +47,7 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.example.finance_code.ui.login.LoginActivity
 import java.io.File
 import java.io.FileOutputStream
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class PerfilFragment : Fragment() {
@@ -142,7 +144,6 @@ class PerfilFragment : Fragment() {
         imgEditarNombre = binding.imgEditarNombre
         switchModoOscuro = binding.switchModoOscuro
 
-        // MOSTRAR LA VERSIÓN DE LA APP
         val tvVersionApp = view.findViewById<TextView>(R.id.tvVersionApp)
         if (tvVersionApp != null) {
             try {
@@ -353,8 +354,10 @@ class PerfilFragment : Fragment() {
             return
         }
 
-        // NUEVO DIÁLOGO PERSONALIZADO DE BACKUP
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_backup, null)
+        val progressBar = dialogView.findViewById<ProgressBar>(R.id.progressBarBackup)
+        val txtProgress = dialogView.findViewById<TextView>(R.id.txtProgressBackup)
+
         val builder = AlertDialog.Builder(requireContext())
         builder.setView(dialogView)
         builder.setCancelable(false)
@@ -362,14 +365,29 @@ class PerfilFragment : Fragment() {
         customProgressDialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         customProgressDialog.show()
 
+        val progressJob = viewLifecycleOwner.lifecycleScope.launch {
+            var progress = 0
+            while (progress < 95) {
+                progress += (2..5).random()
+                if (progress > 95) progress = 95
+                progressBar.progress = progress
+                txtProgress.text = "Subiendo datos... $progress%"
+                delay(40)
+            }
+        }
+
         val dbIdentifier = getDbIdentifier(userEmail!!)
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 AppDB.checkpointAndClose(requireContext(), userEmail!!)
-
                 val driveService = DriveService(requireContext(), googleAccount, dbIdentifier)
                 val fileId = driveService.uploadFullBackup(userEmail!!, userUID!!)
+
+                progressJob.cancel()
+                progressBar.progress = 100
+                txtProgress.text = "¡Completado! 100%"
+                delay(500)
 
                 customProgressDialog.dismiss()
 
@@ -379,6 +397,7 @@ class PerfilFragment : Fragment() {
                     Toast.makeText(requireContext(), "Error al subir el archivo a Drive", Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
+                progressJob.cancel()
                 customProgressDialog.dismiss()
                 Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_LONG).show()
             }
@@ -402,8 +421,10 @@ class PerfilFragment : Fragment() {
             return
         }
 
-        // NUEVO DIÁLOGO PERSONALIZADO DE RESTORE
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_restore, null)
+        val progressBar = dialogView.findViewById<ProgressBar>(R.id.progressBarRestore)
+        val txtProgress = dialogView.findViewById<TextView>(R.id.txtProgressRestore)
+
         val builder = AlertDialog.Builder(requireContext())
         builder.setView(dialogView)
         builder.setCancelable(false)
@@ -411,24 +432,40 @@ class PerfilFragment : Fragment() {
         customProgressDialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         customProgressDialog.show()
 
+        val progressJob = viewLifecycleOwner.lifecycleScope.launch {
+            var progress = 0
+            while (progress < 95) {
+                progress += (2..5).random()
+                if (progress > 95) progress = 95
+                progressBar.progress = progress
+                txtProgress.text = "Descargando datos... $progress%"
+                delay(40)
+            }
+        }
+
         val dbIdentifier = getDbIdentifier(userEmail!!)
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 AppDB.closeInstance()
-
                 val driveService = DriveService(requireContext(), googleAccount, dbIdentifier)
                 val exito = driveService.restoreFullBackup(userEmail!!, userUID!!)
 
-                customProgressDialog.dismiss()
+                progressJob.cancel()
 
                 if (exito) {
+                    progressBar.progress = 100
+                    txtProgress.text = "¡Completado! 100%"
+                    delay(500)
+                    customProgressDialog.dismiss()
                     Toast.makeText(requireContext(), "Restauración completada. Reiniciando...", Toast.LENGTH_LONG).show()
                     reiniciarApp()
                 } else {
+                    customProgressDialog.dismiss()
                     Toast.makeText(requireContext(), "No se encontró copia completa para este usuario", Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
+                progressJob.cancel()
                 customProgressDialog.dismiss()
                 Toast.makeText(requireContext(), "Error al restaurar: ${e.message}", Toast.LENGTH_LONG).show()
             }

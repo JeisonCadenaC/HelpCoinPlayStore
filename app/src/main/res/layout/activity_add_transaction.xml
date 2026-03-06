@@ -14,6 +14,7 @@
         android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent"
         android:background="?attr/colorSurface"
+        app:elevation="0dp"
         android:fitsSystemWindows="true">
 
         <com.google.android.material.appbar.MaterialToolbar
@@ -29,56 +30,34 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_constraintTop_toBottomOf="@id/appBarLayout"
-        app:layout_constraintBottom_toTopOf="@id/guardarT"
-        android:padding="24dp">
+        app:layout_constraintBottom_toTopOf="@id/btnGuardar">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:padding="24dp">
 
             <TextView
-                android:id="@+id/title_with_icon"
-                android:layout_width="0dp"
+                android:id="@+id/tvTitulo"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Añadir Transacción"
-                android:textSize="24sp"
-                android:textStyle="bold"
+                android:text="Añadir Movimiento"
                 android:textColor="?attr/colorOnSurface"
-                app:drawableStartCompat="@drawable/ic_movimientos"
-                android:drawablePadding="12dp"
-                app:drawableTint="?attr/colorPrimary"
-                app:layout_constraintTop_toTopOf="parent"
+                android:textSize="28sp"
+                android:textStyle="bold"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
+                app:layout_constraintTop_toTopOf="parent" />
 
-            <com.google.android.material.button.MaterialButtonToggleGroup
-                android:id="@+id/registrarOpcion"
+            <View
+                android:id="@+id/divider"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                app:layout_constraintTop_toBottomOf="@id/title_with_icon"
-                android:layout_marginTop="24dp"
-                app:layout_constraintStart_toStartOf="parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="16dp"
+                android:alpha="0.1"
+                android:background="?attr/colorOnSurface"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:singleSelection="true"
-                app:checkedButton="@id/ingreso">
-
-                <Button
-                    android:id="@+id/ingreso"
-                    style="?attr/materialButtonOutlinedStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Ingreso" />
-
-                <Button
-                    android:id="@+id/egreso"
-                    style="?attr/materialButtonOutlinedStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Egreso" />
-
-            </com.google.android.material.button.MaterialButtonToggleGroup>
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvTitulo" />
 
             <LinearLayout
                 android:id="@+id/voiceInputContainer"
@@ -89,7 +68,7 @@
                 android:background="@drawable/rounded_background_card"
                 android:padding="12dp"
                 android:layout_marginTop="24dp"
-                app:layout_constraintTop_toBottomOf="@id/registrarOpcion"
+                app:layout_constraintTop_toBottomOf="@id/divider"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent">
 
@@ -113,56 +92,162 @@
             </LinearLayout>
 
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/valorLayout"
+                android:id="@+id/tilDescripcion"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
+                android:hint="Descripción"
+                app:boxCornerRadiusBottomEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusTopStart="12dp"
+                app:layout_constraintTop_toBottomOf="@id/voiceInputContainer">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etDescripcion"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textCapSentences" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilMonto"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
                 android:hint="Monto"
                 app:prefixText="$"
                 app:prefixTextColor="?attr/colorOnSurface"
-                app:layout_constraintTop_toBottomOf="@id/voiceInputContainer"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent">
+                app:boxCornerRadiusBottomEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusTopStart="12dp"
+                app:layout_constraintTop_toBottomOf="@id/tilDescripcion">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/valorT"
+                    android:id="@+id/etMonto"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="numberDecimal" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/descripcionLayout"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="0dp"
+            <TextView
+                android:id="@+id/tvTipoLabel"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:hint="Descripción"
-                app:helperText="Ejem: Netflix, Almuerzo"
-                app:startIconDrawable="@drawable/ic_tag"
-                app:layout_constraintTop_toBottomOf="@id/valorLayout"
+                android:layout_marginTop="24dp"
+                android:text="Tipo de transacción"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="16sp"
+                android:textStyle="bold"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent">
+                app:layout_constraintTop_toBottomOf="@id/tilMonto" />
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/descripcionT"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
-            </com.google.android.material.textfield.TextInputLayout>
+            <LinearLayout
+                android:id="@+id/llSelector"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:baselineAligned="false"
+                android:orientation="horizontal"
+                app:layout_constraintTop_toBottomOf="@id/tvTipoLabel">
 
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardEgreso"
+                    android:layout_width="0dp"
+                    android:layout_height="110dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="#808080"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="8dp">
+
+                        <ImageView
+                            android:id="@+id/ivEgresoArrow"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:contentDescription="Flecha abajo"
+                            android:src="@drawable/ic_arrow_down"
+                            app:tint="#F44336" />
+
+                        <TextView
+                            android:id="@+id/tvEgresoText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="Egreso"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardIngreso"
+                    android:layout_width="0dp"
+                    android:layout_height="110dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="#808080"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="8dp">
+
+                        <ImageView
+                            android:id="@+id/ivIngresoArrow"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:contentDescription="Flecha arriba"
+                            android:src="@drawable/ic_arrow_up"
+                            app:tint="#4CAF50" />
+
+                        <TextView
+                            android:id="@+id/tvIngresoText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="Ingreso"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+            </LinearLayout>
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
 
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/guardarT"
-        android:layout_width="0dp"
-        android:layout_height="60dp"
-        android:layout_margin="16dp"
+        android:id="@+id/btnGuardar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="24dp"
+        android:paddingVertical="14dp"
         android:text="Guardar Transacción"
+        android:textSize="16sp"
         android:textStyle="bold"
+        app:cornerRadius="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -75,13 +75,16 @@
             style="@style/Widget.AppCompat.ProgressBar.Horizontal"
             android:layout_width="match_parent"
             android:layout_height="8dp"
-            android:indeterminate="true"
-            android:indeterminateTint="#6200EE" />
+            android:max="100"
+            android:progress="0"
+            android:indeterminate="false"
+            android:progressTint="#6200EE" />
 
         <TextView
+            android:id="@+id/txtProgressRestore"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Descargando datos..."
+            android:text="Preparando... 0%"
             android:gravity="end"
             android:textSize="12sp"
             android:fontFamily="@font/montserrat_regular"

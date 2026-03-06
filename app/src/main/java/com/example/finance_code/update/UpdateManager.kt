@@ -31,8 +31,11 @@ data class AppVersion(
 
 class UpdateManager(private val activity: AppCompatActivity) {
 
-    // URL directa al archivo version.json en tu nuevo repositorio público (rama main)
-    // NOTA: Si tu repositorio por defecto se creó con la rama "master", cambia la palabra "main" por "master" en el enlace.
+    companion object {
+        // Variable estática que sobrevive a la recreación de la Activity al cambiar de tema
+        private var isSkippedThisSession = false
+    }
+
     private val UPDATE_JSON_URL = "https://raw.githubusercontent.com/JeisonCadenaC/HelpCoinUpdater/main/version.json"
 
     private var updateDialog: AlertDialog? = null
@@ -41,12 +44,30 @@ class UpdateManager(private val activity: AppCompatActivity) {
     private var layoutButtons: LinearLayout? = null
     private var layoutProgress: LinearLayout? = null
 
+    init {
+        deleteOldApk()
+    }
+
+    private fun deleteOldApk() {
+        try {
+            val file = File(activity.getExternalFilesDir(null), "HelpCoin_Update.apk")
+            if (file.exists()) {
+                file.delete()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     fun checkForUpdates() {
+        // Si el usuario ya le dio a "Ahora no" en esta sesión, cancelamos la búsqueda
+        if (isSkippedThisSession) return
+
         val urlFresca = "$UPDATE_JSON_URL?t=${System.currentTimeMillis()}"
 
         val request = Request.Builder()
             .url(urlFresca)
-            .cacheControl(CacheControl.FORCE_NETWORK) // Petición pública
+            .cacheControl(CacheControl.FORCE_NETWORK)
             .build()
 
         OkHttpClient().newCall(request).enqueue(object : Callback {
@@ -65,7 +86,8 @@ class UpdateManager(private val activity: AppCompatActivity) {
                         val currentVersionCode = activity.packageManager
                             .getPackageInfo(activity.packageName, 0).versionCode
 
-                        if (appVersion.versionCode > currentVersionCode) {
+                        // Verificamos de nuevo por si cambió la variable mientras se hacía la petición
+                        if (appVersion.versionCode > currentVersionCode && !isSkippedThisSession) {
                             activity.runOnUiThread {
                                 showCustomUpdateDialog(appVersion)
                             }
@@ -101,7 +123,12 @@ class UpdateManager(private val activity: AppCompatActivity) {
         updateDialog?.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
         btnUpdate.setOnClickListener { startDownload(version.url) }
-        btnLater.setOnClickListener { updateDialog?.dismiss() }
+
+        btnLater.setOnClickListener {
+            // Registramos que el usuario no quiere actualizar en esta sesión
+            isSkippedThisSession = true
+            updateDialog?.dismiss()
+        }
 
         updateDialog?.show()
     }
@@ -111,13 +138,11 @@ class UpdateManager(private val activity: AppCompatActivity) {
         layoutProgress?.visibility = View.VISIBLE
         txtProgress?.text = "Preparando actualización..."
 
-        // Usamos la URL de descarga directa (el link del release)
         val request = Request.Builder()
             .url(url)
             .addHeader("Accept-Encoding", "identity")
             .build()
 
-        // Forzamos a OkHttp a seguir redirecciones (esencial para los Releases de GitHub)
         val client = OkHttpClient.Builder()
             .followRedirects(true)
             .followSslRedirects(true)
@@ -157,7 +182,6 @@ class UpdateManager(private val activity: AppCompatActivity) {
                         sink.write(buffer, 0, bytesRead)
                         totalBytesRead += bytesRead
 
-                        // Dependiendo del servidor, GitHub podría no informar el tamaño total (contentLength = -1)
                         if (contentLength > 0) {
                             val progress = ((totalBytesRead * 100) / contentLength).toInt()
                             if (progress > lastProgress) {
@@ -168,7 +192,6 @@ class UpdateManager(private val activity: AppCompatActivity) {
                                 }
                             }
                         } else {
-                            // Si no se sabe el peso total, mostramos los MB descargados
                             activity.runOnUiThread {
                                 val megabytes = totalBytesRead / (1024 * 1024)
                                 txtProgress?.text = "Descargando... ${megabytes}MB"
