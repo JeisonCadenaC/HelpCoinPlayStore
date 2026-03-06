@@ -42,8 +42,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Todo el historial"
-                    android:textSize="13sp"
-                    android:alpha="0.6"
+                    android:textSize="14sp"
                     android:layout_marginTop="2dp"
                     android:textColor="?attr/colorOnSurface"/>
             </LinearLayout>
@@ -117,7 +116,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="0%"
-                            android:textSize="13sp"
+                            android:textSize="14sp"
                             android:textStyle="bold"
                             android:textColor="#4CAF50"
                             android:layout_marginStart="4dp"/>
@@ -127,9 +126,8 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text=" vs periodo anterior"
-                            android:textSize="12sp"
+                            android:textSize="13sp"
                             android:textColor="?attr/colorOnSurface"
-                            android:alpha="0.8"
                             android:layout_marginStart="4dp"/>
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>

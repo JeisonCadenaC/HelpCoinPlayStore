@@ -319,8 +319,10 @@ class InicioFragment : Fragment() {
         val pTipoActual = if (tipoAnalisis == 0) pTipoGastos else pTipoIngresos
         val cTipoActual = if (tipoAnalisis == 0) cTipoGastos else cTipoIngresos
 
-        sheetView.findViewById<Chip>(mapearPeriodoAId(pTipoActual))?.isChecked = true
-        sheetView.findViewById<Chip>(mapearCompAId(cTipoActual))?.isChecked = true
+        var tempPIni = if (tipoAnalisis == 0) pInicioGastos else pInicioIngresos
+        var tempPFin = if (tipoAnalisis == 0) pFinGastos else pFinIngresos
+        var tempCIni = if (tipoAnalisis == 0) cInicioGastos else cInicioIngresos
+        var tempCFin = if (tipoAnalisis == 0) cFinGastos else cFinIngresos
 
         val actualizarEstiloChips = { group: ChipGroup ->
             for (i in 0 until group.childCount) {
@@ -329,6 +331,35 @@ class InicioFragment : Fragment() {
                     if (chip?.isChecked == true) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
             }
         }
+
+        val chipPersonalizado = sheetView.findViewById<Chip>(R.id.chipPersonalizado)
+        val chipCompPersonalizado = sheetView.findViewById<Chip>(R.id.chipCompPersonalizado)
+
+        if (pTipoActual == 6) chipPersonalizado.text = obtenerTextoRango(6, tempPIni, tempPFin)
+        if (cTipoActual == 6) chipCompPersonalizado.text = "vs " + obtenerTextoRango(6, tempCIni, tempCFin)
+
+        chipPersonalizado.setOnClickListener {
+            abrirSelectorFechas(parentView, tipoAnalisis, isComp = false) { ini, fin ->
+                tempPIni = ini
+                tempPFin = fin
+                chipPersonalizado.text = obtenerTextoRango(6, ini, fin)
+                chipPersonalizado.isChecked = true
+                actualizarEstiloChips(chipGroupPeriodo)
+            }
+        }
+
+        chipCompPersonalizado.setOnClickListener {
+            abrirSelectorFechas(parentView, tipoAnalisis, isComp = true) { ini, fin ->
+                tempCIni = ini
+                tempCFin = fin
+                chipCompPersonalizado.text = "vs " + obtenerTextoRango(6, ini, fin)
+                chipCompPersonalizado.isChecked = true
+                actualizarEstiloChips(chipGroupComparacion)
+            }
+        }
+
+        sheetView.findViewById<Chip>(mapearPeriodoAId(pTipoActual))?.isChecked = true
+        sheetView.findViewById<Chip>(mapearCompAId(cTipoActual))?.isChecked = true
 
         chipGroupPeriodo.setOnCheckedChangeListener { group, _ -> actualizarEstiloChips(group) }
         chipGroupComparacion.setOnCheckedChangeListener { group, _ -> actualizarEstiloChips(group) }
@@ -340,63 +371,19 @@ class InicioFragment : Fragment() {
             val nuevoPTipo = mapearIdATipo(chipGroupPeriodo.checkedChipId)
             val nuevoCTipo = mapearIdATipo(chipGroupComparacion.checkedChipId)
 
-            if (nuevoPTipo == 6) {
-                abrirSelectorFechas(parentView, tipoAnalisis, isComp = false) { iniP, finP ->
-                    if (nuevoCTipo == 6) {
-                        abrirSelectorFechas(parentView, tipoAnalisis, isComp = true) { iniC, finC ->
-                            aplicarSeleccion(
-                                parentView,
-                                tipoAnalisis,
-                                nuevoPTipo,
-                                iniP,
-                                finP,
-                                nuevoCTipo,
-                                iniC,
-                                finC
-                            )
-                        }
-                    } else {
-                        val (iniC, finC) = calcularFechasAbsolutas(nuevoCTipo)
-                        aplicarSeleccion(
-                            parentView,
-                            tipoAnalisis,
-                            nuevoPTipo,
-                            iniP,
-                            finP,
-                            nuevoCTipo,
-                            iniC,
-                            finC
-                        )
-                    }
-                }
-            } else if (nuevoCTipo == 6) {
-                val (iniP, finP) = calcularFechasAbsolutas(nuevoPTipo)
-                abrirSelectorFechas(parentView, tipoAnalisis, isComp = true) { iniC, finC ->
-                    aplicarSeleccion(
-                        parentView,
-                        tipoAnalisis,
-                        nuevoPTipo,
-                        iniP,
-                        finP,
-                        nuevoCTipo,
-                        iniC,
-                        finC
-                    )
-                }
-            } else {
-                val (iniP, finP) = calcularFechasAbsolutas(nuevoPTipo)
-                val (iniC, finC) = calcularFechasAbsolutas(nuevoCTipo)
-                aplicarSeleccion(
-                    parentView,
-                    tipoAnalisis,
-                    nuevoPTipo,
-                    iniP,
-                    finP,
-                    nuevoCTipo,
-                    iniC,
-                    finC
-                )
-            }
+            val (iniP, finP) = if (nuevoPTipo == 6) Pair(tempPIni, tempPFin) else calcularFechasAbsolutas(nuevoPTipo)
+            val (iniC, finC) = if (nuevoCTipo == 6) Pair(tempCIni, tempCFin) else calcularFechasAbsolutas(nuevoCTipo)
+
+            aplicarSeleccion(
+                parentView,
+                tipoAnalisis,
+                nuevoPTipo,
+                iniP,
+                finP,
+                nuevoCTipo,
+                iniC,
+                finC
+            )
             bottomSheetDialog.dismiss()
         }
         bottomSheetDialog.show()
@@ -446,13 +433,13 @@ class InicioFragment : Fragment() {
                 val sdf = SimpleDateFormat("dd MMM", Locale.getDefault())
                 "${sdf.format(Date(ini))} - ${sdf.format(Date(fin))}"
             }
-
             else -> "Periodo"
         }
     }
 
     private fun calcularFechasAbsolutas(rangoTipo: Int): Pair<Long, Long> {
-        if (rangoTipo == 5 || rangoTipo < 0) return Pair(0L, Long.MAX_VALUE)
+        val hoy = System.currentTimeMillis()
+        if (rangoTipo == 5 || rangoTipo < 0) return Pair(0L, hoy)
         var inicio = 0L
         var fin = Long.MAX_VALUE
         val cal = Calendar.getInstance()
@@ -463,8 +450,8 @@ class InicioFragment : Fragment() {
                 inicio = resetTime(cal).timeInMillis
                 cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH))
                 fin = maximizeTime(cal).timeInMillis
+                fin = minOf(fin, hoy)
             }
-
             1 -> {
                 cal.add(Calendar.MONTH, -1)
                 cal.set(Calendar.DAY_OF_MONTH, 1)
@@ -472,19 +459,16 @@ class InicioFragment : Fragment() {
                 cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH))
                 fin = maximizeTime(cal).timeInMillis
             }
-
             2 -> {
-                fin = System.currentTimeMillis()
+                fin = hoy
                 cal.add(Calendar.DAY_OF_YEAR, -7)
                 inicio = resetTime(cal).timeInMillis
             }
-
             3 -> {
-                fin = System.currentTimeMillis()
+                fin = hoy
                 cal.add(Calendar.DAY_OF_YEAR, -30)
                 inicio = resetTime(cal).timeInMillis
             }
-
             4 -> {
                 cal.set(Calendar.MONTH, Calendar.JANUARY)
                 cal.set(Calendar.DAY_OF_MONTH, 1)
@@ -492,6 +476,7 @@ class InicioFragment : Fragment() {
                 cal.set(Calendar.MONTH, Calendar.DECEMBER)
                 cal.set(Calendar.DAY_OF_MONTH, 31)
                 fin = maximizeTime(cal).timeInMillis
+                fin = minOf(fin, hoy)
             }
         }
         return Pair(inicio, fin)
@@ -537,7 +522,6 @@ class InicioFragment : Fragment() {
                 cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH))
                 Pair(i, maximizeTime(cal).timeInMillis)
             }
-
             1 -> {
                 cal.add(Calendar.MONTH, -2)
                 cal.set(Calendar.DAY_OF_MONTH, 1)
@@ -545,7 +529,6 @@ class InicioFragment : Fragment() {
                 cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH))
                 Pair(i, maximizeTime(cal).timeInMillis)
             }
-
             2 -> Pair(pIni - 7L * 24 * 60 * 60 * 1000, pIni - 1)
             3 -> Pair(pIni - 30L * 24 * 60 * 60 * 1000, pIni - 1)
             4 -> {
@@ -557,12 +540,10 @@ class InicioFragment : Fragment() {
                 cal.set(Calendar.DAY_OF_MONTH, 31)
                 Pair(i, maximizeTime(cal).timeInMillis)
             }
-
             6 -> {
                 val duracion = pFin - pIni
                 Pair(pIni - duracion - 1, pIni - 1)
             }
-
             else -> Pair(0L, 0L)
         }
     }
@@ -587,7 +568,6 @@ class InicioFragment : Fragment() {
                     else -> "vs Anterior"
                 }
             }
-
             else -> ""
         }
     }
@@ -647,22 +627,9 @@ class InicioFragment : Fragment() {
     private fun configurarPieChart(pieChart: PieChart, view: View) {
         pieChart.setUsePercentValues(true)
         pieChart.description.isEnabled = false
-        pieChart.isDrawHoleEnabled = true
-        pieChart.setHoleColor(Color.TRANSPARENT)
-        pieChart.setTransparentCircleAlpha(0)
-        pieChart.holeRadius = 55f
-        pieChart.transparentCircleRadius = 60f
+        pieChart.isDrawHoleEnabled = false
         pieChart.setDrawEntryLabels(false)
         pieChart.setExtraOffsets(0f, 0f, 0f, 0f)
-
-        pieChart.setDrawCenterText(true)
-        pieChart.setCenterTextSize(11f)
-        pieChart.setCenterTextColor(
-            ContextCompat.getColor(
-                requireContext(),
-                android.R.color.tab_indicator_text
-            )
-        )
 
         val legend = pieChart.legend
         legend.verticalAlignment = Legend.LegendVerticalAlignment.BOTTOM
@@ -670,13 +637,12 @@ class InicioFragment : Fragment() {
         legend.orientation = Legend.LegendOrientation.HORIZONTAL
         legend.setDrawInside(false)
         legend.isWordWrapEnabled = true
-        legend.textSize = 10f
+        legend.textSize = 14f
         legend.form = Legend.LegendForm.CIRCLE
-        legend.formSize = 8f
-        legend.xEntrySpace = 8f
-        legend.yEntrySpace = 4f
-        legend.textColor =
-            ContextCompat.getColor(requireContext(), android.R.color.tab_indicator_text)
+        legend.formSize = 14f
+        legend.xEntrySpace = 10f
+        legend.yEntrySpace = 6f
+        legend.textColor = ContextCompat.getColor(requireContext(), android.R.color.tab_indicator_text)
 
         pieChart.setOnChartValueSelectedListener(object : OnChartValueSelectedListener {
             override fun onValueSelected(e: Entry?, h: Highlight?) {
@@ -718,6 +684,8 @@ class InicioFragment : Fragment() {
         legend.horizontalAlignment = Legend.LegendHorizontalAlignment.CENTER
         legend.orientation = Legend.LegendOrientation.HORIZONTAL
         legend.setDrawInside(false)
+        legend.textSize = 14f
+        legend.formSize = 14f
         legend.textColor =
             ContextCompat.getColor(requireContext(), android.R.color.tab_indicator_text)
 
@@ -725,6 +693,7 @@ class InicioFragment : Fragment() {
         xAxis.position = XAxis.XAxisPosition.BOTTOM
         xAxis.setDrawGridLines(false)
         xAxis.granularity = 1f
+        xAxis.textSize = 13f
         xAxis.textColor =
             ContextCompat.getColor(requireContext(), android.R.color.tab_indicator_text)
         xAxis.valueFormatter = object : ValueFormatter() {
@@ -740,6 +709,7 @@ class InicioFragment : Fragment() {
         val yAxis = lineChart.axisLeft
         yAxis.setDrawGridLines(true)
         yAxis.gridColor = Color.parseColor("#33888888")
+        yAxis.textSize = 13f
         yAxis.textColor =
             ContextCompat.getColor(requireContext(), android.R.color.tab_indicator_text)
         yAxis.valueFormatter = object : ValueFormatter() {
@@ -788,62 +758,50 @@ class InicioFragment : Fragment() {
                 "🍔 Comida",
                 Color.parseColor("#FF9800")
             )
-
             textoInfo.matches(Regex(".*(gasolina|moto|carro|repuestos|arreglo|mecanico|parqueadero|peaje|llanta|aceite|taller|vehiculo|soat|tecnomecanica).*")) -> Pair(
                 "🚗 Vehículo",
                 Color.parseColor("#607D8B")
             )
-
             textoInfo.matches(Regex(".*(transporte|pasaje|bus|transmilenio|taxi|uber|didi|cabify|metro|picap).*")) -> Pair(
                 "🚌 Transporte",
                 Color.parseColor("#03A9F4")
             )
-
             textoInfo.matches(Regex(".*(servicio|luz|agua|internet|recibo|gas|telefono|celular|plan|wifi|factura|arriendo|alquiler).*")) -> Pair(
                 "💡 Servicios y Recibos",
                 Color.parseColor("#FFC107")
             )
-
             textoInfo.matches(Regex(".*(supermercado|mercado|despensa|viveres|tienda|d1|ara|exito|jumbo|olimpica|carulla|abastos).*")) -> Pair(
                 "🛒 Mercado",
                 Color.parseColor("#4CAF50")
             )
-
             textoInfo.matches(Regex(".*(maquillaje|peluqueria|uñas|barbero|cuidado|crema|aseo|skincare|corte|perfume).*")) -> Pair(
                 "💅 Cuidado Personal",
                 Color.parseColor("#E91E63")
             )
-
             textoInfo.matches(Regex(".*(salud|medicina|farmacia|medico|pastillas|hospital|eps|cita|droga|drogueria|examen).*")) -> Pair(
                 "💊 Salud",
                 Color.parseColor("#F44336")
             )
-
             textoInfo.matches(Regex(".*(ropa|compras|zapatos|tenis|blusa|pantalon|chaqueta|centro comercial|mall|regalo|accesorio).*")) -> Pair(
                 "🛍️ Compras",
                 Color.parseColor("#9C27B0")
             )
-
             textoInfo.matches(Regex(".*(educacion|estudio|universidad|colegio|cuaderno|libro|curso|matricula|pension|semestre|diplomado).*")) -> Pair(
                 "📚 Educación",
                 Color.parseColor("#00BCD4")
             )
-
             textoInfo.matches(Regex(".*(viaje|hotel|vuelo|avion|vacaciones|turismo|paseo|hospedaje|airbnb|terminal).*")) -> Pair(
                 "✈️ Viajes",
                 Color.parseColor("#3F51B5")
             )
-
             textoInfo.matches(Regex(".*(prostituta|puta|prepago|onlyfans|webcam|motel|cariñosa|chica|acompañante).*")) -> Pair(
                 "🔞 Ocio Nocturno",
                 Color.parseColor("#B71C1C")
             )
-
             textoInfo.matches(Regex(".*(ocio|diversion|cine|rumba|fiesta|trago|cerveza|pola|licor|bar|netflix|spotify|suscripcion|videojuego|juego|xbox|play|suscripción).*")) -> Pair(
                 "🎉 Diversión",
                 Color.parseColor("#CDDC39")
             )
-
             else -> Pair("🏷️ Otros Gastos", Color.parseColor("#795548"))
         }
     }
@@ -904,6 +862,7 @@ class InicioFragment : Fragment() {
         val pieChartComp = view.findViewById<PieChart>(R.id.pieChartComparacion)
         val layoutComp = view.findViewById<LinearLayout>(R.id.layoutPieComparacion)
         val txtActual = view.findViewById<TextView>(R.id.txtLabelActualGastos)
+        val txtAnterior = view.findViewById<TextView>(R.id.txtLabelAnteriorGastos)
         val txtTotal = view.findViewById<TextView>(R.id.txtTotalGastos)
         val cardTendencia = view.findViewById<CardView>(R.id.cardTendenciaGastos)
 
@@ -923,18 +882,16 @@ class InicioFragment : Fragment() {
 
         rellenarPieChart(pieChartActual, gastosActuales)
 
-        if (pInicioGastos == 0L && pFinGastos == Long.MAX_VALUE) {
-            pieChartActual.centerText = "Historial\nCompleto"
+        txtActual.visibility = View.VISIBLE
+        val txtFechaActual = if (pInicioGastos == 0L && pFinGastos == Long.MAX_VALUE) {
+            "Historial Completo"
         } else {
-            pieChartActual.centerText =
-                "${sdfRangoCenter.format(Date(if (pInicioGastos == 0L) System.currentTimeMillis() else pInicioGastos))}\nal\n${
-                    sdfRangoCenter.format(Date(if (pFinGastos == Long.MAX_VALUE) System.currentTimeMillis() else pFinGastos))
-                }"
+            "${sdfRangoCenter.format(Date(if (pInicioGastos == 0L) System.currentTimeMillis() else pInicioGastos))} - ${sdfRangoCenter.format(Date(if (pFinGastos == Long.MAX_VALUE) System.currentTimeMillis() else pFinGastos))}"
         }
 
         if (cTipoGastos != -1) {
+            txtActual.text = "Actual\n($txtFechaActual)"
             layoutComp.visibility = View.VISIBLE
-            txtActual.visibility = View.VISIBLE
 
             val (cIni, cFin) = if (cTipoGastos == -2) obtenerFechasComparacionAuto(
                 pTipoGastos,
@@ -951,12 +908,12 @@ class InicioFragment : Fragment() {
 
             rellenarPieChart(pieChartComp, gastosAnt)
 
-            if (cIni == 0L && cFin == Long.MAX_VALUE) {
-                pieChartComp.centerText = "Historial\nCompleto"
+            val txtFechaAnt = if (cIni == 0L && cFin == Long.MAX_VALUE) {
+                "Historial Completo"
             } else {
-                pieChartComp.centerText =
-                    "${sdfRangoCenter.format(Date(cIni))}\nal\n${sdfRangoCenter.format(Date(if (cFin == Long.MAX_VALUE) System.currentTimeMillis() else cFin))}"
+                "${sdfRangoCenter.format(Date(cIni))} - ${sdfRangoCenter.format(Date(if (cFin == Long.MAX_VALUE) System.currentTimeMillis() else cFin))}"
             }
+            txtAnterior.text = "Anterior\n($txtFechaAnt)"
 
             val totalAnt = gastosAnt.sumOf { it.cantidad }
             actualizarUITendencia(
@@ -967,8 +924,8 @@ class InicioFragment : Fragment() {
                 obtenerNombreModo(cTipoGastos, pTipoGastos)
             )
         } else {
+            txtActual.text = txtFechaActual
             layoutComp.visibility = View.GONE
-            txtActual.visibility = View.GONE
             cardTendencia.visibility = View.GONE
         }
     }
@@ -1271,8 +1228,8 @@ class InicioFragment : Fragment() {
             }
 
             holder.btnEliminar.setOnClickListener {
-                onDeleteClick(evento) a
-                        idItemSeleccionado = null
+                onDeleteClick(evento)
+                idItemSeleccionado = null
                 notifyDataSetChanged()
             }
         }
