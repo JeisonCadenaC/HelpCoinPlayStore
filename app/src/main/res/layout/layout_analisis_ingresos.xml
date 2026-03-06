@@ -73,36 +73,87 @@
                 android:background="#1A000000"
                 android:layout_marginBottom="12dp"/>
 
-            <RelativeLayout
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
 
                 <TextView
                     android:id="@+id/txtTotalIngresos"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="$0.00"
-                    android:textSize="22sp"
+                    android:textSize="32sp"
                     android:textStyle="bold"
-                    android:layout_centerVertical="true"
                     android:textColor="#4CAF50"/>
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnFiltrarFechasIngresos"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardTendenciaIngresos"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:text="Filtrar Mes"
-                    android:textColor="?attr/colorPrimary" />
-            </RelativeLayout>
+                    android:layout_marginTop="6dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="#1A4CAF50"
+                    android:visibility="gone">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="4dp">
+
+                        <ImageView
+                            android:id="@+id/imgTendenciaIngresos"
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:src="@drawable/ic_arrow_up"
+                            app:tint="#4CAF50"/>
+
+                        <TextView
+                            android:id="@+id/txtTendenciaIngresos"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0%"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
+                            android:textColor="#4CAF50"
+                            android:layout_marginStart="4dp"/>
+
+                        <TextView
+                            android:id="@+id/txtTendenciaModoIngresos"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text=" vs periodo anterior"
+                            android:textSize="12sp"
+                            android:textColor="?attr/colorOnSurface"
+                            android:alpha="0.8"
+                            android:layout_marginStart="4dp"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnConfigurarAnalisisIngresos"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:text="Periodo: Todo el historial"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="13sp"
+                    app:strokeColor="#40888888"
+                    app:iconTint="?attr/colorOnSurface"
+                    app:cornerRadius="14dp" />
+
+            </LinearLayout>
 
             <com.github.mikephil.charting.charts.LineChart
                 android:id="@+id/lineChartIngresos"
                 android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:layout_marginTop="8dp" />
+                android:layout_height="220dp"
+                android:layout_marginTop="20dp" />
 
             <LinearLayout
                 android:id="@+id/layoutDetalleSliceIngresos"
@@ -111,7 +162,7 @@
                 android:orientation="vertical"
                 android:background="@drawable/rounded_background_card"
                 android:padding="12dp"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="12dp"
                 android:gravity="center"
                 android:visibility="gone">
 
