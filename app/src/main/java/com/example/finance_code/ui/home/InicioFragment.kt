@@ -3,6 +3,7 @@ package com.example.finance_code.ui.home
 import android.Manifest
 import android.app.AlertDialog
 import android.content.Context
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.graphics.Color
@@ -168,22 +169,36 @@ class InicioFragment : Fragment() {
         }
     }
 
+    private fun getSafeLong(prefs: SharedPreferences, key: String, defaultVal: Long): Long {
+        return try {
+            prefs.getLong(key, defaultVal)
+        } catch (e: ClassCastException) {
+            try {
+                prefs.getInt(key, defaultVal.toInt()).toLong()
+            } catch (e2: Exception) {
+                defaultVal
+            }
+        }
+    }
+
     private fun cargarPreferencias() {
-        val prefs =
-            requireContext().getSharedPreferences("analisis_prefs_$userEmail", Context.MODE_PRIVATE)
+        val prefs = requireContext().getSharedPreferences("analisis_prefs_$userEmail", Context.MODE_PRIVATE)
+
         pTipoGastos = prefs.getInt("pTipoGastos", 5)
-        pInicioGastos = prefs.getLong("pInicioGastos", 0L)
-        pFinGastos = prefs.getLong("pFinGastos", Long.MAX_VALUE)
+        pInicioGastos = getSafeLong(prefs, "pInicioGastos", 0L)
+        pFinGastos = getSafeLong(prefs, "pFinGastos", Long.MAX_VALUE)
+
         cTipoGastos = prefs.getInt("cTipoGastos", -1)
-        cInicioGastos = prefs.getLong("cInicioGastos", 0L)
-        cFinGastos = prefs.getLong("cFinGastos", Long.MAX_VALUE)
+        cInicioGastos = getSafeLong(prefs, "cInicioGastos", 0L)
+        cFinGastos = getSafeLong(prefs, "cFinGastos", Long.MAX_VALUE)
 
         pTipoIngresos = prefs.getInt("pTipoIngresos", 5)
-        pInicioIngresos = prefs.getLong("pInicioIngresos", 0L)
-        pFinIngresos = prefs.getLong("pFinIngresos", Long.MAX_VALUE)
+        pInicioIngresos = getSafeLong(prefs, "pInicioIngresos", 0L)
+        pFinIngresos = getSafeLong(prefs, "pFinIngresos", Long.MAX_VALUE)
+
         cTipoIngresos = prefs.getInt("cTipoIngresos", -1)
-        cInicioIngresos = prefs.getLong("cInicioIngresos", 0L)
-        cFinIngresos = prefs.getLong("cFinIngresos", Long.MAX_VALUE)
+        cInicioIngresos = getSafeLong(prefs, "cInicioIngresos", 0L)
+        cFinIngresos = getSafeLong(prefs, "cFinIngresos", Long.MAX_VALUE)
     }
 
     private fun guardarPreferencias(tipo: Int) {

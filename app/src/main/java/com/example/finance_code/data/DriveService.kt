@@ -245,12 +245,23 @@ class DriveService(
             prefs.clear()
 
             val iter = json.keys()
+            val longKeys = setOf(
+                "pInicioGastos", "pFinGastos", "cInicioGastos", "cFinGastos",
+                "pInicioIngresos", "pFinIngresos", "cInicioIngresos", "cFinIngresos"
+            )
+
             while (iter.hasNext()) {
                 val key = iter.next()
                 val value = json.get(key)
                 when (value) {
                     is Boolean -> prefs.putBoolean(key, value)
-                    is Int -> prefs.putInt(key, value)
+                    is Int -> {
+                        if (key in longKeys || key.lowercase().contains("time") || key.lowercase().contains("date") || key.lowercase().contains("millis")) {
+                            prefs.putLong(key, value.toLong())
+                        } else {
+                            prefs.putInt(key, value)
+                        }
+                    }
                     is Long -> prefs.putLong(key, value)
                     is Double -> prefs.putFloat(key, value.toFloat())
                     is String -> prefs.putString(key, value)
