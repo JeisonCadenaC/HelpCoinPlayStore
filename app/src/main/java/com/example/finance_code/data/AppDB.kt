@@ -10,7 +10,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [Movimiento::class, Recordatorio::class, MetaDB::class, Categoria::class],
-    version = 10,
+    version = 11, // Subimos a versión 11
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -40,6 +40,13 @@ abstract class AppDB : RoomDatabase() {
             }
         }
 
+        // NUEVA MIGRACIÓN: Añadir la columna HORA
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                try { database.execSQL("ALTER TABLE `movimientos` ADD COLUMN `hora` TEXT NOT NULL DEFAULT '00:00:00'") } catch (e: Exception) {}
+            }
+        }
+
         private fun getDbNameFromEmail(email: String): String {
             return "finance_db_" + email.replace(Regex("[^a-zA-Z0-9]"), "_")
         }
@@ -61,7 +68,7 @@ abstract class AppDB : RoomDatabase() {
                     AppDB::class.java,
                     dbName
                 )
-                    .addMigrations(MIGRATION_8_10, MIGRATION_9_10)
+                    .addMigrations(MIGRATION_8_10, MIGRATION_9_10, MIGRATION_10_11)
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance

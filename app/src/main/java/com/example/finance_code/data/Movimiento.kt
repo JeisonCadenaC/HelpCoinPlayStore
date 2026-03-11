@@ -15,5 +15,6 @@ data class Movimiento(
     val tipo: Int,
     val fecha: String,
     val categoria: String,
-    val categoriaId: Long = 5L
+    val categoriaId: Long = 5L,
+    val hora: String = "00:00:00"
 ): Parcelable

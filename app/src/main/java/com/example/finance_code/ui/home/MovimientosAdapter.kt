@@ -15,81 +15,105 @@ import com.example.finance_code.DiscreetModeManager
 import java.text.NumberFormat
 import java.util.Locale
 
+sealed class MovimientoListItem {
+    data class Header(val title: String) : MovimientoListItem()
+    data class Item(val movimiento: Movimiento) : MovimientoListItem()
+}
+
 class MovimientosAdapter(
-    private var movimientos: List<Movimiento>
-) : RecyclerView.Adapter<MovimientosAdapter.MovimientoViewHolder>() {
+    private var items: List<MovimientoListItem>
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private var onItemLongClickListener: ((Movimiento) -> Unit)? = null
 
-    inner class MovimientoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val tvNombre: TextView = itemView.findViewById(R.id.tvDescripcion)
-        val tvMonto: TextView = itemView.findViewById(R.id.tvCantidad)
-        val ivIcono: ImageView = itemView.findViewById(R.id.ivIcono)
-        val tvFecha: TextView = itemView.findViewById(R.id.tvFecha)
-        val iconContainer: CardView = itemView.findViewById(R.id.iconContainer)
+    companion object {
+        private const val TYPE_HEADER = 0
+        private const val TYPE_ITEM = 1
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MovimientoViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_movimiento, parent, false)
-        return MovimientoViewHolder(view)
+    override fun getItemViewType(position: Int): Int {
+        return when (items[position]) {
+            is MovimientoListItem.Header -> TYPE_HEADER
+            is MovimientoListItem.Item -> TYPE_ITEM
+        }
     }
 
-    override fun onBindViewHolder(holder: MovimientoViewHolder, position: Int) {
-        val movimiento = movimientos[position]
-
-        if (DiscreetModeManager.isDiscreetModeActive) {
-
-            holder.tvNombre.text = "***********"
-            holder.tvFecha.text = "--/--/----"
-            holder.tvMonto.text = "•••••"
-
-            holder.tvMonto.setTextColor(Color.parseColor("#9E9E9E"))
-
-            val grisClaro = Color.parseColor("#9E9E9E")
-            val grisFondo = Color.parseColor("#EEEEEE")
-            holder.ivIcono.setImageResource(R.drawable.ic_tag)
-            holder.ivIcono.imageTintList = ColorStateList.valueOf(grisClaro)
-            holder.iconContainer.setCardBackgroundColor(grisFondo)
-
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        return if (viewType == TYPE_HEADER) {
+            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_movimiento_header, parent, false)
+            HeaderViewHolder(view)
         } else {
-            holder.tvNombre.text = movimiento.descripcion
-            holder.tvFecha.text = movimiento.fecha
+            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_movimiento, parent, false)
+            MovimientoViewHolder(view)
+        }
+    }
 
-            val locale = Locale.Builder().setLanguage("es").setRegion("CO").build()
-            val formatter = NumberFormat.getCurrencyInstance(locale)
-            formatter.maximumFractionDigits = 0
-            val montoFormateado = formatter.format(movimiento.cantidad)
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        val item = items[position]
 
-            if (movimiento.tipo == 1) {
-                holder.tvMonto.text = "+ $montoFormateado"
-                val verde = Color.parseColor("#4CAF50")
-                holder.tvMonto.setTextColor(verde)
+        if (holder is HeaderViewHolder && item is MovimientoListItem.Header) {
+            holder.tvHeaderTitle.text = item.title
+        } else if (holder is MovimientoViewHolder && item is MovimientoListItem.Item) {
+            val movimiento = item.movimiento
 
-                holder.ivIcono.setImageResource(R.drawable.ic_arrow_up)
-                holder.ivIcono.imageTintList = ColorStateList.valueOf(verde)
-                holder.iconContainer.setCardBackgroundColor(Color.parseColor("#E8F5E9"))
+            if (DiscreetModeManager.isDiscreetModeActive) {
+                holder.tvNombre.text = "***********"
+                holder.tvFecha.text = "--/--/----"
+                holder.tvMonto.text = "•••••"
+                holder.tvMonto.setTextColor(Color.parseColor("#9E9E9E"))
+
+                val grisClaro = Color.parseColor("#9E9E9E")
+                val grisFondo = Color.parseColor("#EEEEEE")
+                holder.ivIcono.setImageResource(R.drawable.ic_tag)
+                holder.ivIcono.imageTintList = ColorStateList.valueOf(grisClaro)
+                holder.iconContainer.setCardBackgroundColor(grisFondo)
+
             } else {
-                holder.tvMonto.text = "- $montoFormateado"
-                val rojo = Color.parseColor("#F44336")
-                holder.tvMonto.setTextColor(rojo)
+                holder.tvNombre.text = movimiento.descripcion
 
-                holder.ivIcono.setImageResource(R.drawable.ic_arrow_down)
-                holder.ivIcono.imageTintList = ColorStateList.valueOf(rojo)
-                holder.iconContainer.setCardBackgroundColor(Color.parseColor("#FFEBEE"))
+                // MUESTRA FECHA + HORA DE FORMA ESTÉTICA
+                val horaCorta = if (movimiento.hora.length >= 5) movimiento.hora.substring(0, 5) else ""
+                if (horaCorta.isNotEmpty() && horaCorta != "00:00") {
+                    holder.tvFecha.text = "${movimiento.fecha} • $horaCorta"
+                } else {
+                    holder.tvFecha.text = movimiento.fecha
+                }
+
+                val locale = Locale.Builder().setLanguage("es").setRegion("CO").build()
+                val formatter = NumberFormat.getCurrencyInstance(locale)
+                formatter.maximumFractionDigits = 0
+                val montoFormateado = formatter.format(movimiento.cantidad)
+
+                if (movimiento.tipo == 1) {
+                    holder.tvMonto.text = "+ $montoFormateado"
+                    val verde = Color.parseColor("#4CAF50")
+                    holder.tvMonto.setTextColor(verde)
+
+                    holder.ivIcono.setImageResource(R.drawable.ic_arrow_up)
+                    holder.ivIcono.imageTintList = ColorStateList.valueOf(verde)
+                    holder.iconContainer.setCardBackgroundColor(Color.parseColor("#E8F5E9"))
+                } else {
+                    holder.tvMonto.text = "- $montoFormateado"
+                    val rojo = Color.parseColor("#F44336")
+                    holder.tvMonto.setTextColor(rojo)
+
+                    holder.ivIcono.setImageResource(R.drawable.ic_arrow_down)
+                    holder.ivIcono.imageTintList = ColorStateList.valueOf(rojo)
+                    holder.iconContainer.setCardBackgroundColor(Color.parseColor("#FFEBEE"))
+                }
+            }
+
+            holder.itemView.setOnLongClickListener {
+                onItemLongClickListener?.invoke(movimiento)
+                true
             }
         }
-
-        holder.itemView.setOnLongClickListener {
-            onItemLongClickListener?.invoke(movimiento)
-            true
-        }
     }
 
-    override fun getItemCount(): Int = movimientos.size
+    override fun getItemCount(): Int = items.size
 
-    fun setData(nuevosMovimientos: List<Movimiento>) {
-        this.movimientos = nuevosMovimientos
+    fun setData(nuevosItems: List<MovimientoListItem>) {
+        this.items = nuevosItems
         notifyDataSetChanged()
     }
 
@@ -99,5 +123,17 @@ class MovimientosAdapter(
 
     fun updateDiscreetMode() {
         notifyDataSetChanged()
+    }
+
+    inner class HeaderViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val tvHeaderTitle: TextView = itemView.findViewById(R.id.tvHeaderTitle)
+    }
+
+    inner class MovimientoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val tvNombre: TextView = itemView.findViewById(R.id.tvDescripcion)
+        val tvMonto: TextView = itemView.findViewById(R.id.tvCantidad)
+        val ivIcono: ImageView = itemView.findViewById(R.id.ivIcono)
+        val tvFecha: TextView = itemView.findViewById(R.id.tvFecha)
+        val iconContainer: CardView = itemView.findViewById(R.id.iconContainer)
     }
 }

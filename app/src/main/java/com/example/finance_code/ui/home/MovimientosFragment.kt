@@ -1,12 +1,14 @@
 package com.example.finance_code.ui.home
 
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -14,11 +16,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.finance_code.DiscreetModeManager
 import com.example.finance_code.R
 import com.example.finance_code.data.AppDB
 import com.example.finance_code.data.Categoria
 import com.example.finance_code.data.Movimiento
 import com.example.finance_code.data.MovimientoRepository
+import com.example.finance_code.ui.transaction.addTransaction
 import com.example.finance_code.viewmodel.MovimientoViewModel
 import com.example.finance_code.viewmodel.MovimientoViewModelFactory
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -26,8 +30,10 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.datepicker.MaterialDatePicker
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
+import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -40,16 +46,22 @@ class MovimientosFragment : Fragment() {
     private lateinit var adapter: MovimientosAdapter
 
     private var listaMovimientosGlobal: List<Movimiento> = emptyList()
-    private var listaCategoriasGlobal: List<Categoria> = emptyList()
 
     private var userEmail: String = "default"
+    private var userNameDisplay: String = "USUARIO"
 
     private var fTipo: Int = 5
     private var fInicio: Long = 0L
     private var fFin: Long = Long.MAX_VALUE
 
+    private var fAgrupacion: Int = 1
+    private var isBalanceHidden = false
+
     private lateinit var btnFiltrar: Button
     private lateinit var tvEmpty: TextView
+    private lateinit var tvSaldoTotal: TextView
+    private lateinit var tvUserName: TextView
+    private lateinit var btnHideBalance: ImageButton
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_movimientos, container, false)
@@ -58,21 +70,60 @@ class MovimientosFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        userEmail = FirebaseAuth.getInstance().currentUser?.email ?: "default"
+        val user = FirebaseAuth.getInstance().currentUser
+        userEmail = user?.email ?: "default"
+        val uid = user?.uid ?: "default"
+
+        val prefsName = "${uid}_UserProfilePrefs"
+        val profilePrefs = requireContext().getSharedPreferences(prefsName, Context.MODE_PRIVATE)
+        val customName = profilePrefs.getString("user_name", null)
+
+        userNameDisplay = if (!customName.isNullOrEmpty()) {
+            customName.uppercase()
+        } else if (!user?.displayName.isNullOrEmpty()) {
+            user!!.displayName!!.uppercase()
+        } else {
+            userEmail.substringBefore("@").uppercase()
+        }
+
         btnFiltrar = view.findViewById(R.id.btnFiltrarFechas)
         tvEmpty = view.findViewById(R.id.tvEmptyMessage)
+        tvSaldoTotal = view.findViewById(R.id.tvSaldoTotal)
+        tvUserName = view.findViewById(R.id.tvUserName)
+        btnHideBalance = view.findViewById(R.id.btnHideBalance)
+        val btnDiscreetModeManual = view.findViewById<ImageButton>(R.id.btnDiscreetModeManual)
+        val fabAddTransaction = view.findViewById<FloatingActionButton>(R.id.fabAddTransaction)
+
+        tvUserName.text = userNameDisplay
 
         cargarPreferencias()
         actualizarBotonFiltro()
 
-        adapter = MovimientosAdapter { mov ->
+        adapter = MovimientosAdapter(emptyList())
+        adapter.setOnItemLongClickListener { mov ->
             val bundle = Bundle().apply { putParcelable("movimiento", mov) }
             findNavController().navigate(R.id.action_movimientosFragment_to_eTransactionFragment, bundle)
         }
 
-        val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerViewMovimientos)
+        val recyclerView = view.findViewById<RecyclerView>(R.id.listMovies)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         recyclerView.adapter = adapter
+
+        fabAddTransaction.setOnClickListener {
+            val intent = Intent(requireContext(), addTransaction::class.java)
+            startActivity(intent)
+        }
+
+        btnDiscreetModeManual.setOnClickListener {
+            DiscreetModeManager.toggleMode()
+            actualizarUIModoDiscreto()
+        }
+
+        btnHideBalance.setOnClickListener {
+            isBalanceHidden = !isBalanceHidden
+            btnHideBalance.setImageResource(if (isBalanceHidden) R.drawable.ic_visibility_off else R.drawable.ic_visibility)
+            actualizarSaldoTotal()
+        }
 
         if (userEmail != "default") {
             database = AppDB.getDatabase(requireContext(), userEmail)
@@ -80,22 +131,48 @@ class MovimientosFragment : Fragment() {
             val factory = MovimientoViewModelFactory(repository)
             viewModel = ViewModelProvider(this, factory)[MovimientoViewModel::class.java]
 
-            viewLifecycleOwner.lifecycleScope.launch {
-                database.categoriaDao().obtenerTodas().collect { categorias ->
-                    listaCategoriasGlobal = categorias
-                    aplicarFiltrosActuales()
-                }
-            }
-
             viewModel.movimientos.observe(viewLifecycleOwner) { movimientos ->
                 listaMovimientosGlobal = movimientos
+                actualizarSaldoTotal()
                 aplicarFiltrosActuales()
             }
         }
 
         btnFiltrar.setOnClickListener {
-            mostrarBottomSheetFiltros(view)
+            mostrarBottomSheetFiltros()
         }
+
+        actualizarUIModoDiscreto()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val user = FirebaseAuth.getInstance().currentUser
+        val uid = user?.uid ?: "default"
+        val prefsName = "${uid}_UserProfilePrefs"
+        val profilePrefs = requireContext().getSharedPreferences(prefsName, Context.MODE_PRIVATE)
+        val customName = profilePrefs.getString("user_name", null)
+
+        if (!customName.isNullOrEmpty() && ::tvUserName.isInitialized) {
+            tvUserName.text = customName.uppercase()
+        }
+    }
+
+    private fun actualizarSaldoTotal() {
+        val total = listaMovimientosGlobal.sumOf { if (it.tipo == 1) it.cantidad else -it.cantidad }
+        val formatter = NumberFormat.getCurrencyInstance(Locale("es", "CO"))
+        formatter.maximumFractionDigits = 0
+
+        if (DiscreetModeManager.isDiscreetModeActive || isBalanceHidden) {
+            tvSaldoTotal.text = "$ •••••••"
+        } else {
+            tvSaldoTotal.text = formatter.format(total)
+        }
+    }
+
+    private fun actualizarUIModoDiscreto() {
+        actualizarSaldoTotal()
+        adapter.updateDiscreetMode()
     }
 
     private fun getSafeLong(prefs: SharedPreferences, key: String, defaultVal: Long): Long {
@@ -105,13 +182,22 @@ class MovimientosFragment : Fragment() {
     private fun cargarPreferencias() {
         val prefs = requireContext().getSharedPreferences("analisis_prefs_$userEmail", Context.MODE_PRIVATE)
         fTipo = prefs.getInt("fTipoMovs", 5)
-        fInicio = getSafeLong(prefs, "fInicioMovs", 0L)
-        fFin = getSafeLong(prefs, "fFinMovs", Long.MAX_VALUE)
+        fAgrupacion = prefs.getInt("fAgrupacion", 1)
+
+        if (fTipo != 6 && fTipo != 5) {
+            val bounds = calcularFechasAbsolutas(fTipo)
+            fInicio = bounds.first
+            fFin = bounds.second
+        } else {
+            fInicio = getSafeLong(prefs, "fInicioMovs", 0L)
+            fFin = getSafeLong(prefs, "fFinMovs", Long.MAX_VALUE)
+        }
     }
 
     private fun guardarPreferencias() {
         val prefs = requireContext().getSharedPreferences("analisis_prefs_$userEmail", Context.MODE_PRIVATE).edit()
         prefs.putInt("fTipoMovs", fTipo)
+        prefs.putInt("fAgrupacion", fAgrupacion)
         prefs.putLong("fInicioMovs", fInicio)
         prefs.putLong("fFinMovs", fFin)
         prefs.apply()
@@ -126,6 +212,21 @@ class MovimientosFragment : Fragment() {
         return 0L
     }
 
+    // NUEVO: Función que combina Fecha y Hora para ordenar matemáticamente de más reciente a más antiguo
+    private fun parseDateTimeToMillis(fecha: String?, hora: String?): Long {
+        if (fecha.isNullOrEmpty()) return 0L
+        val h = if (hora.isNullOrEmpty()) "00:00:00" else hora
+        val dateTimeStr = "$fecha $h"
+        val formats = arrayOf(
+            "yyyy-MM-dd HH:mm:ss", "dd/MM/yyyy HH:mm:ss", "dd-MM-yyyy HH:mm:ss",
+            "yyyy-MM-dd", "dd/MM/yyyy", "dd-MM-yyyy"
+        )
+        for (f in formats) {
+            try { return SimpleDateFormat(f, Locale.getDefault()).parse(dateTimeStr)?.time ?: 0L } catch (e: Exception) {}
+        }
+        return 0L
+    }
+
     private fun aplicarFiltrosActuales() {
         val filtrados = listaMovimientosGlobal.filter { mov ->
             if (fInicio == 0L && fFin == Long.MAX_VALUE) true
@@ -136,7 +237,39 @@ class MovimientosFragment : Fragment() {
         }
 
         tvEmpty.visibility = if (filtrados.isEmpty()) View.VISIBLE else View.GONE
-        adapter.actualizarListaYCategorias(filtrados, listaCategoriasGlobal)
+
+        // --- ORDENADO POR FECHA Y HORA DESCENDENTE ---
+        val ordenados = filtrados.sortedByDescending { parseDateTimeToMillis(it.fecha, it.hora) }
+
+        val itemsFinales = mutableListOf<MovimientoListItem>()
+
+        if (fAgrupacion == 0 || ordenados.isEmpty()) {
+            itemsFinales.addAll(ordenados.map { MovimientoListItem.Item(it) })
+        } else {
+            val formatDia = SimpleDateFormat("dd 'de' MMMM, yyyy", Locale("es", "CO"))
+            val formatMes = SimpleDateFormat("MMMM yyyy", Locale("es", "CO"))
+            val formatAno = SimpleDateFormat("yyyy", Locale("es", "CO"))
+
+            var currentHeaderTitle = ""
+
+            for (mov in ordenados) {
+                val date = Date(parseDateToMillis(mov.fecha))
+                val title = when (fAgrupacion) {
+                    1 -> formatDia.format(date)
+                    2 -> formatMes.format(date)
+                    3 -> formatAno.format(date)
+                    else -> ""
+                }
+
+                if (title != currentHeaderTitle) {
+                    itemsFinales.add(MovimientoListItem.Header(title.replaceFirstChar { it.uppercase() }))
+                    currentHeaderTitle = title
+                }
+                itemsFinales.add(MovimientoListItem.Item(mov))
+            }
+        }
+
+        adapter.setData(itemsFinales)
     }
 
     private fun actualizarBotonFiltro() {
@@ -151,20 +284,26 @@ class MovimientosFragment : Fragment() {
                 val sdf = SimpleDateFormat("dd MMM", Locale.getDefault())
                 "${sdf.format(Date(fInicio))} - ${sdf.format(Date(fFin))}"
             }
+            7 -> "Hoy"
             else -> "Filtrar por Fecha"
         }
         btnFiltrar.text = texto
     }
 
-    private fun mostrarBottomSheetFiltros(parentView: View) {
+    private fun mostrarBottomSheetFiltros() {
         val bottomSheetDialog = BottomSheetDialog(requireContext())
         val sheetView = layoutInflater.inflate(R.layout.layout_bottom_sheet_filtros, null)
         bottomSheetDialog.setContentView(sheetView)
 
-        val chipGroupPeriodo = sheetView.findViewById<ChipGroup>(R.id.chipGroupPeriodo)
-        sheetView.findViewById<TextView>(R.id.tvTituloComparacion).visibility = View.GONE
-        sheetView.findViewById<ChipGroup>(R.id.chipGroupComparacion).visibility = View.GONE
+        try {
+            sheetView.findViewById<TextView>(R.id.tvTituloComparacion)?.visibility = View.GONE
+            sheetView.findViewById<View>(R.id.divisorComparacion)?.visibility = View.GONE
+            sheetView.findViewById<View>(R.id.scrollComparacion)?.visibility = View.GONE
+            sheetView.findViewById<ChipGroup>(R.id.chipGroupComparacion)?.visibility = View.GONE
+        } catch (e: Exception) {}
 
+        val chipGroupPeriodo = sheetView.findViewById<ChipGroup>(R.id.chipGroupPeriodo)
+        val chipGroupAgrupacion = sheetView.findViewById<ChipGroup>(R.id.chipGroupAgrupacion)
         val btnAplicar = sheetView.findViewById<MaterialButton>(R.id.btnAplicarAnalisis)
         val chipPersonalizado = sheetView.findViewById<Chip>(R.id.chipPersonalizado)
 
@@ -190,19 +329,30 @@ class MovimientosFragment : Fragment() {
             picker.show(parentFragmentManager, "DATE_PICKER")
         }
 
-        val chipId = when (fTipo) {
+        val chipIdPeriodo = when (fTipo) {
             0 -> R.id.chipEsteMes
             1 -> R.id.chipMesAnterior
             2 -> R.id.chip7Dias
             3 -> R.id.chip30Dias
             4 -> R.id.chipEsteAno
             6 -> R.id.chipPersonalizado
+            7 -> R.id.chipHoy
             else -> R.id.chipHistorial
         }
-        sheetView.findViewById<Chip>(chipId)?.isChecked = true
+        sheetView.findViewById<Chip>(chipIdPeriodo)?.isChecked = true
+
+        val chipIdAgrupar = when (fAgrupacion) {
+            0 -> R.id.chipAgruparNinguno
+            1 -> R.id.chipAgruparDia
+            2 -> R.id.chipAgruparMes
+            3 -> R.id.chipAgruparAno
+            else -> R.id.chipAgruparDia
+        }
+        sheetView.findViewById<Chip>(chipIdAgrupar)?.isChecked = true
 
         btnAplicar.setOnClickListener {
             fTipo = when (chipGroupPeriodo.checkedChipId) {
+                R.id.chipHoy -> 7
                 R.id.chipEsteMes -> 0
                 R.id.chipMesAnterior -> 1
                 R.id.chip7Dias -> 2
@@ -211,6 +361,14 @@ class MovimientosFragment : Fragment() {
                 R.id.chipHistorial -> 5
                 R.id.chipPersonalizado -> 6
                 else -> 5
+            }
+
+            fAgrupacion = when (chipGroupAgrupacion.checkedChipId) {
+                R.id.chipAgruparNinguno -> 0
+                R.id.chipAgruparDia -> 1
+                R.id.chipAgruparMes -> 2
+                R.id.chipAgruparAno -> 3
+                else -> 1
             }
 
             if (fTipo == 6) {
@@ -268,6 +426,10 @@ class MovimientosFragment : Fragment() {
                 cal.set(Calendar.MONTH, Calendar.JANUARY); cal.set(Calendar.DAY_OF_MONTH, 1)
                 inicio = resetTime(cal)
                 cal.set(Calendar.MONTH, Calendar.DECEMBER); cal.set(Calendar.DAY_OF_MONTH, 31)
+                fin = maximizeTime(cal)
+            }
+            7 -> { // Hoy
+                inicio = resetTime(cal)
                 fin = maximizeTime(cal)
             }
         }

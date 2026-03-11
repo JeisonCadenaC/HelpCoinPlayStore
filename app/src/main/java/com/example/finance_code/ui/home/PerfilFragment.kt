@@ -15,7 +15,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.EditText
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -404,15 +403,27 @@ class PerfilFragment : Fragment() {
         }
     }
 
+    // --- NUEVO DIALOGO BONITO DE CONFIRMAR RESTAURACION ---
     private fun mostrarDialogoConfirmarRestauracion(googleAccount: GoogleSignInAccount) {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Restaurar Todo")
-            .setMessage("Se recuperarán tus movimientos, metas, nombre de perfil, foto y configuraciones.\n\nLa aplicación se reiniciará.")
-            .setPositiveButton("Restaurar") { _, _ ->
-                proceedWithRestore(googleAccount)
-            }
-            .setNegativeButton("Cancelar", null)
-            .show()
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_confirm_restore, null)
+
+        val btnRestaurar = dialogView.findViewById<Button>(R.id.btnConfirmarRestaurar)
+        val btnCancelar = dialogView.findViewById<Button>(R.id.btnCancelarRestaurar)
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        // Fondo transparente para que se vean las esquinas redondeadas
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        btnCancelar.setOnClickListener { dialog.dismiss() }
+        btnRestaurar.setOnClickListener {
+            dialog.dismiss()
+            proceedWithRestore(googleAccount)
+        }
+
+        dialog.show()
     }
 
     private fun proceedWithRestore(googleAccount: GoogleSignInAccount) {
@@ -511,16 +522,28 @@ class PerfilFragment : Fragment() {
         }
     }
 
+
     private fun mostrarDialogoEditarNombre() {
-        val builder = AlertDialog.Builder(requireContext())
-        builder.setTitle("Cambiar nombre de usuario")
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_edit_name, null)
 
-        val input = EditText(requireContext())
-        input.setText(tvNombreUsuario.text)
-        builder.setView(input)
+        val etNombre = dialogView.findViewById<TextInputEditText>(R.id.etNuevoNombre)
+        val btnGuardar = dialogView.findViewById<Button>(R.id.btnGuardarNombre)
+        val btnCancelar = dialogView.findViewById<Button>(R.id.btnCancelarNombre)
 
-        builder.setPositiveButton("Guardar") { dialog, _ ->
-            val nuevoNombre = input.text.toString().trim()
+        // Rellenar con el nombre actual
+        etNombre.setText(tvNombreUsuario.text)
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        // Fondo transparente para que se vean las esquinas redondeadas
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        btnCancelar.setOnClickListener { dialog.dismiss() }
+
+        btnGuardar.setOnClickListener {
+            val nuevoNombre = etNombre.text.toString().trim()
             if (nuevoNombre.isNotEmpty()) {
                 val prefs = getPrefs()
                 prefs?.edit()?.putString(KEY_USER_NAME, nuevoNombre)?.commit()
@@ -528,11 +551,12 @@ class PerfilFragment : Fragment() {
             }
             dialog.dismiss()
         }
-        builder.setNegativeButton("Cancelar") { dialog, _ ->
-            dialog.cancel()
-        }
 
-        builder.show()
+        dialog.show()
+
+        // Poner el foco en el campo de texto y mostrar el teclado si lo deseas
+        etNombre.requestFocus()
+        etNombre.selectAll()
     }
 
     private fun cargarDatosUsuario() {

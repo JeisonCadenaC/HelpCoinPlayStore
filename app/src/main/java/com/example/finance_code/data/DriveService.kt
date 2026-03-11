@@ -187,7 +187,7 @@ class DriveService(
                 tempDir.deleteRecursively()
 
                 // ==========================================
-                // INTELIGENCIA DE AUTO-CATEGORIZACIÓN
+                // INTELIGENCIA DE AUTO-CATEGORIZACIÓN CENTRALIZADA
                 // ==========================================
                 try {
                     val db = AppDB.getDatabase(context, userEmail)
@@ -196,24 +196,8 @@ class DriveService(
 
                     val catsActuales = catDao.obtenerTodasSync()
                     if (catsActuales.isEmpty()) {
-                        val predefinidas = listOf(
-                            Categoria(nombre = "Comida y Restaurantes", emoji = "🍔", colorHex = "#FF9800"),
-                            Categoria(nombre = "Supermercado", emoji = "🛒", colorHex = "#4CAF50"),
-                            Categoria(nombre = "Transporte Público", emoji = "🚌", colorHex = "#03A9F4"),
-                            Categoria(nombre = "Vehículo y Gasolina", emoji = "🚗", colorHex = "#607D8B"),
-                            Categoria(nombre = "Ocio Nocturno", emoji = "🔞", colorHex = "#B71C1C"),
-                            Categoria(nombre = "Cine y Entretenimiento", emoji = "🎬", colorHex = "#673AB7"),
-                            Categoria(nombre = "Salud y Farmacia", emoji = "💊", colorHex = "#E91E63"),
-                            Categoria(nombre = "Hogar y Servicios", emoji = "🏠", colorHex = "#795548"),
-                            Categoria(nombre = "Ropa y Cuidado", emoji = "🛍️", colorHex = "#9C27B0"),
-                            Categoria(nombre = "Educación", emoji = "📚", colorHex = "#00BCD4"),
-                            Categoria(nombre = "Mascotas", emoji = "🐶", colorHex = "#FF5722"),
-                            Categoria(nombre = "Viajes", emoji = "✈️", colorHex = "#3F51B5"),
-                            Categoria(nombre = "Gimnasio y Deporte", emoji = "🏋️", colorHex = "#8BC34A"),
-                            Categoria(nombre = "Regalos", emoji = "🎁", colorHex = "#FFC107"),
-                            Categoria(nombre = "Tecnología", emoji = "💻", colorHex = "#607D8B"),
-                            Categoria(nombre = "Otros", emoji = "📦", colorHex = "#9E9E9E")
-                        )
+                        // AQUÍ SE UTILIZA LA LÓGICA CENTRAL
+                        val predefinidas = CategorySuggester.getDefaultCategories()
                         predefinidas.forEach { catDao.insertar(it) }
                     }
 
@@ -308,7 +292,8 @@ class DriveService(
             val iter = json.keys()
             val longKeys = setOf(
                 "pInicioGastos", "pFinGastos", "cInicioGastos", "cFinGastos",
-                "pInicioIngresos", "pFinIngresos", "cInicioIngresos", "cFinIngresos"
+                "pInicioIngresos", "pFinIngresos", "cInicioIngresos", "cFinIngresos",
+                "fInicioMovs", "fFinMovs"
             )
 
             while (iter.hasNext()) {

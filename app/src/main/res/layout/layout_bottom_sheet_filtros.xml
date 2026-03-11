@@ -10,7 +10,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Periodo de Análisis"
+        android:text="Filtros y Agrupación"
         android:textColor="?attr/colorOnSurface"
         android:textSize="22sp"
         android:textStyle="bold" />
@@ -19,7 +19,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
-        android:text="Rango de datos actual"
+        android:text="Periodo de tiempo"
         android:textColor="?attr/colorPrimary"
         android:textSize="14sp"
         android:textStyle="bold" />
@@ -38,12 +38,17 @@
             app:singleSelection="true">
 
             <com.google.android.material.chip.Chip
+                android:id="@+id/chipHoy"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Hoy" />
+
+            <com.google.android.material.chip.Chip
                 android:id="@+id/chipEsteMes"
                 style="@style/Widget.MaterialComponents.Chip.Choice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="?attr/colorOnSurface"
-                app:checkedIconVisible="false"
                 android:text="Este Mes" />
 
             <com.google.android.material.chip.Chip
@@ -51,8 +56,6 @@
                 style="@style/Widget.MaterialComponents.Chip.Choice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="?attr/colorOnSurface"
-                app:checkedIconVisible="false"
                 android:text="Mes Anterior" />
 
             <com.google.android.material.chip.Chip
@@ -60,8 +63,6 @@
                 style="@style/Widget.MaterialComponents.Chip.Choice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="?attr/colorOnSurface"
-                app:checkedIconVisible="false"
                 android:text="Últimos 7 Días" />
 
             <com.google.android.material.chip.Chip
@@ -69,8 +70,6 @@
                 style="@style/Widget.MaterialComponents.Chip.Choice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="?attr/colorOnSurface"
-                app:checkedIconVisible="false"
                 android:text="Últimos 30 Días" />
 
             <com.google.android.material.chip.Chip
@@ -78,8 +77,6 @@
                 style="@style/Widget.MaterialComponents.Chip.Choice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="?attr/colorOnSurface"
-                app:checkedIconVisible="false"
                 android:text="Este Año" />
 
             <com.google.android.material.chip.Chip
@@ -87,8 +84,6 @@
                 style="@style/Widget.MaterialComponents.Chip.Choice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="?attr/colorOnSurface"
-                app:checkedIconVisible="false"
                 android:text="Todo el Historial" />
 
             <com.google.android.material.chip.Chip
@@ -96,19 +91,79 @@
                 style="@style/Widget.MaterialComponents.Chip.Choice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="?attr/colorOnSurface"
-                app:checkedIconVisible="false"
                 android:text="Personalizado..." />
         </com.google.android.material.chip.ChipGroup>
     </HorizontalScrollView>
 
     <View
+        android:id="@+id/divisorAgrupacion"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginVertical="20dp"
         android:background="#1A000000" />
 
     <TextView
+        android:id="@+id/tvTituloAgrupar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Agrupar lista por:"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:scrollbars="none">
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupAgrupacion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:selectionRequired="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipAgruparNinguno"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sin agrupar" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipAgruparDia"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Por Día" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipAgruparMes"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Por Mes" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipAgruparAno"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Por Año" />
+
+        </com.google.android.material.chip.ChipGroup>
+    </HorizontalScrollView>
+
+    <View
+        android:id="@+id/divisorComparacion"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginVertical="20dp"
+        android:background="#1A000000" />
+
+    <TextView
+        android:id="@+id/tvTituloComparacion"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Comparar contra:"
@@ -117,6 +172,7 @@
         android:textStyle="bold" />
 
     <HorizontalScrollView
+        android:id="@+id/scrollComparacion"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
@@ -134,81 +190,16 @@
                 style="@style/Widget.MaterialComponents.Chip.Choice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="?attr/colorOnSurface"
-                app:checkedIconVisible="false"
                 android:text="Sin comparación" />
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipCompAuto"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="?attr/colorOnSurface"
-                app:checkedIconVisible="false"
-                android:text="Periodo Anterior (Automático)" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipCompEsteMes"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="?attr/colorOnSurface"
-                app:checkedIconVisible="false"
-                android:text="Este Mes" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipCompMesAnterior"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="?attr/colorOnSurface"
-                app:checkedIconVisible="false"
-                android:text="Mes Anterior" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipComp7Dias"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="?attr/colorOnSurface"
-                app:checkedIconVisible="false"
-                android:text="Últimos 7 Días" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipComp30Dias"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="?attr/colorOnSurface"
-                app:checkedIconVisible="false"
-                android:text="Últimos 30 Días" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipCompEsteAno"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="?attr/colorOnSurface"
-                app:checkedIconVisible="false"
-                android:text="Este Año" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipCompHistorial"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="?attr/colorOnSurface"
-                app:checkedIconVisible="false"
-                android:text="Todo el Historial" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipCompPersonalizado"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="?attr/colorOnSurface"
-                app:checkedIconVisible="false"
-                android:text="Personalizado..." />
+            <com.google.android.material.chip.Chip android:id="@+id/chipCompAuto" style="@style/Widget.MaterialComponents.Chip.Choice" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Periodo Anterior (Automático)" />
+            <com.google.android.material.chip.Chip android:id="@+id/chipCompEsteMes" style="@style/Widget.MaterialComponents.Chip.Choice" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Este Mes" />
+            <com.google.android.material.chip.Chip android:id="@+id/chipCompMesAnterior" style="@style/Widget.MaterialComponents.Chip.Choice" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Mes Anterior" />
+            <com.google.android.material.chip.Chip android:id="@+id/chipComp7Dias" style="@style/Widget.MaterialComponents.Chip.Choice" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Últimos 7 Días" />
+            <com.google.android.material.chip.Chip android:id="@+id/chipComp30Dias" style="@style/Widget.MaterialComponents.Chip.Choice" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Últimos 30 Días" />
+            <com.google.android.material.chip.Chip android:id="@+id/chipCompEsteAno" style="@style/Widget.MaterialComponents.Chip.Choice" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Este Año" />
+            <com.google.android.material.chip.Chip android:id="@+id/chipCompHistorial" style="@style/Widget.MaterialComponents.Chip.Choice" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Todo el Historial" />
+            <com.google.android.material.chip.Chip android:id="@+id/chipCompPersonalizado" style="@style/Widget.MaterialComponents.Chip.Choice" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Personalizado..." />
 
         </com.google.android.material.chip.ChipGroup>
     </HorizontalScrollView>
@@ -218,7 +209,7 @@
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_marginTop="28dp"
-        android:text="Aplicar Análisis"
+        android:text="Aplicar Filtros"
         android:textSize="16sp"
         android:textStyle="bold"
         app:cornerRadius="16dp" />

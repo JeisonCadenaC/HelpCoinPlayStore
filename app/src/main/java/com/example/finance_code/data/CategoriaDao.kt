@@ -23,7 +23,7 @@ interface CategoriaDao {
     fun obtenerTodas(): Flow<List<Categoria>>
 
     @Query("SELECT * FROM categorias")
-    suspend fun obtenerTodasSync(): List<Categoria>
+    fun obtenerTodasSync(): List<Categoria>
 
     @Query("SELECT * FROM categorias WHERE id = :id LIMIT 1")
     suspend fun obtenerPorId(id: Long): Categoria?

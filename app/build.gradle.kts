@@ -14,8 +14,8 @@ android {
         applicationId = "com.example.finance_code"
         minSdk = 28
         targetSdk = 36
-        versionCode = 3
-        versionName = "1.24"
+        versionCode = 4
+        versionName = "1.25"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         packaging {

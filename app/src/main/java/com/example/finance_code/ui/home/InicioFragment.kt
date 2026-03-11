@@ -199,27 +199,51 @@ class InicioFragment : Fragment() {
     private fun cargarPreferencias() {
         val prefs = requireContext().getSharedPreferences("analisis_prefs_$userEmail", Context.MODE_PRIVATE)
 
+        // RECALCULO DINÁMICO GASTOS
         pTipoGastos = prefs.getInt("pTipoGastos", 5)
-        pInicioGastos = getSafeLong(prefs, "pInicioGastos", 0L)
-        pFinGastos = getSafeLong(prefs, "pFinGastos", Long.MAX_VALUE)
+        if (pTipoGastos != 6 && pTipoGastos != 5) {
+            val pBounds = calcularFechasAbsolutas(pTipoGastos)
+            pInicioGastos = pBounds.first
+            pFinGastos = pBounds.second
+        } else {
+            pInicioGastos = getSafeLong(prefs, "pInicioGastos", 0L)
+            pFinGastos = getSafeLong(prefs, "pFinGastos", Long.MAX_VALUE)
+        }
 
         cTipoGastos = prefs.getInt("cTipoGastos", -1)
-        cInicioGastos = getSafeLong(prefs, "cInicioGastos", 0L)
-        cFinGastos = getSafeLong(prefs, "cFinGastos", Long.MAX_VALUE)
+        if (cTipoGastos != 6 && cTipoGastos != 5 && cTipoGastos != -2 && cTipoGastos != -1) {
+            val cBounds = calcularFechasAbsolutas(cTipoGastos)
+            cInicioGastos = cBounds.first
+            cFinGastos = cBounds.second
+        } else {
+            cInicioGastos = getSafeLong(prefs, "cInicioGastos", 0L)
+            cFinGastos = getSafeLong(prefs, "cFinGastos", Long.MAX_VALUE)
+        }
 
+        // RECALCULO DINÁMICO INGRESOS
         pTipoIngresos = prefs.getInt("pTipoIngresos", 5)
-        pInicioIngresos = getSafeLong(prefs, "pInicioIngresos", 0L)
-        pFinIngresos = getSafeLong(prefs, "pFinIngresos", Long.MAX_VALUE)
+        if (pTipoIngresos != 6 && pTipoIngresos != 5) {
+            val pBoundsI = calcularFechasAbsolutas(pTipoIngresos)
+            pInicioIngresos = pBoundsI.first
+            pFinIngresos = pBoundsI.second
+        } else {
+            pInicioIngresos = getSafeLong(prefs, "pInicioIngresos", 0L)
+            pFinIngresos = getSafeLong(prefs, "pFinIngresos", Long.MAX_VALUE)
+        }
 
         cTipoIngresos = prefs.getInt("cTipoIngresos", -1)
-        cInicioIngresos = getSafeLong(prefs, "cInicioIngresos", 0L)
-        cFinIngresos = getSafeLong(prefs, "cFinIngresos", Long.MAX_VALUE)
+        if (cTipoIngresos != 6 && cTipoIngresos != 5 && cTipoIngresos != -2 && cTipoIngresos != -1) {
+            val cBoundsI = calcularFechasAbsolutas(cTipoIngresos)
+            cInicioIngresos = cBoundsI.first
+            cFinIngresos = cBoundsI.second
+        } else {
+            cInicioIngresos = getSafeLong(prefs, "cInicioIngresos", 0L)
+            cFinIngresos = getSafeLong(prefs, "cFinIngresos", Long.MAX_VALUE)
+        }
     }
 
     private fun guardarPreferencias(tipo: Int) {
-        val prefs =
-            requireContext().getSharedPreferences("analisis_prefs_$userEmail", Context.MODE_PRIVATE)
-                .edit()
+        val prefs = requireContext().getSharedPreferences("analisis_prefs_$userEmail", Context.MODE_PRIVATE).edit()
         if (tipo == 0) {
             prefs.putInt("pTipoGastos", pTipoGastos)
             prefs.putLong("pInicioGastos", pInicioGastos)
@@ -310,6 +334,7 @@ class InicioFragment : Fragment() {
         3 -> R.id.chip30Dias
         4 -> R.id.chipEsteAno
         6 -> R.id.chipPersonalizado
+        7 -> R.id.chipHoy
         else -> R.id.chipHistorial
     }
 
@@ -326,6 +351,7 @@ class InicioFragment : Fragment() {
     }
 
     private fun mapearIdATipo(id: Int): Int = when (id) {
+        R.id.chipHoy -> 7
         R.id.chipEsteMes, R.id.chipCompEsteMes -> 0
         R.id.chipMesAnterior, R.id.chipCompMesAnterior -> 1
         R.id.chip7Dias, R.id.chipComp7Dias -> 2
@@ -341,6 +367,15 @@ class InicioFragment : Fragment() {
         val bottomSheetDialog = BottomSheetDialog(requireContext())
         val sheetView = layoutInflater.inflate(R.layout.layout_bottom_sheet_filtros, null)
         bottomSheetDialog.setContentView(sheetView)
+
+        // Ocultar la sección de "Agrupar por" que solo aplica a la lista de Billetera
+        try {
+            sheetView.findViewById<View>(R.id.divisorAgrupacion)?.visibility = View.GONE
+            sheetView.findViewById<TextView>(R.id.tvTituloAgrupar)?.visibility = View.GONE
+            val chipGroupAgrupar = sheetView.findViewById<ChipGroup>(R.id.chipGroupAgrupacion)
+            chipGroupAgrupar?.visibility = View.GONE
+            (chipGroupAgrupar?.parent as? View)?.visibility = View.GONE // Oculta el ScrollView padre
+        } catch (e: Exception) {}
 
         val chipGroupPeriodo = sheetView.findViewById<ChipGroup>(R.id.chipGroupPeriodo)
         val chipGroupComparacion = sheetView.findViewById<ChipGroup>(R.id.chipGroupComparacion)
@@ -463,6 +498,7 @@ class InicioFragment : Fragment() {
                 val sdf = SimpleDateFormat("dd MMM", Locale.getDefault())
                 "${sdf.format(Date(ini))} - ${sdf.format(Date(fin))}"
             }
+            7 -> "Hoy"
             else -> "Periodo"
         }
     }
@@ -507,6 +543,10 @@ class InicioFragment : Fragment() {
                 cal.set(Calendar.DAY_OF_MONTH, 31)
                 fin = maximizeTime(cal).timeInMillis
                 fin = minOf(fin, hoy)
+            }
+            7 -> { // Hoy
+                inicio = resetTime(cal).timeInMillis
+                fin = maximizeTime(cal).timeInMillis
             }
         }
         return Pair(inicio, fin)

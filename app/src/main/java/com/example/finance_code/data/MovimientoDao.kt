@@ -23,4 +23,10 @@ interface MovimientoDao {
 
     @Query("SELECT * FROM movimientos")
     suspend fun obtenerTodosSync(): List<Movimiento>
+    
+    @Query("SELECT SUM(CASE WHEN tipo = 1 THEN cantidad ELSE -cantidad END) FROM movimientos")
+    fun obtenerSaldoTotalFlow(): Flow<Double?>
+
+    @Query("SELECT SUM(CASE WHEN tipo = 1 THEN cantidad ELSE -cantidad END) FROM movimientos")
+    fun obtenerSaldoActualSincrono(): Double?
 }

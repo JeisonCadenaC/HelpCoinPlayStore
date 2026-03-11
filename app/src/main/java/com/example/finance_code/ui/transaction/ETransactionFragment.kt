@@ -1,5 +1,6 @@
 package com.example.finance_code.ui.transaction
 
+import android.app.AlertDialog
 import android.graphics.Color
 import android.os.Bundle
 import android.text.Editable
@@ -12,6 +13,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.GridLayout
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -74,11 +76,18 @@ class ETransactionFragment : Fragment(R.layout.fragment_e_transaction) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Botón de Volver
+        val btnBack = view.findViewById<ImageButton>(R.id.btnBack)
+        btnBack.setOnClickListener {
+            findNavController().popBackStack()
+        }
+
         movimiento = requireArguments().getParcelable("movimiento", Movimiento::class.java)!!
 
         val etDescripcion = view.findViewById<EditText>(R.id.etDescripcion)
-        etMonto = view.findViewById<EditText>(R.id.etMonto)
         val btnGuardar = view.findViewById<Button>(R.id.btnGuardar)
+        val btnEliminar = view.findViewById<Button>(R.id.btnEliminar)
+        etMonto = view.findViewById(R.id.etMonto)
 
         cardSelectorCategoria = view.findViewById(R.id.cardSelectorCategoria)
         cardEmojiFondo = view.findViewById(R.id.cardEmojiFondo)
@@ -176,6 +185,7 @@ class ETransactionFragment : Fragment(R.layout.fragment_e_transaction) {
             }
         })
 
+        // Acción Guardar
         btnGuardar.setOnClickListener {
             val descripcionTexto = etDescripcion.text.toString()
             val montoTextoLimpio = etMonto.text.toString().replace(".", "").replace(",", ".")
@@ -208,32 +218,37 @@ class ETransactionFragment : Fragment(R.layout.fragment_e_transaction) {
             Toast.makeText(requireContext(), "Movimiento actualizado", Toast.LENGTH_SHORT).show()
             findNavController().popBackStack()
         }
+
+        // Acción Eliminar (con EL NUEVO DIÁLOGO PERSONALIZADO)
+        btnEliminar.setOnClickListener {
+            val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_confirm_delete, null)
+            val dialog = AlertDialog.Builder(requireContext()).setView(dialogView).create()
+            dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+            val btnCancelarEliminar = dialogView.findViewById<Button>(R.id.btnCancelarEliminar)
+            val btnConfirmarEliminar = dialogView.findViewById<Button>(R.id.btnConfirmarEliminar)
+
+            btnCancelarEliminar.setOnClickListener { dialog.dismiss() }
+
+            btnConfirmarEliminar.setOnClickListener {
+                lifecycleScope.launch(Dispatchers.IO) {
+                    database.movimientoDao().eliminar(movimiento)
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(requireContext(), "Movimiento eliminado", Toast.LENGTH_SHORT).show()
+                        dialog.dismiss()
+                        findNavController().popBackStack()
+                    }
+                }
+            }
+            dialog.show()
+        }
     }
 
     private fun cargarCategorias() {
         lifecycleScope.launch(Dispatchers.IO) {
             database.categoriaDao().obtenerTodas().collect { lista ->
-                val predefinidas = listOf(
-                    Categoria(nombre = "Comida y Restaurantes", emoji = "🍔", colorHex = "#FF9800"),
-                    Categoria(nombre = "Supermercado", emoji = "🛒", colorHex = "#4CAF50"),
-                    Categoria(nombre = "Transporte Público", emoji = "🚌", colorHex = "#03A9F4"),
-                    Categoria(nombre = "Vehículo y Gasolina", emoji = "🚗", colorHex = "#607D8B"),
-                    Categoria(nombre = "Ocio Nocturno", emoji = "🔞", colorHex = "#B71C1C"),
-                    Categoria(nombre = "Cine y Entretenimiento", emoji = "🎬", colorHex = "#673AB7"),
-                    Categoria(nombre = "Salud y Farmacia", emoji = "💊", colorHex = "#E91E63"),
-                    Categoria(nombre = "Hogar y Servicios", emoji = "🏠", colorHex = "#795548"),
-                    Categoria(nombre = "Ropa y Cuidado", emoji = "🛍️", colorHex = "#9C27B0"),
-                    Categoria(nombre = "Educación", emoji = "📚", colorHex = "#00BCD4"),
-                    Categoria(nombre = "Mascotas", emoji = "🐶", colorHex = "#FF5722"),
-                    Categoria(nombre = "Viajes", emoji = "✈️", colorHex = "#3F51B5"),
-                    Categoria(nombre = "Gimnasio y Deporte", emoji = "🏋️", colorHex = "#8BC34A"),
-                    Categoria(nombre = "Regalos", emoji = "🎁", colorHex = "#FFC107"),
-                    Categoria(nombre = "Tecnología", emoji = "💻", colorHex = "#607D8B"),
-                    Categoria(nombre = "Otros", emoji = "📦", colorHex = "#9E9E9E")
-                )
-
                 val nombresEnDB = lista.map { it.nombre }
-                val faltantes = predefinidas.filter { it.nombre !in nombresEnDB }
+                val faltantes = CategorySuggester.getDefaultCategories().filter { it.nombre !in nombresEnDB }
                 faltantes.forEach { database.categoriaDao().insertar(it) }
 
                 withContext(Dispatchers.Main) {
@@ -398,7 +413,7 @@ class ETransactionFragment : Fragment(R.layout.fragment_e_transaction) {
         dialog.show()
     }
 
-    private fun mostrarDialogoCrearCategoria() {
+    private fun mostrarDialogoCrearCategoria(categoriaAEditar: Categoria? = null) {
         val dialog = BottomSheetDialog(requireContext())
         val view = LayoutInflater.from(requireContext()).inflate(R.layout.layout_create_category, null)
         dialog.setContentView(view)

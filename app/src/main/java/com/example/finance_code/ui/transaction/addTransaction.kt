@@ -216,13 +216,16 @@ class addTransaction : AppCompatActivity() {
             }
 
             val fechaActual = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+            val horaActual = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
+
             val nuevoMovimiento = Movimiento(
                 descripcion = descripcion,
                 cantidad = cantidad,
                 tipo = tipoSeleccionado,
                 fecha = fechaActual,
                 categoria = currentCategoriaNombre,
-                categoriaId = currentCategoriaId
+                categoriaId = currentCategoriaId,
+                hora = horaActual
             )
 
             val job = viewModel.insertar(nuevoMovimiento)
@@ -246,27 +249,8 @@ class addTransaction : AppCompatActivity() {
     private fun cargarCategorias() {
         lifecycleScope.launch(Dispatchers.IO) {
             database.categoriaDao().obtenerTodas().collect { lista ->
-                val predefinidas = listOf(
-                    Categoria(nombre = "Comida y Restaurantes", emoji = "🍔", colorHex = "#FF9800"),
-                    Categoria(nombre = "Supermercado", emoji = "🛒", colorHex = "#4CAF50"),
-                    Categoria(nombre = "Transporte Público", emoji = "🚌", colorHex = "#03A9F4"),
-                    Categoria(nombre = "Vehículo y Gasolina", emoji = "🚗", colorHex = "#607D8B"),
-                    Categoria(nombre = "Ocio Nocturno", emoji = "🔞", colorHex = "#B71C1C"),
-                    Categoria(nombre = "Cine y Entretenimiento", emoji = "🎬", colorHex = "#673AB7"),
-                    Categoria(nombre = "Salud y Farmacia", emoji = "💊", colorHex = "#E91E63"),
-                    Categoria(nombre = "Hogar y Servicios", emoji = "🏠", colorHex = "#795548"),
-                    Categoria(nombre = "Ropa y Cuidado", emoji = "🛍️", colorHex = "#9C27B0"),
-                    Categoria(nombre = "Educación", emoji = "📚", colorHex = "#00BCD4"),
-                    Categoria(nombre = "Mascotas", emoji = "🐶", colorHex = "#FF5722"),
-                    Categoria(nombre = "Viajes", emoji = "✈️", colorHex = "#3F51B5"),
-                    Categoria(nombre = "Gimnasio y Deporte", emoji = "🏋️", colorHex = "#8BC34A"),
-                    Categoria(nombre = "Regalos", emoji = "🎁", colorHex = "#FFC107"),
-                    Categoria(nombre = "Tecnología", emoji = "💻", colorHex = "#607D8B"),
-                    Categoria(nombre = "Otros", emoji = "📦", colorHex = "#9E9E9E")
-                )
-
                 val nombresEnDB = lista.map { it.nombre }
-                val faltantes = predefinidas.filter { it.nombre !in nombresEnDB }
+                val faltantes = CategorySuggester.getDefaultCategories().filter { it.nombre !in nombresEnDB }
                 faltantes.forEach { database.categoriaDao().insertar(it) }
 
                 withContext(Dispatchers.Main) {
@@ -425,7 +409,7 @@ class addTransaction : AppCompatActivity() {
         dialog.show()
     }
 
-    private fun mostrarDialogoCrearCategoria() {
+    private fun mostrarDialogoCrearCategoria(categoriaAEditar: Categoria? = null) {
         val dialog = BottomSheetDialog(this)
         val view = LayoutInflater.from(this).inflate(R.layout.layout_create_category, null)
         dialog.setContentView(view)
@@ -570,6 +554,7 @@ class addTransaction : AppCompatActivity() {
         }
     }
 
+    // EL NUEVO CEREBRO DEL DICTADO POR VOZ
     private fun procesarTextoVoz(texto: String) {
         val procesado = texto.lowercase()
             .replace(" pesos", "")
@@ -578,18 +563,46 @@ class addTransaction : AppCompatActivity() {
             .replace("un millon", "1 millón")
             .trim()
 
-        val regex = Regex("((?:\\d+[.,\\s]*)+(?:millón|millones|mil)?(?:\\s*\\d+[.,\\s]*)*(?:mil)?(?:\\s*\\d+[.,\\s]*)*)$")
-        val matchResult = regex.find(procesado)
+        val words = procesado.split(" ")
+        val priceTokens = mutableListOf<String>()
+        var lastWasNumber = false
 
-        if (matchResult != null) {
-            val strMonto = matchResult.value
-            val descripcionStr = procesado.substring(0, matchResult.range.first).trim()
+        // Leemos de derecha a izquierda
+        for (i in words.indices.reversed()) {
+            val word = words[i]
+            val isKeyword = word in listOf("mil", "millón", "millon", "millones")
+            val isNumber = word.replace(".", "").replace(",", "").toLongOrNull() != null
+
+            if (isKeyword) {
+                priceTokens.add(0, word)
+                lastWasNumber = false
+            } else if (isNumber) {
+                if (lastWasNumber) {
+                    // Si encontramos dos números seguidos sin una palabra como "mil" en el medio
+                    // Ejemplo: "5090" y "15" en "RTX 5090 15 millones". Rompemos el ciclo.
+                    break
+                } else {
+                    priceTokens.add(0, word)
+                    lastWasNumber = true
+                }
+            } else {
+                // Si encontramos una palabra normal (ej. "RTX", "Comida"), rompemos.
+                break
+            }
+        }
+
+        // Todo lo que sobró a la izquierda es la descripción
+        val descTokens = words.dropLast(priceTokens.size)
+        val strMonto = priceTokens.joinToString(" ")
+        val descripcionStr = descTokens.joinToString(" ")
+
+        if (strMonto.isNotEmpty()) {
             val montoLimpio = strMonto.replace(".", "").replace(",", "").replace(" ", "")
             var montoFinal = 0L
 
             try {
-                if (montoLimpio.contains("millones") || montoLimpio.contains("millón")) {
-                    val partesMillon = montoLimpio.split("millones", "millón")
+                if (montoLimpio.contains("millones") || montoLimpio.contains("millón") || montoLimpio.contains("millon")) {
+                    val partesMillon = montoLimpio.split("millones", "millón", "millon")
                     val millones = partesMillon[0].toLongOrNull() ?: 0L
                     montoFinal += millones * 1000000L
 
