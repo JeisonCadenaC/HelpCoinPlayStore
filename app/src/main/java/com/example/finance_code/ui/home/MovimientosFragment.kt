@@ -3,23 +3,29 @@ package com.example.finance_code.ui.home
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.hardware.Sensor
+import android.hardware.SensorManager
+import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
+import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.finance_code.DiscreetModeManager
 import com.example.finance_code.R
+import com.example.finance_code.ShakeDetector
 import com.example.finance_code.data.AppDB
-import com.example.finance_code.data.Categoria
 import com.example.finance_code.data.Movimiento
 import com.example.finance_code.data.MovimientoRepository
 import com.example.finance_code.ui.transaction.addTransaction
@@ -32,7 +38,6 @@ import com.google.android.material.chip.ChipGroup
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -62,6 +67,10 @@ class MovimientosFragment : Fragment() {
     private lateinit var tvSaldoTotal: TextView
     private lateinit var tvUserName: TextView
     private lateinit var btnHideBalance: ImageButton
+
+    private lateinit var sensorManager: SensorManager
+    private var accelerometer: Sensor? = null
+    private lateinit var shakeDetector: ShakeDetector
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_movimientos, container, false)
@@ -117,6 +126,8 @@ class MovimientosFragment : Fragment() {
         btnDiscreetModeManual.setOnClickListener {
             DiscreetModeManager.toggleMode()
             actualizarUIModoDiscreto()
+            val message = if (DiscreetModeManager.isDiscreetModeActive) "Modo Discreto Activado" else "Modo Visible Activado"
+            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
         }
 
         btnHideBalance.setOnClickListener {
@@ -142,11 +153,39 @@ class MovimientosFragment : Fragment() {
             mostrarBottomSheetFiltros()
         }
 
+        sensorManager = requireContext().getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+
+        val vibrator = ContextCompat.getSystemService(requireContext(), Vibrator::class.java)
+
+        shakeDetector = ShakeDetector {
+            activity?.runOnUiThread {
+                DiscreetModeManager.toggleMode()
+                actualizarUIModoDiscreto()
+
+                if (vibrator != null) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE))
+                    } else {
+                        vibrator.vibrate(100)
+                    }
+                }
+
+                val mensaje = if (DiscreetModeManager.isDiscreetModeActive) "Modo Discreto Activado" else "Modo Visible Activado"
+                Toast.makeText(requireContext(), mensaje, Toast.LENGTH_SHORT).show()
+            }
+        }
+
         actualizarUIModoDiscreto()
     }
 
     override fun onResume() {
         super.onResume()
+
+        accelerometer?.let {
+            sensorManager.registerListener(shakeDetector, it, SensorManager.SENSOR_DELAY_NORMAL)
+        }
+
         val user = FirebaseAuth.getInstance().currentUser
         val uid = user?.uid ?: "default"
         val prefsName = "${uid}_UserProfilePrefs"
@@ -156,6 +195,11 @@ class MovimientosFragment : Fragment() {
         if (!customName.isNullOrEmpty() && ::tvUserName.isInitialized) {
             tvUserName.text = customName.uppercase()
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        sensorManager.unregisterListener(shakeDetector)
     }
 
     private fun actualizarSaldoTotal() {
@@ -212,7 +256,6 @@ class MovimientosFragment : Fragment() {
         return 0L
     }
 
-    // NUEVO: Función que combina Fecha y Hora para ordenar matemáticamente de más reciente a más antiguo
     private fun parseDateTimeToMillis(fecha: String?, hora: String?): Long {
         if (fecha.isNullOrEmpty()) return 0L
         val h = if (hora.isNullOrEmpty()) "00:00:00" else hora
@@ -238,7 +281,6 @@ class MovimientosFragment : Fragment() {
 
         tvEmpty.visibility = if (filtrados.isEmpty()) View.VISIBLE else View.GONE
 
-        // --- ORDENADO POR FECHA Y HORA DESCENDENTE ---
         val ordenados = filtrados.sortedByDescending { parseDateTimeToMillis(it.fecha, it.hora) }
 
         val itemsFinales = mutableListOf<MovimientoListItem>()
@@ -428,7 +470,7 @@ class MovimientosFragment : Fragment() {
                 cal.set(Calendar.MONTH, Calendar.DECEMBER); cal.set(Calendar.DAY_OF_MONTH, 31)
                 fin = maximizeTime(cal)
             }
-            7 -> { // Hoy
+            7 -> {
                 inicio = resetTime(cal)
                 fin = maximizeTime(cal)
             }

@@ -3,21 +3,13 @@ package com.example.finance_code.ui.transaction
 import com.example.finance_code.data.Categoria
 
 object CategorySuggester {
-    // Diccionario Masivo y Optimizado (Colombia)
     private val keywords = mapOf(
-        // ==========================================
-        // 💰 SALARIO E INGRESOS (NUEVO)
-        // ==========================================
         "salario" to "Salario e Ingresos", "sueldo" to "Salario e Ingresos", "quincena" to "Salario e Ingresos",
         "pago" to "Salario e Ingresos", "honorarios" to "Salario e Ingresos", "nomina" to "Salario e Ingresos",
         "prima" to "Salario e Ingresos", "liquidacion" to "Salario e Ingresos", "cesantias" to "Salario e Ingresos",
         "trabajo" to "Salario e Ingresos", "venta" to "Salario e Ingresos", "negocio" to "Salario e Ingresos",
         "ganancia" to "Salario e Ingresos", "utilidad" to "Salario e Ingresos", "bono" to "Salario e Ingresos",
         "ingreso" to "Salario e Ingresos", "mesada" to "Salario e Ingresos", "prestacion" to "Salario e Ingresos",
-
-        // ==========================================
-        // 🏍️ MOTOS (NUEVO)
-        // ==========================================
         "moto" to "Motos", "motocicleta" to "Motos", "fz" to "Motos", "gixxer" to "Motos",
         "raider" to "Motos", "apache" to "Motos", "ns" to "Motos", "ns 200" to "Motos",
         "ns 160" to "Motos", "pulsar" to "Motos", "dominar" to "Motos", "boxer" to "Motos",
@@ -29,10 +21,6 @@ object CategorySuggester {
         "cbr" to "Motos", "gn 125" to "Motos", "gs 125" to "Motos", "libero" to "Motos",
         "agility" to "Motos", "bws" to "Motos", "vstrom" to "Motos", "casco" to "Motos",
         "impermeable" to "Motos", "rodilleras" to "Motos", "guantes moto" to "Motos", "mt" to "Motos",
-
-        // ==========================================
-        // 🚙 CARROS (NUEVO)
-        // ==========================================
         "carro" to "Carros", "coche" to "Carros", "automovil" to "Carros", "chevrolet" to "Carros",
         "renault" to "Carros", "mazda" to "Carros", "kia" to "Carros", "toyota" to "Carros",
         "nissan" to "Carros", "ford" to "Carros", "volkswagen" to "Carros", "hyundai" to "Carros",
@@ -44,10 +32,6 @@ object CategorySuggester {
         "ecosport" to "Carros", "escape" to "Carros", "jetta" to "Carros", "gol" to "Carros",
         "sportage" to "Carros", "tucson" to "Carros", "jeep" to "Carros", "bmw" to "Carros",
         "audi" to "Carros", "mercedes" to "Carros",
-
-        // ==========================================
-        // 🛠️ MANTENIMIENTO Y REPARACIÓN (NUEVO)
-        // ==========================================
         "reparacion" to "Mantenimiento y Reparación", "arreglo" to "Mantenimiento y Reparación",
         "repuestos" to "Mantenimiento y Reparación", "mecanico" to "Mantenimiento y Reparación",
         "taller" to "Mantenimiento y Reparación", "aceite" to "Mantenimiento y Reparación",
@@ -58,10 +42,6 @@ object CategorySuggester {
         "alineacion" to "Mantenimiento y Reparación", "balanceo" to "Mantenimiento y Reparación",
         "revision" to "Mantenimiento y Reparación", "tecnomecanica" to "Mantenimiento y Reparación",
         "mantenimiento" to "Mantenimiento y Reparación", "lavadero" to "Mantenimiento y Reparación",
-
-        // ==========================================
-        // 🏦 BANCOS Y FINANZAS (NUEVO)
-        // ==========================================
         "nequi" to "Bancos y Finanzas", "daviplata" to "Bancos y Finanzas", "bancolombia" to "Bancos y Finanzas",
         "davivienda" to "Bancos y Finanzas", "aval" to "Bancos y Finanzas", "bogota" to "Bancos y Finanzas",
         "occidente" to "Bancos y Finanzas", "popular" to "Bancos y Finanzas", "caja social" to "Bancos y Finanzas",
@@ -71,10 +51,6 @@ object CategorySuggester {
         "comision" to "Bancos y Finanzas", "prestamo" to "Bancos y Finanzas", "abono" to "Bancos y Finanzas",
         "deuda" to "Bancos y Finanzas", "banco" to "Bancos y Finanzas", "credito" to "Bancos y Finanzas",
         "ahorro" to "Bancos y Finanzas", "inversion" to "Bancos y Finanzas", "cdt" to "Bancos y Finanzas",
-
-        // ==========================================
-        // 🍔 COMIDA Y RESTAURANTES
-        // ==========================================
         "restaurante" to "Comida y Restaurantes", "almuerzo" to "Comida y Restaurantes",
         "cena" to "Comida y Restaurantes", "desayuno" to "Comida y Restaurantes",
         "pizza" to "Comida y Restaurantes", "hamburguesa" to "Comida y Restaurantes",
@@ -93,19 +69,11 @@ object CategorySuggester {
         "chuzo" to "Comida y Restaurantes", "tamal" to "Comida y Restaurantes",
         "lechona" to "Comida y Restaurantes", "ajiaco" to "Comida y Restaurantes",
         "sancocho" to "Comida y Restaurantes", "bandeja paisa" to "Comida y Restaurantes",
-
-        // ==========================================
-        // 🛒 SUPERMERCADO
-        // ==========================================
         "mercado" to "Supermercado", "d1" to "Supermercado", "ara" to "Supermercado",
         "exito" to "Supermercado", "carulla" to "Supermercado", "jumbo" to "Supermercado",
         "despensa" to "Supermercado", "corabastos" to "Supermercado", "makro" to "Supermercado",
         "alkosto" to "Supermercado", "olimpica" to "Supermercado", "fruver" to "Supermercado",
         "surtimax" to "Supermercado", "isimo" to "Supermercado", "colsubsidio" to "Supermercado",
-
-        // ==========================================
-        // 🚌 TRANSPORTE PÚBLICO
-        // ==========================================
         "bus" to "Transporte Público", "transmilenio" to "Transporte Público",
         "pasaje" to "Transporte Público", "sitp" to "Transporte Público",
         "taxi" to "Transporte Público", "uber" to "Transporte Público",
@@ -113,17 +81,9 @@ object CategorySuggester {
         "picap" to "Transporte Público", "indriver" to "Transporte Público",
         "metro" to "Transporte Público", "mio" to "Transporte Público",
         "alimentador" to "Transporte Público", "flota" to "Transporte Público",
-
-        // ==========================================
-        // 🚗 VEHÍCULO Y GASOLINA (Gastos generales)
-        // ==========================================
         "gasolina" to "Vehículo y Gasolina", "tanqueo" to "Vehículo y Gasolina",
         "parqueadero" to "Vehículo y Gasolina", "peaje" to "Vehículo y Gasolina",
         "soat" to "Vehículo y Gasolina", "acpm" to "Vehículo y Gasolina",
-
-        // ==========================================
-        // 🔞 OCIO NOCTURNO
-        // ==========================================
         "bar" to "Ocio Nocturno", "cerveza" to "Ocio Nocturno", "pola" to "Ocio Nocturno",
         "polas" to "Ocio Nocturno", "guaro" to "Ocio Nocturno", "aguardiente" to "Ocio Nocturno",
         "ron" to "Ocio Nocturno", "discoteca" to "Ocio Nocturno", "fiesta" to "Ocio Nocturno",
@@ -132,10 +92,6 @@ object CategorySuggester {
         "prepagos" to "Ocio Nocturno", "motel" to "Ocio Nocturno", "amanecedero" to "Ocio Nocturno",
         "club" to "Ocio Nocturno", "tequila" to "Ocio Nocturno", "vodka" to "Ocio Nocturno",
         "coctel" to "Ocio Nocturno", "tragos" to "Ocio Nocturno",
-
-        // ==========================================
-        // 🎬 CINE Y ENTRETENIMIENTO
-        // ==========================================
         "cine" to "Cine y Entretenimiento", "netflix" to "Cine y Entretenimiento",
         "spotify" to "Cine y Entretenimiento", "videojuegos" to "Cine y Entretenimiento",
         "play" to "Cine y Entretenimiento", "xbox" to "Cine y Entretenimiento",
@@ -147,10 +103,6 @@ object CategorySuggester {
         "cinemark" to "Cine y Entretenimiento", "procinal" to "Cine y Entretenimiento",
         "royal films" to "Cine y Entretenimiento", "prime video" to "Cine y Entretenimiento",
         "disney" to "Cine y Entretenimiento", "hbo" to "Cine y Entretenimiento", "max" to "Cine y Entretenimiento",
-
-        // ==========================================
-        // 💊 SALUD Y FARMACIA
-        // ==========================================
         "farmacia" to "Salud y Farmacia", "medico" to "Salud y Farmacia",
         "pastillas" to "Salud y Farmacia", "eps" to "Salud y Farmacia",
         "cita medica" to "Salud y Farmacia", "urgencias" to "Salud y Farmacia",
@@ -161,10 +113,6 @@ object CategorySuggester {
         "farmatodo" to "Salud y Farmacia", "colsanitas" to "Salud y Farmacia",
         "sura" to "Salud y Farmacia", "sanitas" to "Salud y Farmacia",
         "famisanar" to "Salud y Farmacia", "compensar" to "Salud y Farmacia",
-
-        // ==========================================
-        // 🏠 HOGAR Y SERVICIOS
-        // ==========================================
         "arriendo" to "Hogar y Servicios", "agua" to "Hogar y Servicios",
         "luz" to "Hogar y Servicios", "gas" to "Hogar y Servicios",
         "internet" to "Hogar y Servicios", "claro" to "Hogar y Servicios",
@@ -175,10 +123,6 @@ object CategorySuggester {
         "etb" to "Hogar y Servicios", "tigo" to "Hogar y Servicios",
         "directv" to "Hogar y Servicios", "vanti" to "Hogar y Servicios",
         "epm" to "Hogar y Servicios", "enel" to "Hogar y Servicios", "codensa" to "Hogar y Servicios",
-
-        // ==========================================
-        // 🛍️ ROPA Y CUIDADO
-        // ==========================================
         "ropa" to "Ropa y Cuidado", "zapatos" to "Ropa y Cuidado",
         "tenis" to "Ropa y Cuidado", "chaqueta" to "Ropa y Cuidado",
         "pantalon" to "Ropa y Cuidado", "camisa" to "Ropa y Cuidado",
@@ -190,50 +134,26 @@ object CategorySuggester {
         "koaj" to "Ropa y Cuidado", "gef" to "Ropa y Cuidado",
         "punto blanco" to "Ropa y Cuidado", "arturo calle" to "Ropa y Cuidado",
         "cuidado personal" to "Ropa y Cuidado", "skincare" to "Ropa y Cuidado",
-
-        // ==========================================
-        // 📚 EDUCACIÓN
-        // ==========================================
         "universidad" to "Educación", "semestre" to "Educación",
         "cuadernos" to "Educación", "fotocopias" to "Educación",
         "libros" to "Educación", "pension" to "Educación",
         "colegio" to "Educación", "utiles" to "Educación",
         "matricula" to "Educación", "curso" to "Educación",
-
-        // ==========================================
-        // 🐶 MASCOTAS
-        // ==========================================
         "perro" to "Mascotas", "gato" to "Mascotas",
         "veterinario" to "Mascotas", "purina" to "Mascotas",
         "concentrado" to "Mascotas", "croquetas" to "Mascotas",
         "mascota" to "Mascotas", "arena" to "Mascotas",
-
-        // ==========================================
-        // ✈️ VIAJES
-        // ==========================================
         "vuelo" to "Viajes", "avion" to "Viajes",
         "hotel" to "Viajes", "viaje" to "Viajes",
         "vacaciones" to "Viajes", "turismo" to "Viajes",
         "airbnb" to "Viajes", "pasajes" to "Viajes",
-
-        // ==========================================
-        // 🏋️ GIMNASIO Y DEPORTE
-        // ==========================================
         "gimnasio" to "Gimnasio y Deporte", "gym" to "Gimnasio y Deporte",
         "smartfit" to "Gimnasio y Deporte", "pesas" to "Gimnasio y Deporte",
         "suplementos" to "Gimnasio y Deporte", "proteina" to "Gimnasio y Deporte",
         "creatina" to "Gimnasio y Deporte", "bodytech" to "Gimnasio y Deporte",
-
-        // ==========================================
-        // 🎁 REGALOS
-        // ==========================================
         "regalo" to "Regalos", "detalle" to "Regalos",
         "cumpleaños" to "Regalos", "aniversario" to "Regalos",
         "flores" to "Regalos", "chocolates" to "Regalos",
-
-        // ==========================================
-        // 💻 TECNOLOGÍA
-        // ==========================================
         "celular nuevo" to "Tecnología", "computador" to "Tecnología",
         "pc" to "Tecnología", "audifonos" to "Tecnología",
         "cable" to "Tecnología", "cargador" to "Tecnología",
@@ -245,9 +165,7 @@ object CategorySuggester {
         val lowerDesc = description.lowercase()
 
         for ((word, categoryName) in keywords) {
-            // Regex con límite de palabra (\b)
-            // Ejemplo: si word es "pc", hará match con "mi pc nuevo" pero NO con "opcion"
-            val regex = Regex("\\b$word\\b")
+            val regex = Regex("\\b$word(s|es)?\\b")
             if (regex.containsMatchIn(lowerDesc)) {
                 return categoryName
             }
@@ -255,7 +173,6 @@ object CategorySuggester {
         return null
     }
 
-    // Lista Maestra Centralizada (Con las nuevas categorías añadidas)
     fun getDefaultCategories(): List<Categoria> {
         return listOf(
             Categoria(nombre = "Salario e Ingresos", emoji = "💰", colorHex = "#388E3C"),

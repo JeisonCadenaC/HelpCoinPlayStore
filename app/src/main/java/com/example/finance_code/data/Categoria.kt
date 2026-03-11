@@ -13,5 +13,6 @@ data class Categoria(
     val nombre: String,
     val emoji: String,
     val colorHex: String,
-    val esPersonalizada: Boolean = false
+    val esPersonalizada: Boolean = false,
+    val palabrasClave: String = ""
 ): Parcelable

@@ -21,7 +21,6 @@ import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
@@ -138,16 +137,29 @@ class addTransaction : AppCompatActivity() {
             override fun afterTextChanged(s: Editable?) {
                 val desc = s.toString()
                 if (desc.isNotEmpty()) {
-                    val sugerenciaNombre = CategorySuggester.suggestCategory(desc)
-                    if (sugerenciaNombre != null) {
-                        val categoriaEncontrada = listaCategoriasEnDB.find { it.nombre == sugerenciaNombre }
-                        if (categoriaEncontrada != null) {
-                            currentCategoriaId = categoriaEncontrada.id
-                            currentCategoriaNombre = categoriaEncontrada.nombre
-                            currentCategoriaEmoji = categoriaEncontrada.emoji
-                            currentColorHex = categoriaEncontrada.colorHex
-                            actualizarUISeleccionCategoria()
+                    val descLower = desc.lowercase()
+                    var categoriaEncontrada: Categoria? = null
+
+                    categoriaEncontrada = listaCategoriasEnDB.find { cat ->
+                        cat.esPersonalizada && cat.palabrasClave.isNotBlank() && cat.palabrasClave.split(",").any { palabra ->
+                            val p = palabra.trim().lowercase()
+                            p.isNotEmpty() && Regex("\\b$p(s|es)?\\b").containsMatchIn(descLower)
                         }
+                    }
+
+                    if (categoriaEncontrada == null) {
+                        val sugerenciaNombre = CategorySuggester.suggestCategory(desc)
+                        if (sugerenciaNombre != null) {
+                            categoriaEncontrada = listaCategoriasEnDB.find { it.nombre == sugerenciaNombre }
+                        }
+                    }
+
+                    if (categoriaEncontrada != null) {
+                        currentCategoriaId = categoriaEncontrada.id
+                        currentCategoriaNombre = categoriaEncontrada.nombre
+                        currentCategoriaEmoji = categoriaEncontrada.emoji
+                        currentColorHex = categoriaEncontrada.colorHex
+                        actualizarUISeleccionCategoria()
                     }
                 }
             }
@@ -415,6 +427,7 @@ class addTransaction : AppCompatActivity() {
         dialog.setContentView(view)
 
         val etNombre = view.findViewById<TextInputEditText>(R.id.etNombreCategoria)
+        val etPalabrasClave = view.findViewById<TextInputEditText>(R.id.etPalabrasClave)
         val llColorSelector = view.findViewById<LinearLayout>(R.id.llColorSelector)
         val btnGuardar = view.findViewById<MaterialButton>(R.id.btnGuardarCategoriaNueva)
 
@@ -425,7 +438,21 @@ class addTransaction : AppCompatActivity() {
         var colorSeleccionado = "#9E9E9E"
         var vistaSeleccionada: MaterialCardView? = null
 
-        cardLivePreview.setCardBackgroundColor(Color.argb(40, Color.red(Color.GRAY), Color.green(Color.GRAY), Color.blue(Color.GRAY)))
+        if (categoriaAEditar != null) {
+            etNombre.setText(categoriaAEditar.nombre)
+            etPalabrasClave.setText(categoriaAEditar.palabrasClave)
+            emojiSeleccionado = categoriaAEditar.emoji
+            colorSeleccionado = categoriaAEditar.colorHex
+            btnGuardar.text = "Actualizar Categoría"
+        }
+
+        tvLivePreviewEmoji.text = emojiSeleccionado
+        try {
+            val original = Color.parseColor(colorSeleccionado)
+            cardLivePreview.setCardBackgroundColor(Color.argb(40, Color.red(original), Color.green(original), Color.blue(original)))
+        } catch (e: Exception) {
+            cardLivePreview.setCardBackgroundColor(Color.LTGRAY)
+        }
 
         cardLivePreview.setOnClickListener {
             mostrarDialogoSelectorEmoji { emoji ->
@@ -443,7 +470,13 @@ class addTransaction : AppCompatActivity() {
                 layoutParams = LinearLayout.LayoutParams(120, 120).apply { setMargins(8, 8, 8, 8) }
                 radius = 60f
                 setCardBackgroundColor(Color.parseColor(colorHex))
-                strokeWidth = 0
+
+                strokeWidth = if (categoriaAEditar != null && colorHex.equals(colorSeleccionado, ignoreCase = true)) {
+                    vistaSeleccionada = this
+                    10
+                } else 0
+
+                strokeColor = Color.BLACK
                 isClickable = true
                 setOnClickListener {
                     vistaSeleccionada?.strokeWidth = 0
@@ -488,29 +521,55 @@ class addTransaction : AppCompatActivity() {
 
         btnGuardar.setOnClickListener {
             val nombre = etNombre.text.toString().trim()
+            val palabras = etPalabrasClave.text.toString().trim()
 
             if (nombre.isEmpty()) {
                 Toast.makeText(this, "Por favor escribe un nombre", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            val nuevaCat = Categoria(
-                nombre = nombre,
-                emoji = emojiSeleccionado,
-                colorHex = colorSeleccionado,
-                esPersonalizada = true
-            )
-
             lifecycleScope.launch(Dispatchers.IO) {
-                val newId = database.categoriaDao().insertar(nuevaCat)
-                withContext(Dispatchers.Main) {
-                    currentCategoriaId = newId
-                    currentCategoriaNombre = nombre
-                    currentCategoriaEmoji = emojiSeleccionado
-                    currentColorHex = colorSeleccionado
-                    actualizarUISeleccionCategoria()
-                    dialog.dismiss()
-                    Toast.makeText(this@addTransaction, "Categoría creada", Toast.LENGTH_SHORT).show()
+                if (categoriaAEditar == null) {
+                    val nuevaCat = Categoria(
+                        nombre = nombre,
+                        emoji = emojiSeleccionado,
+                        colorHex = colorSeleccionado,
+                        esPersonalizada = true,
+                        palabrasClave = palabras
+                    )
+                    val newId = database.categoriaDao().insertar(nuevaCat)
+                    withContext(Dispatchers.Main) {
+                        currentCategoriaId = newId
+                        currentCategoriaNombre = nombre
+                        currentCategoriaEmoji = emojiSeleccionado
+                        currentColorHex = colorSeleccionado
+                        actualizarUISeleccionCategoria()
+
+                        cargarCategorias()
+                        dialog.dismiss()
+                        Toast.makeText(this@addTransaction, "Categoría creada", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    val catActualizada = categoriaAEditar.copy(
+                        nombre = nombre,
+                        emoji = emojiSeleccionado,
+                        colorHex = colorSeleccionado,
+                        palabrasClave = palabras
+                    )
+                    database.categoriaDao().actualizar(catActualizada)
+                    withContext(Dispatchers.Main) {
+                        if (currentCategoriaId == catActualizada.id) {
+                            currentCategoriaId = catActualizada.id
+                            currentCategoriaNombre = catActualizada.nombre
+                            currentCategoriaEmoji = catActualizada.emoji
+                            currentColorHex = catActualizada.colorHex
+                            actualizarUISeleccionCategoria()
+                        }
+
+                        cargarCategorias()
+                        dialog.dismiss()
+                        Toast.makeText(this@addTransaction, "Categoría actualizada", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         }
@@ -554,7 +613,6 @@ class addTransaction : AppCompatActivity() {
         }
     }
 
-    // EL NUEVO CEREBRO DEL DICTADO POR VOZ
     private fun procesarTextoVoz(texto: String) {
         val procesado = texto.lowercase()
             .replace(" pesos", "")
@@ -567,7 +625,6 @@ class addTransaction : AppCompatActivity() {
         val priceTokens = mutableListOf<String>()
         var lastWasNumber = false
 
-        // Leemos de derecha a izquierda
         for (i in words.indices.reversed()) {
             val word = words[i]
             val isKeyword = word in listOf("mil", "millón", "millon", "millones")
@@ -578,20 +635,16 @@ class addTransaction : AppCompatActivity() {
                 lastWasNumber = false
             } else if (isNumber) {
                 if (lastWasNumber) {
-                    // Si encontramos dos números seguidos sin una palabra como "mil" en el medio
-                    // Ejemplo: "5090" y "15" en "RTX 5090 15 millones". Rompemos el ciclo.
                     break
                 } else {
                     priceTokens.add(0, word)
                     lastWasNumber = true
                 }
             } else {
-                // Si encontramos una palabra normal (ej. "RTX", "Comida"), rompemos.
                 break
             }
         }
 
-        // Todo lo que sobró a la izquierda es la descripción
         val descTokens = words.dropLast(priceTokens.size)
         val strMonto = priceTokens.joinToString(" ")
         val descripcionStr = descTokens.joinToString(" ")
