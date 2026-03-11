@@ -604,7 +604,7 @@ class addTransaction : AppCompatActivity() {
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
-        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Di algo como: 'Comida 15 millones 500 mil'")
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Di algo como: 'Almuerzo $50.000'")
 
         try {
             speechLauncher.launch(intent)
