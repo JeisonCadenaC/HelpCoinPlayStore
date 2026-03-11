@@ -1,10 +1,10 @@
 package com.example.finance_code.data
+
 import android.os.Parcelable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import kotlinx.parcelize.Parcelize
 
-// Aquí va la entidad (la tabla)
 @Parcelize
 @Entity(tableName = "movimientos")
 data class Movimiento(
@@ -12,7 +12,8 @@ data class Movimiento(
     val id: Int = 0,
     val descripcion: String,
     val cantidad: Double,
-    val tipo: Int,       // 0 = gasto, 1 = ingreso
+    val tipo: Int,
     val fecha: String,
-    val categoria: String
+    val categoria: String,
+    val categoriaId: Long = 5L
 ): Parcelable

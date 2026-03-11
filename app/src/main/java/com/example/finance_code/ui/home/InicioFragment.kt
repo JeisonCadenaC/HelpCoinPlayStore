@@ -25,11 +25,13 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.finance_code.R
 import com.example.finance_code.data.AppDB
+import com.example.finance_code.data.Categoria
 import com.example.finance_code.data.Movimiento
 import com.example.finance_code.data.MovimientoRepository
 import com.example.finance_code.data.Recordatorio
@@ -55,6 +57,7 @@ import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -68,12 +71,14 @@ class InicioFragment : Fragment() {
 
     private val viewModel: InicioViewModel by activityViewModels()
     private lateinit var movimientoViewModel: MovimientoViewModel
+    private lateinit var database: AppDB
 
     private lateinit var agendaAdapter: AgendaAdapter
     private var selectedDate: Calendar = Calendar.getInstance()
 
     private var listaRecordatoriosApp: List<Recordatorio> = emptyList()
     private var listaMovimientosReal: List<Movimiento> = emptyList()
+    private var listaCategoriasGlobal: List<Categoria> = emptyList()
 
     private var userEmail: String = "default"
 
@@ -122,10 +127,20 @@ class InicioFragment : Fragment() {
 
         userEmail = FirebaseAuth.getInstance().currentUser?.email ?: "default"
         if (userEmail != "default") {
-            val database = AppDB.getDatabase(requireContext(), userEmail)
+            database = AppDB.getDatabase(requireContext(), userEmail)
             val repository = MovimientoRepository(database.movimientoDao())
             val factory = MovimientoViewModelFactory(repository)
             movimientoViewModel = ViewModelProvider(this, factory)[MovimientoViewModel::class.java]
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                database.categoriaDao().obtenerTodas().collect { categorias ->
+                    listaCategoriasGlobal = categorias
+                    if (listaMovimientosReal.isNotEmpty() && isAdded) {
+                        procesarGraficoGastos(view)
+                        procesarGraficoIngresos(view)
+                    }
+                }
+            }
         }
 
         cargarPreferencias()
@@ -766,58 +781,17 @@ class InicioFragment : Fragment() {
         })
     }
 
-    private fun obtenerCategoriaGastoInteligente(mov: Movimiento): Pair<String, Int> {
-        val textoInfo = "${mov.categoria} ${mov.descripcion}".lowercase(Locale.getDefault())
-        return when {
-            textoInfo.matches(Regex(".*(comida|restaurante|almuerzo|cena|desayuno|pizza|hamburguesa|perro|empanada|helado|postre|snack|tinto).*")) -> Pair(
-                "🍔 Comida",
-                Color.parseColor("#FF9800")
-            )
-            textoInfo.matches(Regex(".*(gasolina|moto|carro|repuestos|arreglo|mecanico|parqueadero|peaje|llanta|aceite|taller|vehiculo|soat|tecnomecanica).*")) -> Pair(
-                "🚗 Vehículo",
-                Color.parseColor("#607D8B")
-            )
-            textoInfo.matches(Regex(".*(transporte|pasaje|bus|transmilenio|taxi|uber|didi|cabify|metro|picap).*")) -> Pair(
-                "🚌 Transporte",
-                Color.parseColor("#03A9F4")
-            )
-            textoInfo.matches(Regex(".*(servicio|luz|agua|internet|recibo|gas|telefono|celular|plan|wifi|factura|arriendo|alquiler).*")) -> Pair(
-                "💡 Servicios y Recibos",
-                Color.parseColor("#FFC107")
-            )
-            textoInfo.matches(Regex(".*(supermercado|mercado|despensa|viveres|tienda|d1|ara|exito|jumbo|olimpica|carulla|abastos).*")) -> Pair(
-                "🛒 Mercado",
-                Color.parseColor("#4CAF50")
-            )
-            textoInfo.matches(Regex(".*(maquillaje|peluqueria|uñas|barbero|cuidado|crema|aseo|skincare|corte|perfume).*")) -> Pair(
-                "💅 Cuidado Personal",
-                Color.parseColor("#E91E63")
-            )
-            textoInfo.matches(Regex(".*(salud|medicina|farmacia|medico|pastillas|hospital|eps|cita|droga|drogueria|examen).*")) -> Pair(
-                "💊 Salud",
-                Color.parseColor("#F44336")
-            )
-            textoInfo.matches(Regex(".*(ropa|compras|zapatos|tenis|blusa|pantalon|chaqueta|centro comercial|mall|regalo|accesorio).*")) -> Pair(
-                "🛍️ Compras",
-                Color.parseColor("#9C27B0")
-            )
-            textoInfo.matches(Regex(".*(educacion|estudio|universidad|colegio|cuaderno|libro|curso|matricula|pension|semestre|diplomado).*")) -> Pair(
-                "📚 Educación",
-                Color.parseColor("#00BCD4")
-            )
-            textoInfo.matches(Regex(".*(viaje|hotel|vuelo|avion|vacaciones|turismo|paseo|hospedaje|airbnb|terminal).*")) -> Pair(
-                "✈️ Viajes",
-                Color.parseColor("#3F51B5")
-            )
-            textoInfo.matches(Regex(".*(prostituta|puta|prepago|onlyfans|webcam|motel|cariñosa|chica|acompañante).*")) -> Pair(
-                "🔞 Ocio Nocturno",
-                Color.parseColor("#B71C1C")
-            )
-            textoInfo.matches(Regex(".*(ocio|diversion|cine|rumba|fiesta|trago|cerveza|pola|licor|bar|netflix|spotify|suscripcion|videojuego|juego|xbox|play|suscripción).*")) -> Pair(
-                "🎉 Diversión",
-                Color.parseColor("#CDDC39")
-            )
-            else -> Pair("🏷️ Otros Gastos", Color.parseColor("#795548"))
+    private fun obtenerDatosCategoriaReal(mov: Movimiento): Pair<String, Int> {
+        val catEncontrada = listaCategoriasGlobal.find { it.id == mov.categoriaId }
+
+        return if (catEncontrada != null) {
+            try {
+                Pair("${catEncontrada.emoji} ${catEncontrada.nombre}", Color.parseColor(catEncontrada.colorHex))
+            } catch (e: Exception) {
+                Pair("${catEncontrada.emoji} ${catEncontrada.nombre}", Color.GRAY)
+            }
+        } else {
+            Pair("📦 ${mov.categoria}", Color.parseColor("#9E9E9E"))
         }
     }
 
@@ -826,7 +800,7 @@ class InicioFragment : Fragment() {
         val coloresAgrupados = HashMap<String, Int>()
 
         for (mov in movimientos) {
-            val (nombreCategoria, colorAsignado) = obtenerCategoriaGastoInteligente(mov)
+            val (nombreCategoria, colorAsignado) = obtenerDatosCategoriaReal(mov)
             agrupado[nombreCategoria] = (agrupado[nombreCategoria] ?: 0.0) + mov.cantidad
             coloresAgrupados[nombreCategoria] = colorAsignado
         }

@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MovimientoDao {
-
     @Insert
     suspend fun insertar(movimiento: Movimiento)
 
@@ -19,13 +18,9 @@ interface MovimientoDao {
     @Delete
     suspend fun eliminar(movimiento: Movimiento)
 
-    @Query("SELECT * FROM movimientos ORDER BY id DESC")
+    @Query("SELECT * FROM movimientos ORDER BY fecha DESC")
     fun obtenerTodos(): Flow<List<Movimiento>>
 
-
-    @Query("SELECT SUM(CASE WHEN tipo = 1 THEN cantidad ELSE -cantidad END) FROM movimientos")
-    fun obtenerSaldoActualSincrono(): Double?
-
-    @Query("SELECT SUM(CASE WHEN tipo = 1 THEN cantidad ELSE -cantidad END) FROM movimientos")
-    fun obtenerSaldoTotalFlow(): Flow<Double?>
+    @Query("SELECT * FROM movimientos")
+    suspend fun obtenerTodosSync(): List<Movimiento>
 }

@@ -2,6 +2,7 @@ package com.example.finance_code.data
 
 import android.content.Context
 import com.example.finance_code.R
+import com.example.finance_code.ui.transaction.CategorySuggester
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.http.FileContent
@@ -184,6 +185,66 @@ class DriveService(
                 }
 
                 tempDir.deleteRecursively()
+
+                // ==========================================
+                // INTELIGENCIA DE AUTO-CATEGORIZACIÓN
+                // ==========================================
+                try {
+                    val db = AppDB.getDatabase(context, userEmail)
+                    val movDao = db.movimientoDao()
+                    val catDao = db.categoriaDao()
+
+                    val catsActuales = catDao.obtenerTodasSync()
+                    if (catsActuales.isEmpty()) {
+                        val predefinidas = listOf(
+                            Categoria(nombre = "Comida y Restaurantes", emoji = "🍔", colorHex = "#FF9800"),
+                            Categoria(nombre = "Supermercado", emoji = "🛒", colorHex = "#4CAF50"),
+                            Categoria(nombre = "Transporte Público", emoji = "🚌", colorHex = "#03A9F4"),
+                            Categoria(nombre = "Vehículo y Gasolina", emoji = "🚗", colorHex = "#607D8B"),
+                            Categoria(nombre = "Ocio Nocturno", emoji = "🔞", colorHex = "#B71C1C"),
+                            Categoria(nombre = "Cine y Entretenimiento", emoji = "🎬", colorHex = "#673AB7"),
+                            Categoria(nombre = "Salud y Farmacia", emoji = "💊", colorHex = "#E91E63"),
+                            Categoria(nombre = "Hogar y Servicios", emoji = "🏠", colorHex = "#795548"),
+                            Categoria(nombre = "Ropa y Cuidado", emoji = "🛍️", colorHex = "#9C27B0"),
+                            Categoria(nombre = "Educación", emoji = "📚", colorHex = "#00BCD4"),
+                            Categoria(nombre = "Mascotas", emoji = "🐶", colorHex = "#FF5722"),
+                            Categoria(nombre = "Viajes", emoji = "✈️", colorHex = "#3F51B5"),
+                            Categoria(nombre = "Gimnasio y Deporte", emoji = "🏋️", colorHex = "#8BC34A"),
+                            Categoria(nombre = "Regalos", emoji = "🎁", colorHex = "#FFC107"),
+                            Categoria(nombre = "Tecnología", emoji = "💻", colorHex = "#607D8B"),
+                            Categoria(nombre = "Otros", emoji = "📦", colorHex = "#9E9E9E")
+                        )
+                        predefinidas.forEach { catDao.insertar(it) }
+                    }
+
+                    val listaCats = catDao.obtenerTodasSync()
+                    val movimientos = movDao.obtenerTodosSync()
+
+                    for (mov in movimientos) {
+                        if (mov.categoriaId == 16L || mov.categoriaId == 0L || mov.categoria == "Otros") {
+                            val sugerencia = CategorySuggester.suggestCategory(mov.descripcion)
+                            if (sugerencia != null) {
+                                val catEncontrada = listaCats.find { it.nombre == sugerencia }
+                                if (catEncontrada != null) {
+                                    movDao.actualizar(mov.copy(categoriaId = catEncontrada.id, categoria = catEncontrada.nombre))
+                                }
+                            } else {
+                                val catExistente = listaCats.find { it.nombre == mov.categoria }
+                                if (catExistente != null) {
+                                    movDao.actualizar(mov.copy(categoriaId = catExistente.id))
+                                }
+                            }
+                        } else {
+                            val catExistente = listaCats.find { it.nombre == mov.categoria }
+                            if (catExistente != null && mov.categoriaId != catExistente.id) {
+                                movDao.actualizar(mov.copy(categoriaId = catExistente.id))
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+
                 true
             } catch (e: Exception) {
                 e.printStackTrace()
