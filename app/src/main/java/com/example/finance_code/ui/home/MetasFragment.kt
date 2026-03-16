@@ -118,6 +118,8 @@ class MetasFragment : Fragment() {
             onMetaClick = { meta ->
                 mostrarDialogoMeta(meta)
             },
+            onMetaLongClick = {},
+            onDragStart = {},
             onAceptarClick = { meta ->
                 metaViewModel.aceptarInvitacion(meta)
                 Toast.makeText(context, "¡Bienvenido a la meta!", Toast.LENGTH_SHORT).show()
@@ -199,7 +201,7 @@ class MetasFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         accelerometer?.also { accel ->
-            sensorManager?.registerListener(shakeDetector, accel, SensorManager.DELAY_UI)
+            sensorManager?.registerListener(shakeDetector, accel, SensorManager.SENSOR_DELAY_UI)
         }
 
         DiscreetModeManager.modeChangeListener = {

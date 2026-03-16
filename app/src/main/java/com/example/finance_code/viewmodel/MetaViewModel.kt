@@ -61,7 +61,6 @@ class MetaViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // AHORA RESPETA EL CAMPO ORDEN AL COMBINAR LAS METAS
     private fun combineMetas(local: List<MetaDB>, shared: List<MetaDB>) {
         val todasLasMetas = (local + shared)
             .sortedWith(
@@ -72,7 +71,6 @@ class MetaViewModel(application: Application) : AndroidViewModel(application) {
         _allMetas.value = todasLasMetas
     }
 
-    // FUNCIÓN NUEVA: GUARDA EL ORDEN DE CADA TARJETA (TANTO EN ROOM COMO EN FIRESTORE)
     fun guardarNuevoOrden(listaOrdenada: List<MetaDB>) = viewModelScope.launch(Dispatchers.IO) {
         listaOrdenada.forEachIndexed { index, meta ->
             if (meta.orden != index) {
@@ -100,6 +98,7 @@ class MetaViewModel(application: Application) : AndroidViewModel(application) {
                     val metaId = document.id
                     val statusInv = data?.get("invitation_status") as? Map<String, Any>
                     val statusAporte = data?.get("aporte_status") as? Map<String, Any>
+                    val statusImage = data?.get("image_status") as? Map<String, Any>
 
                     if (statusInv != null) {
                         val recipientEmail = statusInv["recipient"] as? String ?: ""
@@ -126,9 +125,8 @@ class MetaViewModel(application: Application) : AndroidViewModel(application) {
                     }
 
                     if (statusAporte != null) {
-                        val recipientEmail = statusAporte["recipient"] as? String ?: ""
-                        if (recipientEmail == email) {
-                            val collaboratorEmail = statusAporte["by"] as? String ?: "Alguien"
+                        val byEmail = statusAporte["by"] as? String ?: ""
+                        if (byEmail.isNotEmpty() && byEmail != email) {
                             val montoAbsoluto = statusAporte["monto"] as? String ?: ""
                             val tipo = statusAporte["tipo"] as? String ?: ""
                             val nombreMeta = data["nombre"] as? String ?: "una de tus metas"
@@ -136,7 +134,7 @@ class MetaViewModel(application: Application) : AndroidViewModel(application) {
                             ReminderHelper.showAporteNotification(
                                 getApplication(),
                                 nombreMeta,
-                                collaboratorEmail,
+                                byEmail,
                                 montoAbsoluto,
                                 tipo
                             )
@@ -146,6 +144,27 @@ class MetaViewModel(application: Application) : AndroidViewModel(application) {
                                     .update("aporte_status", FieldValue.delete())
                                     .addOnFailureListener {
                                         Log.e("MetaVM", "Error al limpiar status de aporte: ${it.message}")
+                                    }
+                            }
+                        }
+                    }
+
+                    if (statusImage != null) {
+                        val byEmail = statusImage["by"] as? String ?: ""
+                        if (byEmail.isNotEmpty() && byEmail != email) {
+                            val nombreMeta = data["nombre"] as? String ?: "una de tus metas"
+
+                            ReminderHelper.showImageUpdateNotification(
+                                getApplication(),
+                                nombreMeta,
+                                byEmail
+                            )
+
+                            viewModelScope.launch(Dispatchers.IO) {
+                                db.collection("metas").document(metaId)
+                                    .update("image_status", FieldValue.delete())
+                                    .addOnFailureListener {
+                                        Log.e("MetaVM", "Error al limpiar status de imagen: ${it.message}")
                                     }
                             }
                         }
@@ -333,6 +352,16 @@ class MetaViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun registrarAporte(metaDBExistente: MetaDB, montoCambio: Double, tipoOperacion: String) = viewModelScope.launch(Dispatchers.IO) {
+        val montoAbsolutoStr = "%.0f".format(kotlin.math.abs(montoCambio))
+
+        ReminderHelper.showAporteNotification(
+            getApplication(),
+            metaDBExistente.nombre,
+            "Tú",
+            montoAbsolutoStr,
+            tipoOperacion
+        )
+
         if (metaDBExistente.usuarios.isEmpty()) {
             val nuevoMonto = metaDBExistente.montoActual + montoCambio
             val montoFinal = if (nuevoMonto < 0) 0.0 else nuevoMonto
@@ -347,7 +376,6 @@ class MetaViewModel(application: Application) : AndroidViewModel(application) {
 
         val metaRef = db.collection("metas").document(metaId)
         val aportesRef = metaRef.collection("aportes")
-        val inviterEmail = metaDBExistente.usuarios.firstOrNull() ?: ""
 
         val nuevoAporte = AporteDB(
             id = UUID.randomUUID().toString(),
@@ -377,18 +405,14 @@ class MetaViewModel(application: Application) : AndroidViewModel(application) {
             }
             null
         }.addOnSuccessListener {
-            if (email != inviterEmail && inviterEmail.isNotEmpty()) {
-                val montoAbsoluto = "%.0f".format(kotlin.math.abs(montoCambio))
-                metaRef.update(
-                    "aporte_status", mapOf(
-                        "tipo" to tipoOperacion,
-                        "by" to email,
-                        "monto" to montoAbsoluto,
-                        "timestamp" to System.currentTimeMillis(),
-                        "recipient" to inviterEmail
-                    )
+            metaRef.update(
+                "aporte_status", mapOf(
+                    "tipo" to tipoOperacion,
+                    "by" to email,
+                    "monto" to montoAbsolutoStr,
+                    "timestamp" to System.currentTimeMillis()
                 )
-            }
+            )
         }
     }
 
@@ -435,6 +459,7 @@ class MetaViewModel(application: Application) : AndroidViewModel(application) {
 
     fun update(metaDB: MetaDB, uri: Uri? = null) = viewModelScope.launch(Dispatchers.IO) {
         var urlFinal = metaDB.imagenUrl
+        var imagenCambiada = false
 
         if (uri != null) {
             urlFinal = if (metaDB.usuarios.isEmpty()) {
@@ -442,23 +467,37 @@ class MetaViewModel(application: Application) : AndroidViewModel(application) {
             } else {
                 obtenerImagenBase64Comprimida(uri)
             }
+            if (urlFinal != metaDB.imagenUrl) {
+                imagenCambiada = true
+            }
         }
 
         val metaActualizada = metaDB.copy(imagenUrl = urlFinal ?: metaDB.imagenUrl)
 
+        if (imagenCambiada) {
+            ReminderHelper.showImageUpdateNotification(getApplication(), metaActualizada.nombre, "Tú")
+        }
+
         if (metaDB.usuarios.isEmpty()) {
             metaRepository.update(metaActualizada)
         } else {
-            db.collection("metas").document(metaActualizada.id)
-                .update(
-                    mapOf(
-                        "nombre" to metaActualizada.nombre,
-                        "montoObjetivo" to metaActualizada.montoObjetivo,
-                        "completada" to metaActualizada.completada,
-                        "fechaLimite" to metaActualizada.fechaLimite,
-                        "imagenUrl" to metaActualizada.imagenUrl
-                    )
+            val updates = mutableMapOf<String, Any>()
+            updates["nombre"] = metaActualizada.nombre
+            updates["montoObjetivo"] = metaActualizada.montoObjetivo
+            updates["completada"] = metaActualizada.completada
+            if (metaActualizada.fechaLimite != null) {
+                updates["fechaLimite"] = metaActualizada.fechaLimite!!
+            }
+            updates["imagenUrl"] = metaActualizada.imagenUrl ?: ""
+
+            if (imagenCambiada) {
+                updates["image_status"] = mapOf(
+                    "by" to userEmail,
+                    "timestamp" to System.currentTimeMillis()
                 )
+            }
+
+            db.collection("metas").document(metaActualizada.id).update(updates)
         }
     }
 

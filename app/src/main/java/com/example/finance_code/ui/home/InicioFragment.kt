@@ -722,16 +722,16 @@ class InicioFragment : Fragment() {
         pieChart.setExtraOffsets(0f, 0f, 0f, 0f)
 
         val legend = pieChart.legend
+        legend.isEnabled = true
         legend.verticalAlignment = Legend.LegendVerticalAlignment.BOTTOM
         legend.horizontalAlignment = Legend.LegendHorizontalAlignment.CENTER
         legend.orientation = Legend.LegendOrientation.HORIZONTAL
         legend.setDrawInside(false)
         legend.isWordWrapEnabled = true
-        legend.textSize = 14f
-        legend.form = Legend.LegendForm.CIRCLE
-        legend.formSize = 14f
-        legend.xEntrySpace = 10f
-        legend.yEntrySpace = 6f
+        legend.textSize = 11f
+        legend.formSize = 11f
+        legend.xEntrySpace = 8f
+        legend.yEntrySpace = 4f
         legend.textColor = ContextCompat.getColor(requireContext(), android.R.color.tab_indicator_text)
 
         pieChart.setOnChartValueSelectedListener(object : OnChartValueSelectedListener {
@@ -766,7 +766,8 @@ class InicioFragment : Fragment() {
         lineChart.axisRight.isEnabled = false
         lineChart.setTouchEnabled(true)
         lineChart.isDragEnabled = true
-        lineChart.setScaleEnabled(false)
+        lineChart.setScaleEnabled(true)
+        lineChart.setPinchZoom(true)
 
         val legend = lineChart.legend
         legend.isEnabled = true
@@ -931,12 +932,28 @@ class InicioFragment : Fragment() {
 
         rellenarPieChart(pieChartActual, gastosActuales)
 
-        txtActual.visibility = View.VISIBLE
-        val txtFechaActual = if (pInicioGastos == 0L && pFinGastos == Long.MAX_VALUE) {
+        val validDates = gastosActuales.map { parseDateToMillis(it.fecha) }.filter { it > 0L }
+        val txtFechaActual = if (pTipoGastos == 5 && validDates.isNotEmpty()) {
+            val minD = validDates.minOrNull() ?: 0L
+            val maxD = validDates.maxOrNull() ?: 0L
+            "${sdfRangoCenter.format(Date(minD))} - ${sdfRangoCenter.format(Date(maxD))}"
+        } else if (pTipoGastos == 5) {
             "Historial Completo"
         } else {
             "${sdfRangoCenter.format(Date(if (pInicioGastos == 0L) System.currentTimeMillis() else pInicioGastos))} - ${sdfRangoCenter.format(Date(if (pFinGastos == Long.MAX_VALUE) System.currentTimeMillis() else pFinGastos))}"
         }
+
+        val txtRangoHeader = view.findViewById<TextView>(R.id.txtRangoFechas)
+        val btnConf = view.findViewById<MaterialButton>(R.id.btnConfigurarAnalisisGastos)
+        if (pTipoGastos == 5) {
+            txtRangoHeader.text = txtFechaActual
+            btnConf.text = "Periodo: $txtFechaActual"
+        } else {
+            txtRangoHeader.text = obtenerTextoRango(pTipoGastos, pInicioGastos, pFinGastos)
+            btnConf.text = "Periodo: ${obtenerTextoRango(pTipoGastos, pInicioGastos, pFinGastos)}"
+        }
+
+        txtActual.visibility = View.VISIBLE
 
         if (cTipoGastos != -1) {
             txtActual.text = "Actual\n($txtFechaActual)"
@@ -957,11 +974,17 @@ class InicioFragment : Fragment() {
 
             rellenarPieChart(pieChartComp, gastosAnt)
 
-            val txtFechaAnt = if (cIni == 0L && cFin == Long.MAX_VALUE) {
+            val validDatesAnt = gastosAnt.map { parseDateToMillis(it.fecha) }.filter { it > 0L }
+            val txtFechaAnt = if (cIni == 0L && cFin == Long.MAX_VALUE && validDatesAnt.isNotEmpty()) {
+                val minD = validDatesAnt.minOrNull() ?: 0L
+                val maxD = validDatesAnt.maxOrNull() ?: 0L
+                "${sdfRangoCenter.format(Date(minD))} - ${sdfRangoCenter.format(Date(maxD))}"
+            } else if (cIni == 0L && cFin == Long.MAX_VALUE) {
                 "Historial Completo"
             } else {
                 "${sdfRangoCenter.format(Date(cIni))} - ${sdfRangoCenter.format(Date(if (cFin == Long.MAX_VALUE) System.currentTimeMillis() else cFin))}"
             }
+
             txtAnterior.text = "Anterior\n($txtFechaAnt)"
 
             val totalAnt = gastosAnt.sumOf { it.cantidad }
@@ -1006,6 +1029,28 @@ class InicioFragment : Fragment() {
         val totalIngresos = ingresosActuales.sumOf { it.cantidad }
         val formatCurrency = NumberFormat.getCurrencyInstance(Locale("es", "CO"))
         txtTotal.text = formatCurrency.format(totalIngresos)
+
+        val sdfRangoCenter = SimpleDateFormat("dd/MM/yy", Locale.getDefault())
+        val validDatesIngresos = ingresosActuales.map { parseDateToMillis(it.fecha) }.filter { it > 0L }
+        val txtFechaActualIngresos = if (pTipoIngresos == 5 && validDatesIngresos.isNotEmpty()) {
+            val minD = validDatesIngresos.minOrNull() ?: 0L
+            val maxD = validDatesIngresos.maxOrNull() ?: 0L
+            "${sdfRangoCenter.format(Date(minD))} - ${sdfRangoCenter.format(Date(maxD))}"
+        } else if (pTipoIngresos == 5) {
+            "Historial Completo"
+        } else {
+            "${sdfRangoCenter.format(Date(if (pInicioIngresos == 0L) System.currentTimeMillis() else pInicioIngresos))} - ${sdfRangoCenter.format(Date(if (pFinIngresos == Long.MAX_VALUE) System.currentTimeMillis() else pFinIngresos))}"
+        }
+
+        val txtRangoIng = view.findViewById<TextView>(R.id.txtRangoFechasIngresos)
+        val btnConfIng = view.findViewById<MaterialButton>(R.id.btnConfigurarAnalisisIngresos)
+        if (pTipoIngresos == 5) {
+            txtRangoIng.text = txtFechaActualIngresos
+            btnConfIng.text = "Periodo: $txtFechaActualIngresos"
+        } else {
+            txtRangoIng.text = obtenerTextoRango(pTipoIngresos, pInicioIngresos, pFinIngresos)
+            btnConfIng.text = "Periodo: ${obtenerTextoRango(pTipoIngresos, pInicioIngresos, pFinIngresos)}"
+        }
 
         if (agrupadoActual.isEmpty()) {
             lineChart.setNoDataText("No hay datos en este periodo")

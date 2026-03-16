@@ -44,7 +44,7 @@ object ReminderHelper {
             }
 
             val nameColaboracion = "Actualizaciones de Metas Colaborativas"
-            val descriptionTextColaboracion = "Canal para notificaciones de actividad en metas compartidas."
+            val descriptionTextColaboracion = "Canal para notificaciones de actividad en metas."
             val importanceColaboracion = NotificationManager.IMPORTANCE_HIGH
             val channelColaboracion = NotificationChannel(COLABORACION_CHANNEL_ID, nameColaboracion, importanceColaboracion).apply {
                 description = descriptionTextColaboracion
@@ -307,12 +307,50 @@ object ReminderHelper {
     fun showAporteNotification(context: Context, nombreMeta: String, collaboratorEmail: String, montoAbsoluto: String, tipoOperacion: String) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        val collaboratorName = collaboratorEmail.substringBefore('@').replaceFirstChar { it.uppercase() }
-        val accion = if (tipoOperacion == "APORTE") "agregó" else "retiró"
+        val collaboratorName = if (collaboratorEmail == "Tú") "Tú" else collaboratorEmail.substringBefore('@').replaceFirstChar { it.uppercase() }
+        val accion = if (tipoOperacion == "APORTE") {
+            if (collaboratorEmail == "Tú") "agregaste" else "agregó"
+        } else {
+            if (collaboratorEmail == "Tú") "retiraste" else "retiró"
+        }
 
         val title = "Movimiento en '$nombreMeta'"
         val message = "$collaboratorName $accion $montoAbsoluto de la meta."
         val notificationId = (System.currentTimeMillis() % 10000).toInt() + 20000
+
+        val intent = Intent(context, com.example.finance_code.ui.home.HomeActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra(EXTRA_TARGET_FRAGMENT, TARGET_METAS)
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            notificationId,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, COLABORACION_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_metas)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .build()
+
+        notificationManager.notify(notificationId, notification)
+    }
+
+    fun showImageUpdateNotification(context: Context, nombreMeta: String, collaboratorEmail: String) {
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        val collaboratorName = if (collaboratorEmail == "Tú") "Tú" else collaboratorEmail.substringBefore('@').replaceFirstChar { it.uppercase() }
+        val accion = if (collaboratorEmail == "Tú") "has actualizado" else "ha actualizado"
+
+        val title = "Imagen actualizada en '$nombreMeta'"
+        val message = "$collaboratorName $accion la foto de la meta."
+        val notificationId = (System.currentTimeMillis() % 10000).toInt() + 30000
 
         val intent = Intent(context, com.example.finance_code.ui.home.HomeActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
