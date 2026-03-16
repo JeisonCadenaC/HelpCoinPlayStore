@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="16dp"
+    app:cardBackgroundColor="?attr/colorSurface"
+    app:cardCornerRadius="28dp"
+    app:cardElevation="0dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="24dp">
+
+        <ImageView
+            android:id="@+id/ivDialogIcon"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:src="@drawable/ic_ahorro"
+            app:tint="?attr/colorPrimary"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tvDialogTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Extracto Analizado"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="?attr/colorOnBackground"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/ivDialogIcon" />
+
+        <TextView
+            android:id="@+id/tvTotalMovimientos"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Se encontraron 0 movimientos"
+            android:textSize="15sp"
+            android:textColor="?attr/colorControlNormal"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvDialogTitle" />
+
+        <View
+            android:id="@+id/dividerDialog"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="20dp"
+            android:background="?attr/colorControlHighlight"
+            android:alpha="0.3"
+            app:layout_constraintTop_toBottomOf="@id/tvTotalMovimientos" />
+
+        <TextView
+            android:id="@+id/tvSeleccionLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Selecciona qué deseas importar:"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="?attr/colorOnBackground"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/dividerDialog" />
+
+        <CheckBox
+            android:id="@+id/cbIngresos"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:checked="true"
+            android:text="Ingresos (0)"
+            android:textSize="16sp"
+            android:textColor="?attr/colorOnBackground"
+            android:buttonTint="#4CAF50"
+            app:layout_constraintTop_toBottomOf="@id/tvSeleccionLabel" />
+
+        <CheckBox
+            android:id="@+id/cbGastos"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:checked="true"
+            android:text="Gastos (0)"
+            android:textSize="16sp"
+            android:textColor="?attr/colorOnBackground"
+            android:buttonTint="#F44336"
+            app:layout_constraintTop_toBottomOf="@id/cbIngresos" />
+
+        <Button
+            android:id="@+id/btnCancelarImportacion"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_marginTop="28dp"
+            android:layout_marginEnd="8dp"
+            android:text="Cancelar"
+            android:textColor="#FFFFFF"
+            app:backgroundTint="#D32F2F"
+            app:cornerRadius="16dp"
+            app:layout_constraintEnd_toStartOf="@id/btnConfirmarImportacion"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/cbGastos" />
+
+        <Button
+            android:id="@+id/btnConfirmarImportacion"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_marginTop="28dp"
+            android:layout_marginStart="8dp"
+            android:text="Importar"
+            app:cornerRadius="16dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/btnCancelarImportacion"
+            app:layout_constraintTop_toBottomOf="@id/cbGastos" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.cardview.widget.CardView>

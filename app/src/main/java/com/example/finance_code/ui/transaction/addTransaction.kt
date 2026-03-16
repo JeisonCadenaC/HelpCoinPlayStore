@@ -214,7 +214,7 @@ class addTransaction : AppCompatActivity() {
                     currentCategoriaId = catOtros.id
                     currentCategoriaNombre = catOtros.nombre
                 } else {
-                    currentCategoriaId = 16L
+                    currentCategoriaId = 21L
                     currentCategoriaNombre = "Otros"
                 }
             }
@@ -604,7 +604,7 @@ class addTransaction : AppCompatActivity() {
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
-        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Di algo como: 'Almuerzo $50.000'")
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Di algo como: 'Almuerzo 50.000'")
 
         try {
             speechLauncher.launch(intent)
@@ -613,88 +613,97 @@ class addTransaction : AppCompatActivity() {
         }
     }
 
-    private fun procesarTextoVoz(texto: String) {
-        val procesado = texto.lowercase()
-            .replace(" pesos", "")
-            .replace(" de pesos", "")
-            .replace("un millón", "1 millón")
-            .replace("un millon", "1 millón")
-            .trim()
+    private fun procesarTextoVoz(textoOriginal: String) {
+        var texto = textoOriginal.lowercase(Locale.getDefault()).trim()
+        texto = texto.replace(" pesos", "").replace(" de pesos", "").trim()
 
-        val words = procesado.split(" ")
-        val priceTokens = mutableListOf<String>()
-        var lastWasNumber = false
-
-        for (i in words.indices.reversed()) {
-            val word = words[i]
-            val isKeyword = word in listOf("mil", "millón", "millon", "millones")
-            val isNumber = word.replace(".", "").replace(",", "").toLongOrNull() != null
-
-            if (isKeyword) {
-                priceTokens.add(0, word)
-                lastWasNumber = false
-            } else if (isNumber) {
-                if (lastWasNumber) {
-                    break
-                } else {
-                    priceTokens.add(0, word)
-                    lastWasNumber = true
-                }
-            } else {
-                break
-            }
+        val numerosMap = mapOf(
+            "cero" to "0", "un" to "1", "uno" to "1", "una" to "1",
+            "dos" to "2", "tres" to "3", "cuatro" to "4", "cinco" to "5",
+            "seis" to "6", "siete" to "7", "ocho" to "8", "nueve" to "9", "diez" to "10"
+        )
+        numerosMap.forEach { (palabra, digito) ->
+            texto = texto.replace(Regex("\\b$palabra\\b"), digito)
         }
 
-        val descTokens = words.dropLast(priceTokens.size)
-        val strMonto = priceTokens.joinToString(" ")
-        val descripcionStr = descTokens.joinToString(" ")
+        val tokenRegex = Regex("""(\d+[.,]?\d*[.,]?\d*|\bmil\b|\bmillones\b|\bmillón\b|\bmillon\b)""")
+        val matches = tokenRegex.findAll(texto).toList()
 
-        if (strMonto.isNotEmpty()) {
-            val montoLimpio = strMonto.replace(".", "").replace(",", "").replace(" ", "")
-            var montoFinal = 0L
+        if (matches.isNotEmpty()) {
+            var startIndex = -1
+            var priceFound = false
 
-            try {
-                if (montoLimpio.contains("millones") || montoLimpio.contains("millón") || montoLimpio.contains("millon")) {
-                    val partesMillon = montoLimpio.split("millones", "millón", "millon")
-                    val millones = partesMillon[0].toLongOrNull() ?: 0L
-                    montoFinal += millones * 1000000L
+            for (i in matches.indices) {
+                val token = matches[i].value
+                if (token.matches(Regex("""\d+[.,]?\d*[.,]?\d*"""))) {
+                    if (i + 1 < matches.size && matches[i+1].value.matches(Regex("""\bmil\b|\bmillones\b|\bmillón\b|\bmillon\b"""))) {
+                        startIndex = matches[i].range.first
+                        priceFound = true
+                        break
+                    }
+                }
+            }
 
-                    if (partesMillon.size > 1 && partesMillon[1].isNotEmpty()) {
-                        val resto = partesMillon[1]
-                        if (resto.contains("mil")) {
-                            val partesMil = resto.split("mil")
-                            val miles = partesMil[0].toLongOrNull() ?: 0L
-                            montoFinal += miles * 1000L
-                            val unidades = partesMil.getOrNull(1)?.toLongOrNull() ?: 0L
-                            montoFinal += unidades
-                        } else {
-                            montoFinal += resto.toLongOrNull() ?: 0L
+            if (!priceFound) {
+                val lastNumberMatch = matches.lastOrNull { it.value.matches(Regex("""\d+[.,]?\d*[.,]?\d*""")) }
+                if (lastNumberMatch != null) {
+                    startIndex = lastNumberMatch.range.first
+                }
+            }
+
+            if (startIndex != -1) {
+                var descripcionStr = texto.substring(0, startIndex).trim()
+                if (descripcionStr.endsWith(" en")) descripcionStr = descripcionStr.dropLast(3).trim()
+                if (descripcionStr.endsWith(" por")) descripcionStr = descripcionStr.dropLast(4).trim()
+                if (descripcionStr.endsWith(" de")) descripcionStr = descripcionStr.dropLast(3).trim()
+                if (descripcionStr.endsWith(" a")) descripcionStr = descripcionStr.dropLast(2).trim()
+
+                if (descripcionStr.isEmpty()) descripcionStr = "Gasto sin descripción"
+
+                val cantidadStr = texto.substring(startIndex).trim()
+
+                var montoFinal = 0L
+                var bloqueActual = 0L
+
+                val tokens = cantidadStr.split(" ", " y ")
+                for (token in tokens) {
+                    val cleanToken = token.replace(".", "").replace(",", "").trim()
+
+                    if (cleanToken == "millón" || cleanToken == "millones" || cleanToken == "millon") {
+                        if (bloqueActual == 0L) bloqueActual = 1L
+                        montoFinal += bloqueActual * 1000000L
+                        bloqueActual = 0L
+                    } else if (cleanToken == "mil") {
+                        if (bloqueActual == 0L) bloqueActual = 1L
+                        montoFinal += bloqueActual * 1000L
+                        bloqueActual = 0L
+                    } else {
+                        val num = cleanToken.toLongOrNull()
+                        if (num != null) {
+                            if (montoFinal >= 1000000L && num in 100..999) {
+                                bloqueActual += num * 1000L
+                            } else {
+                                bloqueActual += num
+                            }
                         }
                     }
-                } else if (montoLimpio.contains("mil")) {
-                    val partesMil = montoLimpio.split("mil")
-                    val miles = partesMil[0].toLongOrNull() ?: 0L
-                    montoFinal += miles * 1000L
-                    val unidades = partesMil.getOrNull(1)?.toLongOrNull() ?: 0L
-                    montoFinal += unidades
-                } else {
-                    montoFinal = montoLimpio.toLongOrNull() ?: 0L
                 }
+                montoFinal += bloqueActual
 
-                etMonto.setText(montoFinal.toString())
-
-                if (descripcionStr.isNotEmpty()) {
+                if (montoFinal > 0) {
+                    etMonto.setText(montoFinal.toString())
                     etDescripcion.setText(descripcionStr.replaceFirstChar { it.uppercase() })
                 } else {
-                    etDescripcion.setText("Gasto sin descripción")
+                    etDescripcion.setText(textoOriginal.replaceFirstChar { it.uppercase() })
+                    Toast.makeText(this, "No detecté un monto válido", Toast.LENGTH_SHORT).show()
                 }
-            } catch (e: Exception) {
-                etDescripcion.setText(texto.replaceFirstChar { it.uppercase() })
-                Toast.makeText(this, "Detecté números pero hubo un error calculando", Toast.LENGTH_SHORT).show()
+            } else {
+                etDescripcion.setText(textoOriginal.replaceFirstChar { it.uppercase() })
+                Toast.makeText(this, "No detecté ningún número", Toast.LENGTH_SHORT).show()
             }
         } else {
-            etDescripcion.setText(texto.replaceFirstChar { it.uppercase() })
-            Toast.makeText(this, "No detecté un monto válido al final", Toast.LENGTH_SHORT).show()
+            etDescripcion.setText(textoOriginal.replaceFirstChar { it.uppercase() })
+            Toast.makeText(this, "No detecté ningún número", Toast.LENGTH_SHORT).show()
         }
     }
 }

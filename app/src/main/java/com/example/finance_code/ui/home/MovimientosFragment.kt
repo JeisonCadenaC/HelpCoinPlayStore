@@ -8,18 +8,25 @@ import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.hardware.Sensor
 import android.hardware.SensorManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.text.InputType
+import android.text.method.PasswordTransformationMethod
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.widget.Button
+import android.widget.CheckBox
+import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -27,6 +34,8 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.finance_code.DiscreetModeManager
+import com.example.finance_code.PDF.ExtractoBancarioHelper
+import com.example.finance_code.PDF.MovimientoExtraido
 import com.example.finance_code.R
 import com.example.finance_code.ShakeDetector
 import com.example.finance_code.data.AppDB
@@ -77,6 +86,12 @@ class MovimientosFragment : Fragment() {
     private var accelerometer: Sensor? = null
     private lateinit var shakeDetector: ShakeDetector
 
+    private val pickPdfLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            procesarPDF(uri, "")
+        }
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_movimientos, container, false)
     }
@@ -107,6 +122,7 @@ class MovimientosFragment : Fragment() {
         btnHideBalance = view.findViewById(R.id.btnHideBalance)
         btnDiscreetModeManual = view.findViewById(R.id.btnDiscreetModeManual)
         val fabAddTransaction = view.findViewById<FloatingActionButton>(R.id.fabAddTransaction)
+        val fabImportPDF = view.findViewById<MaterialButton>(R.id.fabImportPDF)
 
         tvUserName.text = userNameDisplay
 
@@ -126,6 +142,10 @@ class MovimientosFragment : Fragment() {
         fabAddTransaction.setOnClickListener {
             val intent = Intent(requireContext(), addTransaction::class.java)
             startActivity(intent)
+        }
+
+        fabImportPDF.setOnClickListener {
+            pickPdfLauncher.launch(arrayOf("application/pdf"))
         }
 
         btnDiscreetModeManual.setOnClickListener {
@@ -188,6 +208,12 @@ class MovimientosFragment : Fragment() {
         checkAndShowShakeAnimation()
     }
 
+    private fun formatCop(monto: Double): String {
+        val formatter = NumberFormat.getCurrencyInstance(Locale("es", "CO"))
+        formatter.maximumFractionDigits = 0
+        return formatter.format(monto)
+    }
+
     override fun onResume() {
         super.onResume()
 
@@ -215,13 +241,10 @@ class MovimientosFragment : Fragment() {
 
     private fun actualizarSaldoTotal() {
         val total = listaMovimientosGlobal.sumOf { if (it.tipo == 1) it.cantidad else -it.cantidad }
-        val formatter = NumberFormat.getCurrencyInstance(Locale("es", "CO"))
-        formatter.maximumFractionDigits = 0
-
         if (DiscreetModeManager.isDiscreetModeActive || isBalanceHidden) {
             tvSaldoTotal.text = "$ •••••••"
         } else {
-            tvSaldoTotal.text = formatter.format(total)
+            tvSaldoTotal.text = formatCop(total)
         }
     }
 
@@ -506,16 +529,12 @@ class MovimientosFragment : Fragment() {
         if (!hasSeenAnimation) {
             val dialogView = layoutInflater.inflate(R.layout.dialog_modo_discreto, null)
 
-            // LA MAGIA: Usamos Dialog directamente en vez de AlertDialog.Builder
             val dialog = Dialog(requireContext())
             dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
             dialog.setContentView(dialogView)
             dialog.setCancelable(false)
 
-            // Hacemos transparente el fondo base del diálogo para que se vea el borde curvo del XML
             dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-
-            // Ajustamos el ancho para que respete los márgenes
             dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
 
             val btnEntendido = dialogView.findViewById<View>(R.id.btnEntendido)
@@ -525,5 +544,126 @@ class MovimientosFragment : Fragment() {
             }
             dialog.show()
         }
+    }
+
+    private fun procesarPDF(uri: Uri, passwordIntento: String) {
+        val helper = ExtractoBancarioHelper(requireContext())
+        val (necesitaPassword, textoExtraido) = helper.extraerTextoDePDF(uri, passwordIntento)
+
+        if (necesitaPassword) {
+            if (passwordIntento.isNotEmpty()) {
+                Toast.makeText(requireContext(), "Contraseña incorrecta. Inténtalo de nuevo.", Toast.LENGTH_LONG).show()
+            }
+            mostrarDialogoPasswordPDF(uri)
+        } else if (textoExtraido != null) {
+            val movimientos = helper.analizarExtracto(textoExtraido)
+            if (movimientos != null && movimientos.isNotEmpty()) {
+                mostrarResumenEImportar(movimientos)
+            } else if (movimientos != null && movimientos.isEmpty()) {
+                Toast.makeText(requireContext(), "No se encontraron movimientos extraíbles.", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(requireContext(), "Formato de banco no soportado", Toast.LENGTH_LONG).show()
+            }
+        } else {
+            Toast.makeText(requireContext(), "Error al leer el archivo o archivo corrupto.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun mostrarDialogoPasswordPDF(uri: Uri) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_pdf_password, null)
+        val etPassword = dialogView.findViewById<EditText>(R.id.etPdfPassword)
+        val btnCancelar = dialogView.findViewById<Button>(R.id.btnCancelarPassword)
+        val btnDesbloquear = dialogView.findViewById<Button>(R.id.btnDesbloquearPdf)
+
+        etPassword.transformationMethod = PasswordTransformationMethod.getInstance()
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+        btnCancelar.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        btnDesbloquear.setOnClickListener {
+            val password = etPassword.text.toString()
+            if (password.isNotEmpty()) {
+                procesarPDF(uri, password)
+                dialog.dismiss()
+            } else {
+                Toast.makeText(requireContext(), "Ingresa una contraseña", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        dialog.show()
+    }
+
+    private fun mostrarResumenEImportar(movimientosExtraidos: List<MovimientoExtraido>) {
+        if (movimientosExtraidos.isEmpty()) {
+            Toast.makeText(requireContext(), "No se encontraron movimientos", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val ingresosList = movimientosExtraidos.filter { it.esIngreso }
+        val gastosList = movimientosExtraidos.filter { !it.esIngreso }
+
+        val sumaIngresos = ingresosList.sumOf { it.monto }
+        val sumaGastos = gastosList.sumOf { it.monto }
+
+        val dialogView = layoutInflater.inflate(R.layout.dialog_import_summary, null)
+
+        val tvTotal = dialogView.findViewById<TextView>(R.id.tvTotalMovimientos)
+        val cbIngresos = dialogView.findViewById<CheckBox>(R.id.cbIngresos)
+        val cbGastos = dialogView.findViewById<CheckBox>(R.id.cbGastos)
+        val btnCancelar = dialogView.findViewById<Button>(R.id.btnCancelarImportacion)
+        val btnConfirmar = dialogView.findViewById<Button>(R.id.btnConfirmarImportacion)
+
+        tvTotal.text = "Se encontraron ${movimientosExtraidos.size} movimientos en total."
+        cbIngresos.text = "Ingresos detectados: ${ingresosList.size} (${formatCop(sumaIngresos)})"
+        cbGastos.text = "Gastos detectados: ${gastosList.size} (${formatCop(sumaGastos)})"
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+        btnCancelar.setOnClickListener { dialog.dismiss() }
+
+        btnConfirmar.setOnClickListener {
+            val importarIngresos = cbIngresos.isChecked
+            val importarGastos = cbGastos.isChecked
+
+            val movimientosAImportar = movimientosExtraidos.filter {
+                (it.esIngreso && importarIngresos) || (!it.esIngreso && importarGastos)
+            }
+
+            if (movimientosAImportar.isNotEmpty()) {
+                guardarMovimientosEnBD(movimientosAImportar)
+                dialog.dismiss()
+            } else {
+                Toast.makeText(requireContext(), "Debes seleccionar al menos una opción", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        dialog.show()
+    }
+
+    private fun guardarMovimientosEnBD(movimientosAImportar: List<MovimientoExtraido>) {
+        for (extraido in movimientosAImportar) {
+            val nuevoMovimiento = Movimiento(
+                cantidad = extraido.monto,
+                tipo = if (extraido.esIngreso) 1 else 0,
+                fecha = extraido.fecha,
+                hora = "00:00:00",
+                descripcion = extraido.descripcion,
+                categoria = extraido.categoria,
+                categoriaId = extraido.categoriaId
+            )
+            viewModel.insertar(nuevoMovimiento)
+        }
+        Toast.makeText(requireContext(), "${movimientosAImportar.size} movimientos importados exitosamente", Toast.LENGTH_LONG).show()
     }
 }
