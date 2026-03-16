@@ -1,23 +1,31 @@
 package com.example.finance_code.viewmodel
 
 import android.app.Application
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.net.Uri
+import android.util.Base64
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.example.finance_code.data.MetaDB
 import com.example.finance_code.data.AporteDB
 import com.example.finance_code.data.AppDB
+import com.example.finance_code.data.MetaDB
 import com.example.finance_code.data.MetaRepository
+import com.example.finance_code.ui.home.ReminderHelper
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import com.example.finance_code.ui.home.ReminderHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
 import java.util.UUID
-import android.util.Log
 
 class MetaViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -176,20 +184,131 @@ class MetaViewModel(application: Application) : AndroidViewModel(application) {
         return liveData
     }
 
-    fun insert(metaDB: MetaDB, emailsInvitados: String = "") = viewModelScope.launch(Dispatchers.IO) {
+    private fun obtenerBitmapCuadrado600(uri: Uri): Bitmap? {
+        return try {
+            val context = getApplication<Application>().applicationContext
+
+            var rotation = 0f
+            try {
+                context.contentResolver.query(uri, arrayOf(android.provider.MediaStore.Images.ImageColumns.ORIENTATION), null, null, null)?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        rotation = cursor.getInt(0).toFloat()
+                    }
+                }
+
+                if (rotation == 0f && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                    context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                        val exif = android.media.ExifInterface(inputStream)
+                        val orientation = exif.getAttributeInt(android.media.ExifInterface.TAG_ORIENTATION, android.media.ExifInterface.ORIENTATION_NORMAL)
+                        rotation = when (orientation) {
+                            android.media.ExifInterface.ORIENTATION_ROTATE_90 -> 90f
+                            android.media.ExifInterface.ORIENTATION_ROTATE_180 -> 180f
+                            android.media.ExifInterface.ORIENTATION_ROTATE_270 -> 270f
+                            else -> 0f
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("MetaVM", "Error leyendo EXIF: ${e.message}")
+            }
+
+            var originalBitmap: Bitmap? = null
+            context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                originalBitmap = BitmapFactory.decodeStream(inputStream)
+            }
+
+            if (originalBitmap == null) return null
+
+            val rotatedBitmap = if (rotation != 0f) {
+                val matrix = Matrix()
+                matrix.postRotate(rotation)
+                val rotated = Bitmap.createBitmap(originalBitmap!!, 0, 0, originalBitmap!!.width, originalBitmap!!.height, matrix, true)
+                if (rotated != originalBitmap) originalBitmap!!.recycle()
+                rotated
+            } else {
+                originalBitmap!!
+            }
+
+            val width = rotatedBitmap.width
+            val height = rotatedBitmap.height
+            val newSize = Math.min(width, height)
+
+            val startX = (width - newSize) / 2
+            val startY = (height - newSize) / 2
+
+            val squareBitmap = Bitmap.createBitmap(rotatedBitmap, startX, startY, newSize, newSize)
+
+            val scaledBitmap = Bitmap.createScaledBitmap(squareBitmap, 600, 600, true)
+
+            if (squareBitmap != rotatedBitmap) squareBitmap.recycle()
+            if (rotatedBitmap != scaledBitmap && !rotatedBitmap.isRecycled) rotatedBitmap.recycle()
+
+            scaledBitmap
+        } catch (e: Exception) {
+            Log.e("MetaVM", "Error procesando imagen: ${e.message}")
+            null
+        }
+    }
+
+    private fun obtenerImagenBase64Comprimida(uri: Uri): String? {
+        return try {
+            val bitmapCuadrado = obtenerBitmapCuadrado600(uri) ?: return null
+
+            val outputStream = ByteArrayOutputStream()
+            bitmapCuadrado.compress(Bitmap.CompressFormat.JPEG, 60, outputStream)
+            val byteArray = outputStream.toByteArray()
+
+            val base64String = Base64.encodeToString(byteArray, Base64.NO_WRAP)
+            "data:image/jpeg;base64,$base64String"
+        } catch (e: Exception) {
+            Log.e("MetaVM", "Error obteniendo Base64: ${e.message}")
+            null
+        }
+    }
+
+    private fun guardarImagenLocal(uri: Uri, metaId: String): String? {
+        return try {
+            val bitmapCuadrado = obtenerBitmapCuadrado600(uri) ?: return null
+
+            val context = getApplication<Application>().applicationContext
+            val file = File(context.filesDir, "meta_$metaId.jpg")
+            val outputStream = FileOutputStream(file)
+
+            bitmapCuadrado.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
+            outputStream.flush()
+            outputStream.close()
+
+            file.absolutePath
+        } catch (e: Exception) {
+            Log.e("MetaVM", "Error guardando local: ${e.message}")
+            null
+        }
+    }
+
+    fun insert(metaDB: MetaDB, emailsInvitados: String = "", uri: Uri? = null) = viewModelScope.launch(Dispatchers.IO) {
         val currentUserEmail = userEmail
+        var urlFinal: String? = null
 
         val invitadosList = emailsInvitados.split(",")
             .map { it.trim() }
             .filter { it.isNotEmpty() && it != currentUserEmail }
             .distinct()
 
+        if (uri != null) {
+            urlFinal = if (invitadosList.isEmpty()) {
+                guardarImagenLocal(uri, metaDB.id)
+            } else {
+                obtenerImagenBase64Comprimida(uri)
+            }
+        }
+
+        val metaConImagen = metaDB.copy(imagenUrl = urlFinal)
+
         if (invitadosList.isEmpty()) {
-            metaRepository.insert(metaDB.copy(usuarios = emptyList(), invitaciones = emptyList()))
+            metaRepository.insert(metaConImagen.copy(usuarios = emptyList(), invitaciones = emptyList()))
         } else {
             val listaUsuarios = listOf(currentUserEmail)
-            val nuevaMeta = metaDB.copy(
-                id = UUID.randomUUID().toString(),
+            val nuevaMeta = metaConImagen.copy(
                 usuarios = listaUsuarios,
                 invitaciones = invitadosList
             )
@@ -229,7 +348,6 @@ class MetaViewModel(application: Application) : AndroidViewModel(application) {
             if (metaDB != null) {
                 val nuevoMontoActual = metaDB.montoActual + montoCambio
                 val montoFinal = if (nuevoMontoActual < 0) 0.0 else nuevoMontoActual
-
                 val esCompletadaAhora = montoFinal >= metaDB.montoObjetivo
 
                 transaction.update(
@@ -245,7 +363,6 @@ class MetaViewModel(application: Application) : AndroidViewModel(application) {
         }.addOnSuccessListener {
             if (email != inviterEmail && inviterEmail.isNotEmpty()) {
                 val montoAbsoluto = "%.0f".format(kotlin.math.abs(montoCambio))
-
                 metaRef.update(
                     "aporte_status", mapOf(
                         "tipo" to tipoOperacion,
@@ -300,17 +417,30 @@ class MetaViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun update(metaDB: MetaDB) = viewModelScope.launch(Dispatchers.IO) {
+    fun update(metaDB: MetaDB, uri: Uri? = null) = viewModelScope.launch(Dispatchers.IO) {
+        var urlFinal = metaDB.imagenUrl
+
+        if (uri != null) {
+            urlFinal = if (metaDB.usuarios.isEmpty()) {
+                guardarImagenLocal(uri, metaDB.id)
+            } else {
+                obtenerImagenBase64Comprimida(uri)
+            }
+        }
+
+        val metaActualizada = metaDB.copy(imagenUrl = urlFinal ?: metaDB.imagenUrl)
+
         if (metaDB.usuarios.isEmpty()) {
-            metaRepository.update(metaDB)
+            metaRepository.update(metaActualizada)
         } else {
-            db.collection("metas").document(metaDB.id)
+            db.collection("metas").document(metaActualizada.id)
                 .update(
                     mapOf(
-                        "nombre" to metaDB.nombre,
-                        "montoObjetivo" to metaDB.montoObjetivo,
-                        "completada" to metaDB.completada,
-                        "fechaLimite" to metaDB.fechaLimite
+                        "nombre" to metaActualizada.nombre,
+                        "montoObjetivo" to metaActualizada.montoObjetivo,
+                        "completada" to metaActualizada.completada,
+                        "fechaLimite" to metaActualizada.fechaLimite,
+                        "imagenUrl" to metaActualizada.imagenUrl
                     )
                 )
         }

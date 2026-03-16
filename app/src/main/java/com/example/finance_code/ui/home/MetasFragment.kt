@@ -8,8 +8,10 @@ import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.hardware.Sensor
 import android.hardware.SensorManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.speech.RecognizerIntent
@@ -21,24 +23,30 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.example.finance_code.DiscreetModeManager
 import com.example.finance_code.R
+import com.example.finance_code.ShakeDetector
 import com.example.finance_code.data.MetaDB
 import com.example.finance_code.databinding.FragmentMetasBinding
 import com.example.finance_code.viewmodel.MetaViewModel
 import com.example.finance_code.viewmodel.MetaViewModelFactory
-import com.example.finance_code.DiscreetModeManager
-import com.example.finance_code.ShakeDetector
+import java.io.File
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.text.NumberFormat
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 import java.util.UUID
 
@@ -56,10 +64,34 @@ class MetasFragment : Fragment() {
     private var currentNombreInput: EditText? = null
     private var currentMontoInput: EditText? = null
     private var isUpdating = false
+    private var currentImagePreview: ImageView? = null
+    private var currentImagePreviewCard: View? = null
+    private var selectedImageUri: Uri? = null
+    private var cameraUri: Uri? = null
 
     private var sensorManager: SensorManager? = null
     private var accelerometer: Sensor? = null
     private lateinit var shakeDetector: ShakeDetector
+
+    private val pickMedia = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) {
+            selectedImageUri = uri
+            currentImagePreviewCard?.visibility = View.VISIBLE
+            currentImagePreview?.let {
+                Glide.with(this).load(uri).into(it)
+            }
+        }
+    }
+
+    private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+        if (success && cameraUri != null) {
+            selectedImageUri = cameraUri
+            currentImagePreviewCard?.visibility = View.VISIBLE
+            currentImagePreview?.let {
+                Glide.with(this).load(cameraUri).into(it)
+            }
+        }
+    }
 
     private val speechLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -188,17 +220,16 @@ class MetasFragment : Fragment() {
         _binding = null
         currentNombreInput = null
         currentMontoInput = null
+        currentImagePreview = null
+        currentImagePreviewCard = null
     }
 
     private fun applyNumberFormatting(editText: EditText) {
         editText.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-
             override fun afterTextChanged(editable: Editable) {
                 if (isUpdating) return
-
                 isUpdating = true
 
                 val text = editable.toString()
@@ -207,22 +238,17 @@ class MetasFragment : Fragment() {
                 if (cleanString.isNotEmpty()) {
                     try {
                         val parsed = cleanString.toLong()
-
                         val symbols = DecimalFormatSymbols(Locale("es", "CO"))
                         symbols.groupingSeparator = '.'
                         symbols.decimalSeparator = ','
-
                         val localFormatter = DecimalFormat("#,##0", symbols)
-
                         val formatted = localFormatter.format(parsed)
 
                         editText.setText(formatted)
                         editText.setSelection(formatted.length)
-
                     } catch (e: NumberFormatException) {
                     }
                 }
-
                 isUpdating = false
             }
         })
@@ -249,9 +275,7 @@ class MetasFragment : Fragment() {
             .create()
 
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-
         btnCerrar.setOnClickListener { dialog.dismiss() }
-
         dialog.show()
     }
 
@@ -328,6 +352,12 @@ class MetasFragment : Fragment() {
         dialog.show()
     }
 
+    private fun createImageFile(): File {
+        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val storageDir: File? = requireContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        return File.createTempFile("JPEG_${timeStamp}_", ".jpg", storageDir)
+    }
+
     private fun mostrarDialogoMeta(metaDBExistente: MetaDB?) {
         val dialogView = layoutInflater.inflate(R.layout.dialog_meta, null)
         val contenedorFormulario = dialogView.findViewById<View>(R.id.contenedorFormulario)
@@ -351,13 +381,47 @@ class MetasFragment : Fragment() {
         val btnConfirmarDelete = dialogView.findViewById<Button>(R.id.btnConfirmarDelete)
         val btnVerHistorial = dialogView.findViewById<Button>(R.id.btnVerHistorial)
 
+        val btnSeleccionarImagen = dialogView.findViewById<Button>(R.id.btnSeleccionarImagen)
+        val cardImagePreview = dialogView.findViewById<View>(R.id.cardImagePreview)
+        val ivMetaImagePreview = dialogView.findViewById<ImageView>(R.id.ivMetaImagePreview)
+
         currentNombreInput = etNombre
         currentMontoInput = etMontoObjetivo
+        currentImagePreview = ivMetaImagePreview
+        currentImagePreviewCard = cardImagePreview
+        selectedImageUri = null
         btnVoice.setOnClickListener { startVoiceInput() }
 
         applyNumberFormatting(etMontoObjetivo)
         applyNumberFormatting(etMontoActual)
         applyNumberFormatting(etMontoOperacion)
+
+        btnSeleccionarImagen.setOnClickListener {
+            val bottomSheetDialog = com.google.android.material.bottomsheet.BottomSheetDialog(requireContext())
+            val sheetView = layoutInflater.inflate(R.layout.dialog_seleccionar_imagen, null)
+            bottomSheetDialog.setContentView(sheetView)
+
+            val btnTomarFoto = sheetView.findViewById<View>(R.id.btnTomarFoto)
+            val btnElegirGaleria = sheetView.findViewById<View>(R.id.btnElegirGaleria)
+
+            btnTomarFoto.setOnClickListener {
+                val photoFile = createImageFile()
+                cameraUri = FileProvider.getUriForFile(
+                    requireContext(),
+                    "${requireContext().packageName}.provider",
+                    photoFile
+                )
+                takePictureLauncher.launch(cameraUri)
+                bottomSheetDialog.dismiss()
+            }
+
+            btnElegirGaleria.setOnClickListener {
+                pickMedia.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                bottomSheetDialog.dismiss()
+            }
+
+            bottomSheetDialog.show()
+        }
 
         val builder = AlertDialog.Builder(requireContext()).setView(dialogView)
 
@@ -384,6 +448,11 @@ class MetasFragment : Fragment() {
             tvMensajeConfirmacion.text = "¿Eliminar '${metaDBExistente.nombre}'?"
             btnVerHistorial.visibility = View.VISIBLE
             btnVerHistorial.setOnClickListener { mostrarDialogoHistorial(metaDBExistente) }
+
+            if (metaDBExistente.imagenUrl != null) {
+                cardImagePreview.visibility = View.VISIBLE
+                Glide.with(this).load(metaDBExistente.imagenUrl).into(ivMetaImagePreview)
+            }
         } else {
             dialogTitle.text = "Nueva Meta"
             etMontoActual.setText("0")
@@ -420,7 +489,6 @@ class MetasFragment : Fragment() {
             val valorOperacion = cleanAndParse(etMontoOperacion)
 
             if (valorOperacion > 0) {
-
                 val valorActualStr = cleanAndParse(etMontoActual)
                 val montoCambio = if (sumar) valorOperacion else -valorOperacion
 
@@ -428,7 +496,6 @@ class MetasFragment : Fragment() {
                 val totalFinal = if (nuevoTotal < 0) 0.0 else nuevoTotal
 
                 etMontoActual.setText(totalFinal.toLong().toString())
-
                 etMontoOperacion.setText("")
 
             } else if (metaDBExistente == null) {
@@ -472,7 +539,7 @@ class MetasFragment : Fragment() {
 
                     val nuevaMetaDB = MetaDB(id = UUID.randomUUID().toString(), nombre = nombre, montoObjetivo = montoObjetivo, montoActual = montoActual, fechaCreacion = fechaCreacion)
 
-                    metaViewModel.insert(nuevaMetaDB, emailsInvitados)
+                    metaViewModel.insert(nuevaMetaDB, emailsInvitados, selectedImageUri)
 
                     if (activity != null) {
                         ReminderHelper.scheduleWeeklyMetaNotification(requireContext(), nuevaMetaDB.nombre, fechaCreacion)
@@ -516,7 +583,7 @@ class MetasFragment : Fragment() {
                         mostrarFelicitaciones(nombre)
                     }
 
-                    metaViewModel.update(actualizada)
+                    metaViewModel.update(actualizada, selectedImageUri)
                 }
             }
             dialog.dismiss()

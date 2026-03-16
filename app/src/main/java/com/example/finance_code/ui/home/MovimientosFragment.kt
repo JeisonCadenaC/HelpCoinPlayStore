@@ -1,8 +1,11 @@
 package com.example.finance_code.ui.home
 
+import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.os.Build
@@ -12,6 +15,7 @@ import android.os.Vibrator
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.Window
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
@@ -67,6 +71,7 @@ class MovimientosFragment : Fragment() {
     private lateinit var tvSaldoTotal: TextView
     private lateinit var tvUserName: TextView
     private lateinit var btnHideBalance: ImageButton
+    private lateinit var btnDiscreetModeManual: ImageButton
 
     private lateinit var sensorManager: SensorManager
     private var accelerometer: Sensor? = null
@@ -100,7 +105,7 @@ class MovimientosFragment : Fragment() {
         tvSaldoTotal = view.findViewById(R.id.tvSaldoTotal)
         tvUserName = view.findViewById(R.id.tvUserName)
         btnHideBalance = view.findViewById(R.id.btnHideBalance)
-        val btnDiscreetModeManual = view.findViewById<ImageButton>(R.id.btnDiscreetModeManual)
+        btnDiscreetModeManual = view.findViewById(R.id.btnDiscreetModeManual)
         val fabAddTransaction = view.findViewById<FloatingActionButton>(R.id.fabAddTransaction)
 
         tvUserName.text = userNameDisplay
@@ -126,6 +131,7 @@ class MovimientosFragment : Fragment() {
         btnDiscreetModeManual.setOnClickListener {
             DiscreetModeManager.toggleMode()
             actualizarUIModoDiscreto()
+            updateDiscreetModeButtonIcon()
             val message = if (DiscreetModeManager.isDiscreetModeActive) "Modo Discreto Activado" else "Modo Visible Activado"
             Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
         }
@@ -162,6 +168,7 @@ class MovimientosFragment : Fragment() {
             activity?.runOnUiThread {
                 DiscreetModeManager.toggleMode()
                 actualizarUIModoDiscreto()
+                updateDiscreetModeButtonIcon()
 
                 if (vibrator != null) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -177,6 +184,8 @@ class MovimientosFragment : Fragment() {
         }
 
         actualizarUIModoDiscreto()
+        updateDiscreetModeButtonIcon()
+        checkAndShowShakeAnimation()
     }
 
     override fun onResume() {
@@ -195,6 +204,8 @@ class MovimientosFragment : Fragment() {
         if (!customName.isNullOrEmpty() && ::tvUserName.isInitialized) {
             tvUserName.text = customName.uppercase()
         }
+
+        updateDiscreetModeButtonIcon()
     }
 
     override fun onPause() {
@@ -476,5 +487,43 @@ class MovimientosFragment : Fragment() {
             }
         }
         return Pair(inicio, fin)
+    }
+
+    private fun updateDiscreetModeButtonIcon() {
+        if (::btnDiscreetModeManual.isInitialized) {
+            val drawableRes = if (DiscreetModeManager.isDiscreetModeActive)
+                R.drawable.ic_visibility_off
+            else
+                R.drawable.ic_visibility
+            btnDiscreetModeManual.setImageResource(drawableRes)
+        }
+    }
+
+    private fun checkAndShowShakeAnimation() {
+        val sharedPrefs = requireContext().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        val hasSeenAnimation = sharedPrefs.getBoolean("has_seen_shake_animation", false)
+
+        if (!hasSeenAnimation) {
+            val dialogView = layoutInflater.inflate(R.layout.dialog_modo_discreto, null)
+
+            // LA MAGIA: Usamos Dialog directamente en vez de AlertDialog.Builder
+            val dialog = Dialog(requireContext())
+            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+            dialog.setContentView(dialogView)
+            dialog.setCancelable(false)
+
+            // Hacemos transparente el fondo base del diálogo para que se vea el borde curvo del XML
+            dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+            // Ajustamos el ancho para que respete los márgenes
+            dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+
+            val btnEntendido = dialogView.findViewById<View>(R.id.btnEntendido)
+            btnEntendido.setOnClickListener {
+                sharedPrefs.edit().putBoolean("has_seen_shake_animation", true).apply()
+                dialog.dismiss()
+            }
+            dialog.show()
+        }
     }
 }

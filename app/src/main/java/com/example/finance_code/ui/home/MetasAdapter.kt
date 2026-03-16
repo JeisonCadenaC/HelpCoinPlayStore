@@ -5,9 +5,13 @@ import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.example.finance_code.R
 import com.example.finance_code.data.MetaDB
 import com.example.finance_code.DiscreetModeManager
@@ -49,6 +53,7 @@ class MetasAdapter(
 
     class MetaViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val layoutNormal: View = itemView.findViewById(R.id.layoutNormal)
+        private val layoutExpanded: LinearLayout = itemView.findViewById(R.id.layoutExpanded)
         private val layoutInvitacion: View = itemView.findViewById(R.id.layoutInvitacion)
         private val cardView: MaterialCardView = itemView.findViewById(R.id.cardMeta)
         private val tvNombre: TextView = itemView.findViewById(R.id.tvNombreMeta)
@@ -61,6 +66,11 @@ class MetasAdapter(
         private val tvInviteMonto: TextView = itemView.findViewById(R.id.tvInviteMonto)
         private val btnAceptar: MaterialButton = itemView.findViewById(R.id.btnAceptar)
         private val btnRechazar: MaterialButton = itemView.findViewById(R.id.btnRechazar)
+        private val ivImagenMeta: ImageView = itemView.findViewById(R.id.ivImagenMeta)
+        private val cardImageMeta: View = itemView.findViewById(R.id.cardImageMeta)
+        private val ivExpandIcon: ImageView = itemView.findViewById(R.id.ivExpandIcon)
+
+        private var isExpanded = false
 
         private fun resolveThemeColor(context: Context, attrId: Int): Int {
             val typedValue = TypedValue()
@@ -90,6 +100,7 @@ class MetasAdapter(
 
             if (esInvitacion) {
                 layoutNormal.visibility = View.GONE
+                layoutExpanded.visibility = View.GONE
                 layoutInvitacion.visibility = View.VISIBLE
 
                 cardView.strokeColor = colorPrimary
@@ -121,6 +132,9 @@ class MetasAdapter(
 
                     progressBar.setIndicatorColor(colorGray)
                     progressBar.progress = 0
+                    layoutExpanded.visibility = View.GONE
+                    isExpanded = false
+                    ivExpandIcon.rotation = 0f
                 } else {
                     tvNombre.text = meta.nombre
                     val actualStr = formatoMoneda.format(meta.montoActual)
@@ -132,6 +146,19 @@ class MetasAdapter(
 
                     progressBar.setIndicatorColor(colorPrimary)
                     progressBar.progress = progreso
+
+                    if (meta.imagenUrl != null) {
+                        cardImageMeta.visibility = View.VISIBLE
+                        Glide.with(itemView.context)
+                            .load(meta.imagenUrl)
+                            .transition(DrawableTransitionOptions.withCrossFade())
+                            .into(ivImagenMeta)
+                    } else {
+                        cardImageMeta.visibility = View.GONE
+                    }
+
+                    layoutExpanded.visibility = if (isExpanded) View.VISIBLE else View.GONE
+                    ivExpandIcon.rotation = if (isExpanded) 180f else 0f
                 }
 
                 cardView.strokeWidth = 0
@@ -141,7 +168,14 @@ class MetasAdapter(
                     cardView.setCardBackgroundColor(colorSurface)
                 }
 
-                itemView.setOnClickListener { onClick(meta) }
+                itemView.setOnClickListener {
+                    if (!DiscreetModeManager.isDiscreetModeActive) {
+                        isExpanded = !isExpanded
+                        layoutExpanded.visibility = if (isExpanded) View.VISIBLE else View.GONE
+                        ivExpandIcon.animate().rotation(if (isExpanded) 180f else 0f).setDuration(200).start()
+                    }
+                }
+
                 btnActualizar.setOnClickListener { onClick(meta) }
             }
         }

@@ -14,5 +14,6 @@ data class MetaDB(
     val completada: Boolean = false,
     val fechaCreacion: Long? = System.currentTimeMillis(),
     val usuarios: List<String> = emptyList(),
-    val invitaciones: List<String> = emptyList()
+    val invitaciones: List<String> = emptyList(),
+    val imagenUrl: String? = null
 )

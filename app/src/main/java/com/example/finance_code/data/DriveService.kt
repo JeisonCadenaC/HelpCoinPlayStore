@@ -75,6 +75,17 @@ class DriveService(
                     }
                 }
 
+                // --- NUEVO: Añadir imágenes de Metas Locales al ZIP ---
+                val archivosInternos = context.filesDir.listFiles()
+                if (archivosInternos != null) {
+                    for (archivo in archivosInternos) {
+                        if (archivo.name.startsWith("meta_") && archivo.name.endsWith(".jpg")) {
+                            addFileToZip(zipOutputStream, archivo, archivo.name)
+                        }
+                    }
+                }
+                // ------------------------------------------------------
+
                 val userPrefsFile = java.io.File(context.cacheDir, "user_prefs.json")
                 savePrefsToJson(context, prefsName, userPrefsFile)
                 addFileToZip(zipOutputStream, userPrefsFile, "user_prefs.json")
@@ -172,6 +183,18 @@ class DriveService(
                     newImg.copyTo(destImgFile, overwrite = true)
                 }
 
+                // --- NUEVO: Restaurar imágenes de Metas Locales ---
+                val archivosExtraidos = tempDir.listFiles()
+                if (archivosExtraidos != null) {
+                    for (archivo in archivosExtraidos) {
+                        if (archivo.name.startsWith("meta_") && archivo.name.endsWith(".jpg")) {
+                            val destMetaImg = java.io.File(context.filesDir, archivo.name)
+                            archivo.copyTo(destMetaImg, overwrite = true)
+                        }
+                    }
+                }
+                // --------------------------------------------------
+
                 restorePrefsFromJson(context, "${userUid}_UserProfilePrefs", java.io.File(tempDir, "user_prefs.json"))
                 restorePrefsFromJson(context, "AppPrefe", java.io.File(tempDir, "app_prefs.json"))
                 restorePrefsFromJson(context, "LoginPrefs", java.io.File(tempDir, "login_prefs.json"))
@@ -186,9 +209,6 @@ class DriveService(
 
                 tempDir.deleteRecursively()
 
-                // ==========================================
-                // INTELIGENCIA DE AUTO-CATEGORIZACIÓN CENTRALIZADA
-                // ==========================================
                 try {
                     val db = AppDB.getDatabase(context, userEmail)
                     val movDao = db.movimientoDao()
@@ -196,7 +216,6 @@ class DriveService(
 
                     val catsActuales = catDao.obtenerTodasSync()
                     if (catsActuales.isEmpty()) {
-                        // AQUÍ SE UTILIZA LA LÓGICA CENTRAL
                         val predefinidas = CategorySuggester.getDefaultCategories()
                         predefinidas.forEach { catDao.insertar(it) }
                     }

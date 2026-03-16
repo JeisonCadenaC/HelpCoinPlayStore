@@ -1,65 +1,91 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="24dp">
+    android:padding="24dp"
+    android:background="@android:color/transparent">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Modo Discreto (Shake &amp; Botón Manual)"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:textColor="@color/purple_500" />
-
-    <com.airbnb.lottie.LottieAnimationView
-        android:id="@+id/animation_shake"
-        android:layout_width="150dp"
-        android:layout_height="150dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="16dp"
-        app:lottie_rawRes="@raw/shake_animation"
-        app:lottie_autoPlay="true"
-        app:lottie_loop="true" />
-
-    <TextView
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Esta aplicación cuenta con una función de privacidad que te permite ocultar el saldo y los movimientos de la pantalla rápidamente."
-        android:textSize="16sp" />
+        app:cardCornerRadius="24dp"
+        app:cardElevation="12dp"
+        app:cardBackgroundColor="?attr/colorSurface">
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="El Modo Discreto se activa/desactiva de dos formas:"
-        android:textSize="16sp"
-        android:textStyle="bold" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:layout_marginStart="8dp"
-        android:text="• Agitando el teléfono."
-        android:textSize="16sp" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Modo Discreto\n(Shake &amp; Botón Manual)"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textAlignment="center"
+                android:textColor="?attr/colorPrimary" />
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:text="• Presionando el ícono del 'ojo' en la esquina superior de las pantallas Movimientos y Metas."
-        android:textSize="16sp" />
+            <com.airbnb.lottie.LottieAnimationView
+                android:id="@+id/animation_shake"
+                android:layout_width="150dp"
+                android:layout_height="150dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="16dp"
+                app:lottie_rawRes="@raw/shake_animation"
+                app:lottie_autoPlay="true"
+                app:lottie_loop="true" />
 
-    <Button
-        android:id="@+id/btnEntendido"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:layout_gravity="end"
-        android:text="ENTENDIDO" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:textColor="?attr/colorOnSurface"
+                android:text="Esta aplicación cuenta con una función de privacidad que te permite ocultar el saldo y los movimientos de la pantalla rápidamente."
+                android:textSize="15sp" />
 
-</LinearLayout>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="El Modo Discreto se activa o desactiva de dos formas:"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginStart="8dp"
+                android:textColor="?attr/colorOnSurface"
+                android:text="• Agitando el teléfono."
+                android:textSize="15sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:layout_marginStart="8dp"
+                android:textColor="?attr/colorOnSurface"
+                android:text="• Presionando el ícono del 'ojo' en la esquina superior de Movimientos y Metas."
+                android:textSize="15sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnEntendido"
+                style="@style/Widget.MaterialComponents.Button"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_marginTop="24dp"
+                android:text="ENTENDIDO"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorOnPrimary"
+                app:backgroundTint="?attr/colorPrimary"
+                app:cornerRadius="16dp" />
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+</FrameLayout>
