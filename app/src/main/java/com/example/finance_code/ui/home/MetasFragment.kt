@@ -1,9 +1,11 @@
 package com.example.finance_code.ui.home
 
+import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.hardware.Sensor
@@ -31,6 +33,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -49,7 +52,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.UUID
-
+import com.example.finance_code.PDF.ExtractoBancarioHelper
+import com.example.finance_code.PDF.MovimientoExtraido
 class MetasFragment : Fragment() {
 
     private var _binding: FragmentMetasBinding? = null
@@ -60,6 +64,7 @@ class MetasFragment : Fragment() {
     }
 
     private lateinit var metasAdapter: MetasAdapter
+    private lateinit var itemTouchHelper: ItemTouchHelper
 
     private var currentNombreInput: EditText? = null
     private var currentMontoInput: EditText? = null
@@ -93,6 +98,22 @@ class MetasFragment : Fragment() {
         }
     }
 
+    private val requestCameraPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        if (isGranted) {
+            abrirCamara()
+        } else {
+            Toast.makeText(requireContext(), "⚠️ Permiso de cámara denegado.", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private val requestGalleryPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        if (isGranted) {
+            abrirGaleria()
+        } else {
+            Toast.makeText(requireContext(), "⚠️ Permiso de galería denegado.", Toast.LENGTH_LONG).show()
+        }
+    }
+
     private val speechLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -100,6 +121,12 @@ class MetasFragment : Fragment() {
             val speechResult = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
             val spokenText = speechResult?.get(0) ?: ""
             procesarTextoVozMeta(spokenText)
+        }
+    }
+
+    private val pickPdfLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            procesarPDF(uri, "")
         }
     }
 
@@ -113,11 +140,54 @@ class MetasFragment : Fragment() {
 
         val myEmail = metaViewModel.userEmail
 
+        binding.btnSubirExtracto.setOnClickListener {
+            pickPdfLauncher.launch(arrayOf("application/pdf"))
+        }
+
+        val swipeHelper = object : ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0) {
+            override fun isLongPressDragEnabled(): Boolean = false
+
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean {
+                val fromPos = viewHolder.adapterPosition
+                val toPos = target.adapterPosition
+                metasAdapter.moveItem(fromPos, toPos)
+                return true
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {}
+
+            override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
+                super.onSelectedChanged(viewHolder, actionState)
+                if (actionState == ItemTouchHelper.ACTION_STATE_DRAG) {
+                    viewHolder?.itemView?.alpha = 0.8f
+                    viewHolder?.itemView?.scaleX = 1.02f
+                    viewHolder?.itemView?.scaleY = 1.02f
+                }
+            }
+
+            override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
+                super.clearView(recyclerView, viewHolder)
+                viewHolder.itemView.alpha = 1.0f
+                viewHolder.itemView.scaleX = 1.0f
+                viewHolder.itemView.scaleY = 1.0f
+                viewHolder.itemView.findViewById<View>(R.id.ivDragHandle)?.visibility = View.GONE
+
+                val listaOrdenada = metasAdapter.getActualList()
+                metaViewModel.guardarNuevoOrden(listaOrdenada)
+            }
+        }
+
+        itemTouchHelper = ItemTouchHelper(swipeHelper)
+
         metasAdapter = MetasAdapter(
             currentUserEmail = myEmail,
-            onMetaClick = { meta ->
-                mostrarDialogoMeta(meta)
-            },
+            onMetaClick = { meta -> mostrarDialogoMeta(meta) },
+            onMetaLongClick = { meta -> mostrarDialogoMeta(meta) },
+            onDragStart = { viewHolder -> itemTouchHelper.startDrag(viewHolder) },
             onAceptarClick = { meta ->
                 metaViewModel.aceptarInvitacion(meta)
                 Toast.makeText(context, "¡Bienvenido a la meta!", Toast.LENGTH_SHORT).show()
@@ -139,6 +209,7 @@ class MetasFragment : Fragment() {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = metasAdapter
         }
+        itemTouchHelper.attachToRecyclerView(binding.rvMetas)
 
         metaViewModel.allMetas.observe(viewLifecycleOwner) { metas ->
             metasAdapter.setData(metas)
@@ -254,6 +325,58 @@ class MetasFragment : Fragment() {
         })
     }
 
+    private fun procesarPDF(uri: Uri, passwordIntento: String) {
+        val helper = ExtractoBancarioHelper(requireContext())
+        val (necesitaPassword, texto) = helper.extraerTextoDePDF(uri, passwordIntento)
+
+        if (necesitaPassword) {
+            mostrarDialogoPasswordPDF(uri)
+        } else if (texto != null) {
+            if (texto.contains("Bancolombia", ignoreCase = true) || texto.contains("Sucursal", ignoreCase = true)) {
+                val movimientos = helper.analizarExtractoBancolombia(texto)
+                mostrarResultadosPiloto(movimientos)
+            } else {
+                Toast.makeText(requireContext(), "Por ahora solo soportamos Bancolombia", Toast.LENGTH_LONG).show()
+            }
+        } else {
+            Toast.makeText(requireContext(), "Error al leer el archivo.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun mostrarDialogoPasswordPDF(uri: Uri) {
+        val input = EditText(requireContext())
+        input.inputType = android.text.InputType.TYPE_CLASS_NUMBER
+        input.hint = "Ej: 1002345678"
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("PDF Protegido")
+            .setMessage("Este extracto tiene contraseña (usualmente tu cédula). Ingrésala para leer los datos:")
+            .setView(input)
+            .setPositiveButton("Desbloquear") { _, _ ->
+                val password = input.text.toString()
+                procesarPDF(uri, password)
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun mostrarResultadosPiloto(movimientos: List<MovimientoExtraido>) {
+        if (movimientos.isEmpty()) {
+            Toast.makeText(requireContext(), "No se encontraron movimientos", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val mensaje = movimientos.take(5).joinToString("\n\n") {
+            "${it.fecha} | ${if (it.esIngreso) "🟢" else "🔴"} $${it.monto}\n${it.descripcion}"
+        }
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("¡Lectura Exitosa! (${movimientos.size} movs)")
+            .setMessage(mensaje)
+            .setPositiveButton("Genial", null)
+            .show()
+    }
+
     private fun mostrarDialogoHistorial(metaDB: MetaDB) {
         val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_historial_metas, null)
         val rvHistorial = dialogView.findViewById<RecyclerView>(R.id.rvHistorialAportes)
@@ -358,6 +481,16 @@ class MetasFragment : Fragment() {
         return File.createTempFile("JPEG_${timeStamp}_", ".jpg", storageDir)
     }
 
+    private fun abrirCamara() {
+        val photoFile = createImageFile()
+        cameraUri = FileProvider.getUriForFile(requireContext(), "${requireContext().packageName}.provider", photoFile)
+        takePictureLauncher.launch(cameraUri)
+    }
+
+    private fun abrirGaleria() {
+        pickMedia.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+    }
+
     private fun mostrarDialogoMeta(metaDBExistente: MetaDB?) {
         val dialogView = layoutInflater.inflate(R.layout.dialog_meta, null)
         val contenedorFormulario = dialogView.findViewById<View>(R.id.contenedorFormulario)
@@ -380,7 +513,6 @@ class MetasFragment : Fragment() {
         val btnCancelarDelete = dialogView.findViewById<Button>(R.id.btnCancelarDelete)
         val btnConfirmarDelete = dialogView.findViewById<Button>(R.id.btnConfirmarDelete)
         val btnVerHistorial = dialogView.findViewById<Button>(R.id.btnVerHistorial)
-
         val btnSeleccionarImagen = dialogView.findViewById<Button>(R.id.btnSeleccionarImagen)
         val cardImagePreview = dialogView.findViewById<View>(R.id.cardImagePreview)
         val ivMetaImagePreview = dialogView.findViewById<ImageView>(R.id.ivMetaImagePreview)
@@ -390,6 +522,7 @@ class MetasFragment : Fragment() {
         currentImagePreview = ivMetaImagePreview
         currentImagePreviewCard = cardImagePreview
         selectedImageUri = null
+
         btnVoice.setOnClickListener { startVoiceInput() }
 
         applyNumberFormatting(etMontoObjetivo)
@@ -405,18 +538,26 @@ class MetasFragment : Fragment() {
             val btnElegirGaleria = sheetView.findViewById<View>(R.id.btnElegirGaleria)
 
             btnTomarFoto.setOnClickListener {
-                val photoFile = createImageFile()
-                cameraUri = FileProvider.getUriForFile(
-                    requireContext(),
-                    "${requireContext().packageName}.provider",
-                    photoFile
-                )
-                takePictureLauncher.launch(cameraUri)
+                if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                    abrirCamara()
+                } else {
+                    requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                }
                 bottomSheetDialog.dismiss()
             }
 
             btnElegirGaleria.setOnClickListener {
-                pickMedia.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                val permiso = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    Manifest.permission.READ_MEDIA_IMAGES
+                } else {
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+                }
+
+                if (ContextCompat.checkSelfPermission(requireContext(), permiso) == PackageManager.PERMISSION_GRANTED) {
+                    abrirGaleria()
+                } else {
+                    requestGalleryPermissionLauncher.launch(permiso)
+                }
                 bottomSheetDialog.dismiss()
             }
 

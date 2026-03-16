@@ -104,4 +104,6 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.1")
     implementation("androidx.localbroadcastmanager:localbroadcastmanager:1.0.0")
+
+    implementation("com.tom-roush:pdfbox-android:2.0.27.0")
 }

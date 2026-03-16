@@ -171,7 +171,7 @@
         android:layout_marginEnd="24dp"
         android:layout_marginBottom="16dp"
         android:gravity="center"
-        android:text="Santiago Rodríguez • Esteban Totaitive • Santiago Zipa • Jeison Cadena • Yoseph Galvis"
+        android:text="Jeison Cadena • Santiago Rodríguez • Esteban Totaitive • Santiago Zipa • Yoseph Galvis"
         android:textColor="?attr/colorOnBackground"
         android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="parent"

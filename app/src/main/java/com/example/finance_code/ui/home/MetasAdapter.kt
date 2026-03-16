@@ -1,9 +1,14 @@
 package com.example.finance_code.ui.home
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.util.TypedValue
+import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -24,15 +29,27 @@ import java.util.Locale
 class MetasAdapter(
     private val currentUserEmail: String,
     private val onMetaClick: (MetaDB) -> Unit,
+    private val onMetaLongClick: (MetaDB) -> Unit,
+    private val onDragStart: (RecyclerView.ViewHolder) -> Unit,
     private val onAceptarClick: (MetaDB) -> Unit,
     private val onRechazarClick: (MetaDB) -> Unit
 ) : RecyclerView.Adapter<MetasAdapter.MetaViewHolder>() {
 
-    private var metas = listOf<MetaDB>()
+    private var metas = mutableListOf<MetaDB>()
 
     fun setData(newMetas: List<MetaDB>) {
-        metas = newMetas
+        metas.clear()
+        metas.addAll(newMetas)
         notifyDataSetChanged()
+    }
+
+    // EXTRAE LA LISTA CON EL NUEVO ORDEN PARA GUARDARLA
+    fun getActualList(): List<MetaDB> = metas.toList()
+
+    fun moveItem(fromPosition: Int, toPosition: Int) {
+        val meta = metas.removeAt(fromPosition)
+        metas.add(toPosition, meta)
+        notifyItemMoved(fromPosition, toPosition)
     }
 
     fun updateDiscreetMode() {
@@ -46,7 +63,7 @@ class MetasAdapter(
 
     override fun onBindViewHolder(holder: MetaViewHolder, position: Int) {
         val meta = metas[position]
-        holder.bind(meta, currentUserEmail, onMetaClick, onAceptarClick, onRechazarClick)
+        holder.bind(meta, currentUserEmail, onMetaClick, onMetaLongClick, onDragStart, onAceptarClick, onRechazarClick)
     }
 
     override fun getItemCount() = metas.size
@@ -69,8 +86,16 @@ class MetasAdapter(
         private val ivImagenMeta: ImageView = itemView.findViewById(R.id.ivImagenMeta)
         private val cardImageMeta: View = itemView.findViewById(R.id.cardImageMeta)
         private val ivExpandIcon: ImageView = itemView.findViewById(R.id.ivExpandIcon)
+        private val ivDragHandle: View = itemView.findViewById(R.id.ivDragHandle)
+        private val hitboxDrag: View = itemView.findViewById(R.id.hitboxDrag)
 
         private var isExpanded = false
+        private var readyToDrag = false
+        private var downX = 0f
+        private var downY = 0f
+        private val touchSlop = ViewConfiguration.get(itemView.context).scaledTouchSlop
+        private val handler = Handler(Looper.getMainLooper())
+        private var longPressRunnable: Runnable? = null
 
         private fun resolveThemeColor(context: Context, attrId: Int): Int {
             val typedValue = TypedValue()
@@ -85,6 +110,8 @@ class MetasAdapter(
             meta: MetaDB,
             myEmail: String,
             onClick: (MetaDB) -> Unit,
+            onLongClick: (MetaDB) -> Unit,
+            onDragStart: (RecyclerView.ViewHolder) -> Unit,
             onAceptar: (MetaDB) -> Unit,
             onRechazar: (MetaDB) -> Unit
         ) {
@@ -120,6 +147,9 @@ class MetasAdapter(
                 btnAceptar.setOnClickListener { onAceptar(meta) }
                 btnRechazar.setOnClickListener { onRechazar(meta) }
                 itemView.setOnClickListener(null)
+                itemView.setOnLongClickListener(null)
+                hitboxDrag.setOnTouchListener(null)
+                hitboxDrag.setOnClickListener(null)
             } else {
                 layoutInvitacion.visibility = View.GONE
                 layoutNormal.visibility = View.VISIBLE
@@ -174,6 +204,56 @@ class MetasAdapter(
                         layoutExpanded.visibility = if (isExpanded) View.VISIBLE else View.GONE
                         ivExpandIcon.animate().rotation(if (isExpanded) 180f else 0f).setDuration(200).start()
                     }
+                }
+
+                itemView.setOnLongClickListener {
+                    if (!DiscreetModeManager.isDiscreetModeActive) {
+                        onLongClick(meta)
+                    }
+                    true
+                }
+
+                hitboxDrag.setOnClickListener {
+                    itemView.performClick()
+                }
+
+                hitboxDrag.setOnLongClickListener {
+                    true
+                }
+
+                hitboxDrag.setOnTouchListener { v, event ->
+                    if (DiscreetModeManager.isDiscreetModeActive) return@setOnTouchListener false
+
+                    when (event.action) {
+                        MotionEvent.ACTION_DOWN -> {
+                            readyToDrag = false
+                            downX = event.rawX
+                            downY = event.rawY
+                            longPressRunnable = Runnable {
+                                readyToDrag = true
+                                v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                                ivDragHandle.visibility = View.VISIBLE
+                                onDragStart(this@MetaViewHolder)
+                            }
+                            handler.postDelayed(longPressRunnable!!, 300)
+                        }
+                        MotionEvent.ACTION_MOVE -> {
+                            val dx = Math.abs(event.rawX - downX)
+                            val dy = Math.abs(event.rawY - downY)
+                            if (dx > touchSlop || dy > touchSlop) {
+                                if (!readyToDrag) {
+                                    longPressRunnable?.let { handler.removeCallbacks(it) }
+                                }
+                            }
+                        }
+                        MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                            longPressRunnable?.let { handler.removeCallbacks(it) }
+                            if (!readyToDrag && event.action == MotionEvent.ACTION_UP) {
+                                v.performClick()
+                            }
+                        }
+                    }
+                    true
                 }
 
                 btnActualizar.setOnClickListener { onClick(meta) }

@@ -11,7 +11,7 @@ import androidx.room.Update
 @Dao
 interface MetaDao {
 
-    @Query("SELECT * FROM metas_table WHERE usuarios = '' OR usuarios = '[]' ORDER BY completada ASC, fechaLimite IS NULL, fechaLimite")
+    @Query("SELECT * FROM metas_table WHERE usuarios = '' OR usuarios = '[]' ORDER BY orden ASC, completada ASC, fechaLimite IS NULL, fechaLimite")
     fun getAllLocalMetas(): LiveData<List<MetaDB>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

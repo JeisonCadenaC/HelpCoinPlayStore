@@ -125,7 +125,30 @@ class InicioFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        userEmail = FirebaseAuth.getInstance().currentUser?.email ?: "default"
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        userEmail = currentUser?.email ?: "default"
+        val uid = currentUser?.uid
+
+        var primerNombre = ""
+
+        if (uid != null) {
+            val prefs = requireContext().getSharedPreferences("${uid}_UserProfilePrefs", Context.MODE_PRIVATE)
+            val nombreGuardado = prefs.getString("user_name", "") ?: ""
+            if (nombreGuardado.isNotBlank() && nombreGuardado.lowercase() != "usuario") {
+                primerNombre = nombreGuardado.trim().split("\\s+".toRegex()).first()
+            }
+        }
+
+        if (primerNombre.isBlank() && !currentUser?.displayName.isNullOrBlank()) {
+            primerNombre = currentUser?.displayName!!.trim().split("\\s+".toRegex()).first()
+        }
+
+        if (primerNombre.isNotBlank()) {
+            binding.txtHolaNombre.text = "Hola $primerNombre"
+        } else {
+            binding.txtHolaNombre.text = "¡Hola, Bienvenido!"
+        }
+
         if (userEmail != "default") {
             database = AppDB.getDatabase(requireContext(), userEmail)
             val repository = MovimientoRepository(database.movimientoDao())
@@ -199,7 +222,6 @@ class InicioFragment : Fragment() {
     private fun cargarPreferencias() {
         val prefs = requireContext().getSharedPreferences("analisis_prefs_$userEmail", Context.MODE_PRIVATE)
 
-        // RECALCULO DINÁMICO GASTOS
         pTipoGastos = prefs.getInt("pTipoGastos", 5)
         if (pTipoGastos != 6 && pTipoGastos != 5) {
             val pBounds = calcularFechasAbsolutas(pTipoGastos)
@@ -220,7 +242,6 @@ class InicioFragment : Fragment() {
             cFinGastos = getSafeLong(prefs, "cFinGastos", Long.MAX_VALUE)
         }
 
-        // RECALCULO DINÁMICO INGRESOS
         pTipoIngresos = prefs.getInt("pTipoIngresos", 5)
         if (pTipoIngresos != 6 && pTipoIngresos != 5) {
             val pBoundsI = calcularFechasAbsolutas(pTipoIngresos)
@@ -368,13 +389,12 @@ class InicioFragment : Fragment() {
         val sheetView = layoutInflater.inflate(R.layout.layout_bottom_sheet_filtros, null)
         bottomSheetDialog.setContentView(sheetView)
 
-        // Ocultar la sección de "Agrupar por" que solo aplica a la lista de Billetera
         try {
             sheetView.findViewById<View>(R.id.divisorAgrupacion)?.visibility = View.GONE
             sheetView.findViewById<TextView>(R.id.tvTituloAgrupar)?.visibility = View.GONE
             val chipGroupAgrupar = sheetView.findViewById<ChipGroup>(R.id.chipGroupAgrupacion)
             chipGroupAgrupar?.visibility = View.GONE
-            (chipGroupAgrupar?.parent as? View)?.visibility = View.GONE // Oculta el ScrollView padre
+            (chipGroupAgrupar?.parent as? View)?.visibility = View.GONE
         } catch (e: Exception) {}
 
         val chipGroupPeriodo = sheetView.findViewById<ChipGroup>(R.id.chipGroupPeriodo)
@@ -544,7 +564,7 @@ class InicioFragment : Fragment() {
                 fin = maximizeTime(cal).timeInMillis
                 fin = minOf(fin, hoy)
             }
-            7 -> { // Hoy
+            7 -> {
                 inicio = resetTime(cal).timeInMillis
                 fin = maximizeTime(cal).timeInMillis
             }

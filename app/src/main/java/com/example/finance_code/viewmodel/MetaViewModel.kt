@@ -61,13 +61,29 @@ class MetaViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // AHORA RESPETA EL CAMPO ORDEN AL COMBINAR LAS METAS
     private fun combineMetas(local: List<MetaDB>, shared: List<MetaDB>) {
         val todasLasMetas = (local + shared)
             .sortedWith(
                 compareBy<MetaDB> { !it.invitaciones.contains(userEmail) }
+                    .thenBy { it.orden }
                     .thenBy { it.completada }
             )
         _allMetas.value = todasLasMetas
+    }
+
+    // FUNCIÓN NUEVA: GUARDA EL ORDEN DE CADA TARJETA (TANTO EN ROOM COMO EN FIRESTORE)
+    fun guardarNuevoOrden(listaOrdenada: List<MetaDB>) = viewModelScope.launch(Dispatchers.IO) {
+        listaOrdenada.forEachIndexed { index, meta ->
+            if (meta.orden != index) {
+                val metaActualizada = meta.copy(orden = index)
+                if (meta.usuarios.isEmpty()) {
+                    metaRepository.update(metaActualizada)
+                } else {
+                    db.collection("metas").document(meta.id).update("orden", index)
+                }
+            }
+        }
     }
 
     private fun listenToSharedMetas() {
