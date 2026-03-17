@@ -61,6 +61,8 @@ class MovimientosAdapter(
                 holder.tvFecha.text = "--/--/----"
                 holder.tvMonto.text = "•••••"
                 holder.tvMonto.setTextColor(Color.parseColor("#9E9E9E"))
+                holder.tvBanco.visibility = View.VISIBLE
+                holder.tvBanco.text = "****"
 
                 val grisClaro = Color.parseColor("#9E9E9E")
                 val grisFondo = Color.parseColor("#EEEEEE")
@@ -71,7 +73,13 @@ class MovimientosAdapter(
             } else {
                 holder.tvNombre.text = movimiento.descripcion
 
-                // MUESTRA FECHA + HORA DE FORMA ESTÉTICA
+                if (movimiento.banco == "General") {
+                    holder.tvBanco.visibility = View.GONE
+                } else {
+                    holder.tvBanco.visibility = View.VISIBLE
+                    holder.tvBanco.text = movimiento.banco
+                }
+
                 val horaCorta = if (movimiento.hora.length >= 5) movimiento.hora.substring(0, 5) else ""
                 if (horaCorta.isNotEmpty() && horaCorta != "00:00") {
                     holder.tvFecha.text = "${movimiento.fecha} • $horaCorta"
@@ -135,5 +143,6 @@ class MovimientosAdapter(
         val ivIcono: ImageView = itemView.findViewById(R.id.ivIcono)
         val tvFecha: TextView = itemView.findViewById(R.id.tvFecha)
         val iconContainer: CardView = itemView.findViewById(R.id.iconContainer)
+        val tvBanco: TextView = itemView.findViewById(R.id.tvBancoMovimiento)
     }
 }

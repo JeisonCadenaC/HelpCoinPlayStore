@@ -660,7 +660,8 @@ class MovimientosFragment : Fragment() {
                 hora = "00:00:00",
                 descripcion = extraido.descripcion,
                 categoria = extraido.categoria,
-                categoriaId = extraido.categoriaId
+                categoriaId = extraido.categoriaId,
+                banco = extraido.banco
             )
             viewModel.insertar(nuevoMovimiento)
         }

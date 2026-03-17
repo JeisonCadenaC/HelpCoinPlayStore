@@ -58,13 +58,22 @@
                 android:ellipsize="end" />
 
             <TextView
+                android:id="@+id/tvBancoMovimiento"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:text="Banco"
+                android:textSize="12sp"
+                android:textColor="#808080"
+                android:layout_marginTop="2dp" />
+
+            <TextView
                 android:id="@+id/tvFecha"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 tools:text="Hoy, 10:30 AM"
                 android:textColor="?android:attr/textColorSecondary"
                 android:textSize="12sp"
-                android:layout_marginTop="4dp" />
+                android:layout_marginTop="2dp" />
         </LinearLayout>
 
         <TextView

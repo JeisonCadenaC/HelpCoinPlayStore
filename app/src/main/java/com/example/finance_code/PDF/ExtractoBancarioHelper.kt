@@ -15,7 +15,8 @@ data class MovimientoExtraido(
     val monto: Double,
     val esIngreso: Boolean,
     val categoria: String,
-    val categoriaId: Long
+    val categoriaId: Long,
+    val banco: String
 )
 
 class ExtractoBancarioHelper(private val context: Context) {
@@ -137,7 +138,8 @@ class ExtractoBancarioHelper(private val context: Context) {
                             monto = montoAbsoluto,
                             esIngreso = esIngreso,
                             categoria = catNombre,
-                            categoriaId = catId
+                            categoriaId = catId,
+                            banco = "Nequi"
                         )
                     )
                 }
@@ -229,7 +231,8 @@ class ExtractoBancarioHelper(private val context: Context) {
                             monto = montoAbsoluto,
                             esIngreso = esIngreso,
                             categoria = catNombre,
-                            categoriaId = catId
+                            categoriaId = catId,
+                            banco = "Bancolombia"
                         )
                     )
                 }
