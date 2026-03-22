@@ -37,7 +37,7 @@
                     android:id="@+id/imgLogo"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
-                    android:src="@drawable/help_coin_logo"
+                    android:src="@drawable/help_coin_logotp"
                     android:contentDescription="@string/app_name" />
 
                 <LinearLayout

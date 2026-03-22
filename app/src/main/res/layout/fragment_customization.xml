@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:background="?android:attr/colorBackground">
+
+    <LinearLayout
+        android:id="@+id/header_layout_custom"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/btnBackCustom"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="12dp"
+            android:src="@drawable/ic_arrow_back"
+            app:tint="?attr/colorOnBackground" />
+
+        <TextView
+            android:id="@+id/tvCustomizationTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:fontFamily="@font/montserrat_bold"
+            android:text="Personalización"
+            android:textColor="?attr/colorOnBackground"
+            android:textSize="22sp" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/header_layout_custom">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="32dp">
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardColorContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginBottom="20dp"
+                app:cardBackgroundColor="?attr/colorSurface"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="1dp"
+                app:strokeWidth="2dp"
+                app:strokeColor="?attr/colorPrimary">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="20dp"
+                    android:paddingVertical="24dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/montserrat_bold"
+                        android:text="Color de la Colmena"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="18sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="24dp"
+                        android:text="Elige el color principal que te representará en toda la aplicación."
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textSize="14sp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:baselineAligned="false"
+                        android:layout_marginBottom="20dp"
+                        android:orientation="horizontal">
+
+                        <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">
+                            <androidx.cardview.widget.CardView android:id="@+id/colorPurple" android:layout_width="56dp" android:layout_height="56dp" android:layout_gravity="center" app:cardBackgroundColor="#8000FF" app:cardCornerRadius="28dp" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackgroundBorderless"/>
+                        </FrameLayout>
+
+                        <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">
+                            <androidx.cardview.widget.CardView android:id="@+id/colorIndigo" android:layout_width="56dp" android:layout_height="56dp" android:layout_gravity="center" app:cardBackgroundColor="#4000FF" app:cardCornerRadius="28dp" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackgroundBorderless"/>
+                        </FrameLayout>
+
+                        <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">
+                            <androidx.cardview.widget.CardView android:id="@+id/colorBlue" android:layout_width="56dp" android:layout_height="56dp" android:layout_gravity="center" app:cardBackgroundColor="#0000FF" app:cardCornerRadius="28dp" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackgroundBorderless"/>
+                        </FrameLayout>
+
+                        <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">
+                            <androidx.cardview.widget.CardView android:id="@+id/colorCyan" android:layout_width="56dp" android:layout_height="56dp" android:layout_gravity="center" app:cardBackgroundColor="#00FFFF" app:cardCornerRadius="28dp" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackgroundBorderless"/>
+                        </FrameLayout>
+
+                        <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">
+                            <androidx.cardview.widget.CardView android:id="@+id/colorTeal" android:layout_width="56dp" android:layout_height="56dp" android:layout_gravity="center" app:cardBackgroundColor="#00FF80" app:cardCornerRadius="28dp" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackgroundBorderless"/>
+                        </FrameLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:baselineAligned="false"
+                        android:orientation="horizontal">
+
+                        <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">
+                            <androidx.cardview.widget.CardView android:id="@+id/colorGreen" android:layout_width="56dp" android:layout_height="56dp" android:layout_gravity="center" app:cardBackgroundColor="#00FF00" app:cardCornerRadius="28dp" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackgroundBorderless"/>
+                        </FrameLayout>
+
+                        <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">
+                            <androidx.cardview.widget.CardView android:id="@+id/colorAmber" android:layout_width="56dp" android:layout_height="56dp" android:layout_gravity="center" app:cardBackgroundColor="#FFFF00" app:cardCornerRadius="28dp" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackgroundBorderless"/>
+                        </FrameLayout>
+
+                        <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">
+                            <androidx.cardview.widget.CardView android:id="@+id/colorOrange" android:layout_width="56dp" android:layout_height="56dp" android:layout_gravity="center" app:cardBackgroundColor="#FF8000" app:cardCornerRadius="28dp" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackgroundBorderless"/>
+                        </FrameLayout>
+
+                        <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">
+                            <androidx.cardview.widget.CardView android:id="@+id/colorRed" android:layout_width="56dp" android:layout_height="56dp" android:layout_gravity="center" app:cardBackgroundColor="#FF0000" app:cardCornerRadius="28dp" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackgroundBorderless"/>
+                        </FrameLayout>
+
+                        <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">
+                            <androidx.cardview.widget.CardView android:id="@+id/colorPink" android:layout_width="56dp" android:layout_height="56dp" android:layout_gravity="center" app:cardBackgroundColor="#FF00FF" app:cardCornerRadius="28dp" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackgroundBorderless"/>
+                        </FrameLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardAmoledContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginBottom="20dp"
+                app:cardBackgroundColor="?attr/colorSurface"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="1dp"
+                app:strokeWidth="2dp"
+                app:strokeColor="?attr/colorPrimary">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="20dp"
+                    android:paddingVertical="20dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="16dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/montserrat_bold"
+                            android:text="Modo Oscuro Puro (AMOLED)"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="16sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="Optimiza la batería en pantallas OLED aplicando un negro puro como fondo."
+                            android:textColor="?attr/colorOnSurfaceVariant"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/switchAmoled"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="10dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSaveCustomization"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_marginHorizontal="24dp"
+                android:fontFamily="@font/montserrat_bold"
+                android:text="Guardar Cambios"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                app:cornerRadius="12dp" />
+
+        </LinearLayout>
+    </ScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>

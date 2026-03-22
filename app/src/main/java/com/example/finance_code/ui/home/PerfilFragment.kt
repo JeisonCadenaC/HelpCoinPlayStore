@@ -97,6 +97,11 @@ class PerfilFragment : Fragment() {
         tvEmailUsuario = binding.tvEmailUsuario
         imgEditarNombre = binding.imgEditarNombre
 
+        // Acción del botón de retroceso superior
+        binding.btnVolverAtras.setOnClickListener {
+            requireActivity().onBackPressedDispatcher.onBackPressed()
+        }
+
         try {
             val packageInfo = requireContext().packageManager.getPackageInfo(requireContext().packageName, 0)
             binding.tvVersionApp.text = "Versión: ${packageInfo.versionName} (Evolution)"
@@ -122,6 +127,20 @@ class PerfilFragment : Fragment() {
                 mostrarDialogoCambiarContrasena()
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Ocultar menú inferior como si fuera una ventana completa
+        val bottomNav = requireActivity().findViewById<View>(R.id.nav_view)
+        bottomNav?.visibility = View.GONE
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // Restaurar menú inferior al salir
+        val bottomNav = requireActivity().findViewById<View>(R.id.nav_view)
+        bottomNav?.visibility = View.VISIBLE
     }
 
     private fun mostrarDialogoCambiarContrasena() {

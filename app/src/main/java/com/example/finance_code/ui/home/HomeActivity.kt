@@ -5,12 +5,16 @@ import android.app.AlarmManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
@@ -18,6 +22,8 @@ import com.example.finance_code.R
 import com.example.finance_code.UpdateManager
 import com.example.finance_code.databinding.ActivityHomeBinding
 import com.example.finance_code.ui.login.AuthCheckActivity
+import com.example.finance_code.utils.ThemeUtils
+import android.util.TypedValue
 
 class HomeActivity : AppCompatActivity() {
 
@@ -34,9 +40,17 @@ class HomeActivity : AppCompatActivity() {
     ) { }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // 1. APLICA EL TEMA GLOBAL ANTES DE CREAR LA VISTA (Tiñe progreso, bordes, botones, TODO)
+        setTheme(ThemeUtils.getAuraTheme(this))
+
         super.onCreate(savedInstanceState)
         binding = ActivityHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // 2. Teñir la barra de notificaciones superior
+        window.statusBarColor = ThemeUtils.getAuraColor(this)
+
+        aplicarColoresGlobalesYAmoled()
 
         solicitarPermisos()
 
@@ -55,8 +69,38 @@ class HomeActivity : AppCompatActivity() {
             handleIncomingNotificationIntent(intent)
         }
 
-        // Llamada de actualización si el usuario ya está logueado y entra directo al inicio
         UpdateManager(this).checkForUpdates()
+    }
+
+    private fun aplicarColoresGlobalesYAmoled() {
+        val auraColor = ThemeUtils.getAuraColor(this)
+
+        val navColorStateList = ThemeUtils.getBottomNavColorStateList(auraColor)
+        binding.navView.itemIconTintList = navColorStateList
+        binding.navView.itemTextColor = navColorStateList
+
+        val sharedPrefs = getSharedPreferences("AppPrefe", Context.MODE_PRIVATE)
+        val isAmoled = sharedPrefs.getBoolean("amoled_mode", false)
+        val isDark = sharedPrefs.getBoolean("modo_oscuro", false)
+
+        if (isAmoled && isDark) {
+            window.decorView.setBackgroundColor(Color.BLACK)
+            binding.root.setBackgroundColor(Color.BLACK)
+        }
+
+        // MAGIA: Esto intercepta TODOS los fragmentos y les pone el AMOLED negro puro automáticamente
+        supportFragmentManager.registerFragmentLifecycleCallbacks(object : FragmentManager.FragmentLifecycleCallbacks() {
+            override fun onFragmentViewCreated(fm: FragmentManager, f: Fragment, v: View, savedInstanceState: Bundle?) {
+                super.onFragmentViewCreated(fm, f, v, savedInstanceState)
+                if (isAmoled && isDark) {
+                    v.setBackgroundColor(Color.BLACK)
+                } else {
+                    val typedValue = TypedValue()
+                    theme.resolveAttribute(android.R.attr.colorBackground, typedValue, true)
+                    v.setBackgroundColor(typedValue.data)
+                }
+            }
+        }, true)
     }
 
     private fun solicitarPermisos() {
@@ -91,6 +135,7 @@ class HomeActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         isSessionActive = true
+        aplicarColoresGlobalesYAmoled()
 
         if (pendingTargetFragment != null) {
             navigateDirectly(pendingTargetFragment!!)
