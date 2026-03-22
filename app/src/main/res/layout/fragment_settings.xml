@@ -290,13 +290,13 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnLogout"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
                 android:layout_marginHorizontal="24dp"
                 android:fontFamily="@font/montserrat_bold"
                 android:text="Cerrar Sesión"
-                android:textColor="@color/expense_red"
+                android:textColor="@android:color/white"
+                app:backgroundTint="@color/expense_red"
                 android:textSize="15sp"
                 app:cornerRadius="12dp" />
 

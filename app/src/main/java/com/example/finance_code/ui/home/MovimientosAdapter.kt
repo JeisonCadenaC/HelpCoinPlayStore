@@ -14,6 +14,7 @@ import com.example.finance_code.R
 import com.example.finance_code.data.Movimiento
 import com.example.finance_code.DiscreetModeManager
 import com.example.finance_code.utils.ThemeUtils
+import com.google.android.material.card.MaterialCardView
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -27,6 +28,9 @@ class MovimientosAdapter(
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private var onItemLongClickListener: ((Movimiento) -> Unit)? = null
+
+    // Variable para rastrear la posición seleccionada actualmente
+    private var selectedPosition = RecyclerView.NO_POSITION
 
     companion object {
         private const val TYPE_HEADER = 0
@@ -58,8 +62,6 @@ class MovimientosAdapter(
         } else if (holder is MovimientoViewHolder && item is MovimientoListItem.Item) {
             val movimiento = item.movimiento
             val context = holder.itemView.context
-
-            // SE ELIMINÓ LA LÓGICA DEL BORDE DE AURA PERMANENTE
 
             if (DiscreetModeManager.isDiscreetModeActive) {
                 holder.tvNombre.text = "***********"
@@ -104,7 +106,6 @@ class MovimientosAdapter(
 
                     holder.ivIcono.setImageResource(R.drawable.ic_arrow_up)
                     holder.ivIcono.imageTintList = ColorStateList.valueOf(verde)
-                    // FONDO NEUTRO PARA EL ÍCONO (SIN TONOS VERDES)
                     holder.iconContainer.setCardBackgroundColor(Color.parseColor("#F5F5F5"))
                 } else {
                     holder.tvMonto.text = "- $montoFormateado"
@@ -113,15 +114,64 @@ class MovimientosAdapter(
 
                     holder.ivIcono.setImageResource(R.drawable.ic_arrow_down)
                     holder.ivIcono.imageTintList = ColorStateList.valueOf(rojo)
-                    // FONDO NEUTRO PARA EL ÍCONO (SIN TONOS ROSAS)
                     holder.iconContainer.setCardBackgroundColor(Color.parseColor("#F5F5F5"))
                 }
             }
 
+            // --- LÓGICA DE SELECCIÓN Y BORDES DINÁMICOS ---
+            val isSelected = selectedPosition == holder.adapterPosition
+            val materialCardView = holder.itemView as MaterialCardView
+
+            if (isSelected) {
+                val strokeWidthPx = (2 * context.resources.displayMetrics.density).toInt()
+                materialCardView.strokeWidth = strokeWidthPx
+
+                if (movimiento.tipo == 1) {
+                    materialCardView.strokeColor = Color.parseColor("#4CAF50")
+                } else {
+                    materialCardView.strokeColor = Color.parseColor("#F44336")
+                }
+            } else {
+                materialCardView.strokeWidth = 0
+                materialCardView.strokeColor = Color.TRANSPARENT
+            }
+
+            holder.itemView.setOnClickListener {
+                val currentPosition = holder.adapterPosition
+                if (currentPosition == RecyclerView.NO_POSITION) return@setOnClickListener
+
+                val previousPosition = selectedPosition
+
+                if (previousPosition == currentPosition) {
+                    selectedPosition = RecyclerView.NO_POSITION
+                    notifyItemChanged(previousPosition)
+                } else {
+                    selectedPosition = currentPosition
+                    if (previousPosition != RecyclerView.NO_POSITION) {
+                        notifyItemChanged(previousPosition)
+                    }
+                    notifyItemChanged(selectedPosition)
+                }
+            }
+
             holder.itemView.setOnLongClickListener {
+                val currentPosition = holder.adapterPosition
+                if (currentPosition != RecyclerView.NO_POSITION) {
+                    val previousPosition = selectedPosition
+
+                    if (previousPosition != currentPosition) {
+                        // Selecciona el nuevo y deselecciona el anterior al mantener presionado
+                        selectedPosition = currentPosition
+                        if (previousPosition != RecyclerView.NO_POSITION) {
+                            notifyItemChanged(previousPosition)
+                        }
+                        notifyItemChanged(selectedPosition)
+                    }
+                }
                 onItemLongClickListener?.invoke(movimiento)
                 true
             }
+            // ----------------------------------------------
         }
     }
 
@@ -129,6 +179,7 @@ class MovimientosAdapter(
 
     fun setData(nuevosItems: List<MovimientoListItem>) {
         this.items = nuevosItems
+        selectedPosition = RecyclerView.NO_POSITION
         notifyDataSetChanged()
     }
 
@@ -138,6 +189,14 @@ class MovimientosAdapter(
 
     fun updateDiscreetMode() {
         notifyDataSetChanged()
+    }
+
+    fun clearSelection() {
+        val previousPosition = selectedPosition
+        selectedPosition = RecyclerView.NO_POSITION
+        if (previousPosition != RecyclerView.NO_POSITION) {
+            notifyItemChanged(previousPosition)
+        }
     }
 
     inner class HeaderViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

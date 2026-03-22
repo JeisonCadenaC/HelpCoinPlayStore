@@ -1,14 +1,10 @@
 package com.example.finance_code.ui.home
 
 import android.content.Context
-import android.os.Handler
-import android.os.Looper
 import android.util.TypedValue
 import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
-import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -43,7 +39,6 @@ class MetasAdapter(
         notifyDataSetChanged()
     }
 
-    // EXTRAE LA LISTA CON EL NUEVO ORDEN PARA GUARDARLA
     fun getActualList(): List<MetaDB> = metas.toList()
 
     fun moveItem(fromPosition: Int, toPosition: Int) {
@@ -87,15 +82,9 @@ class MetasAdapter(
         private val cardImageMeta: View = itemView.findViewById(R.id.cardImageMeta)
         private val ivExpandIcon: ImageView = itemView.findViewById(R.id.ivExpandIcon)
         private val ivDragHandle: View = itemView.findViewById(R.id.ivDragHandle)
-        private val hitboxDrag: View = itemView.findViewById(R.id.hitboxDrag)
+        private val hitboxDrag: View? = itemView.findViewById(R.id.hitboxDrag) // Capa opcional si existe en el XML
 
         private var isExpanded = false
-        private var readyToDrag = false
-        private var downX = 0f
-        private var downY = 0f
-        private val touchSlop = ViewConfiguration.get(itemView.context).scaledTouchSlop
-        private val handler = Handler(Looper.getMainLooper())
-        private var longPressRunnable: Runnable? = null
 
         private fun resolveThemeColor(context: Context, attrId: Int): Int {
             val typedValue = TypedValue()
@@ -104,6 +93,14 @@ class MetasAdapter(
                 return ContextCompat.getColor(context, typedValue.resourceId)
             }
             return typedValue.data
+        }
+
+        fun showDragIndicator() {
+            ivDragHandle.visibility = View.VISIBLE
+        }
+
+        fun hideDragIndicator() {
+            ivDragHandle.visibility = View.GONE
         }
 
         fun bind(
@@ -115,6 +112,8 @@ class MetasAdapter(
             onAceptar: (MetaDB) -> Unit,
             onRechazar: (MetaDB) -> Unit
         ) {
+            ivDragHandle.visibility = View.GONE
+
             val esInvitacion = meta.invitaciones.contains(myEmail)
             val formatoMoneda = NumberFormat.getCurrencyInstance(Locale("es", "CO"))
             formatoMoneda.maximumFractionDigits = 0
@@ -123,7 +122,7 @@ class MetasAdapter(
             val colorSurface = resolveThemeColor(itemView.context, colorSurfaceAttrId)
 
             val colorPrimary = resolveThemeColor(itemView.context, com.google.android.material.R.attr.colorPrimary)
-            val colorGray = ContextCompat.getColor(itemView.context, R.color.gray)
+            val colorGray = ContextCompat.getColor(itemView.context, com.example.finance_code.R.color.gray)
 
             if (esInvitacion) {
                 layoutNormal.visibility = View.GONE
@@ -146,10 +145,11 @@ class MetasAdapter(
 
                 btnAceptar.setOnClickListener { onAceptar(meta) }
                 btnRechazar.setOnClickListener { onRechazar(meta) }
+
                 itemView.setOnClickListener(null)
                 itemView.setOnLongClickListener(null)
-                hitboxDrag.setOnTouchListener(null)
-                hitboxDrag.setOnClickListener(null)
+                hitboxDrag?.setOnClickListener(null)
+                hitboxDrag?.setOnLongClickListener(null)
             } else {
                 layoutInvitacion.visibility = View.GONE
                 layoutNormal.visibility = View.VISIBLE
@@ -198,7 +198,8 @@ class MetasAdapter(
                     cardView.setCardBackgroundColor(colorSurface)
                 }
 
-                itemView.setOnClickListener {
+                // LOGICA DE EVENTOS (Expansión)
+                val clickAction = View.OnClickListener {
                     if (!DiscreetModeManager.isDiscreetModeActive) {
                         isExpanded = !isExpanded
                         layoutExpanded.visibility = if (isExpanded) View.VISIBLE else View.GONE
@@ -206,55 +207,21 @@ class MetasAdapter(
                     }
                 }
 
-                itemView.setOnLongClickListener {
+                itemView.setOnClickListener(clickAction)
+                hitboxDrag?.setOnClickListener(clickAction) // Por si el hitbox atrapa el clic normal
+
+                // LÓGICA DE ARRASTRE AL MANTENER PRESIONADO
+                val longClickAction = View.OnLongClickListener {
                     if (!DiscreetModeManager.isDiscreetModeActive) {
-                        onLongClick(meta)
+                        itemView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                        onDragStart(this@MetaViewHolder)
+                        // onLongClick(meta) <-- Lo comento para que arrastrar no active acciones secundarias a la vez
                     }
                     true
                 }
 
-                hitboxDrag.setOnClickListener {
-                    itemView.performClick()
-                }
-
-                hitboxDrag.setOnLongClickListener {
-                    true
-                }
-
-                hitboxDrag.setOnTouchListener { v, event ->
-                    if (DiscreetModeManager.isDiscreetModeActive) return@setOnTouchListener false
-
-                    when (event.action) {
-                        MotionEvent.ACTION_DOWN -> {
-                            readyToDrag = false
-                            downX = event.rawX
-                            downY = event.rawY
-                            longPressRunnable = Runnable {
-                                readyToDrag = true
-                                v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-                                ivDragHandle.visibility = View.VISIBLE
-                                onDragStart(this@MetaViewHolder)
-                            }
-                            handler.postDelayed(longPressRunnable!!, 300)
-                        }
-                        MotionEvent.ACTION_MOVE -> {
-                            val dx = Math.abs(event.rawX - downX)
-                            val dy = Math.abs(event.rawY - downY)
-                            if (dx > touchSlop || dy > touchSlop) {
-                                if (!readyToDrag) {
-                                    longPressRunnable?.let { handler.removeCallbacks(it) }
-                                }
-                            }
-                        }
-                        MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                            longPressRunnable?.let { handler.removeCallbacks(it) }
-                            if (!readyToDrag && event.action == MotionEvent.ACTION_UP) {
-                                v.performClick()
-                            }
-                        }
-                    }
-                    true
-                }
+                itemView.setOnLongClickListener(longClickAction)
+                hitboxDrag?.setOnLongClickListener(longClickAction)
 
                 btnActualizar.setOnClickListener { onClick(meta) }
             }

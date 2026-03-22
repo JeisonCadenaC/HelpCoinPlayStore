@@ -31,6 +31,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -60,6 +61,7 @@ class MetasFragment : Fragment() {
     }
 
     private lateinit var metasAdapter: MetasAdapter
+    private lateinit var itemTouchHelper: ItemTouchHelper
 
     private var currentNombreInput: EditText? = null
     private var currentMontoInput: EditText? = null
@@ -119,7 +121,9 @@ class MetasFragment : Fragment() {
                 mostrarDialogoMeta(meta)
             },
             onMetaLongClick = {},
-            onDragStart = {},
+            onDragStart = { viewHolder ->
+                itemTouchHelper.startDrag(viewHolder)
+            },
             onAceptarClick = { meta ->
                 metaViewModel.aceptarInvitacion(meta)
                 Toast.makeText(context, "¡Bienvenido a la meta!", Toast.LENGTH_SHORT).show()
@@ -137,10 +141,52 @@ class MetasFragment : Fragment() {
             }
         )
 
+        val itemTouchHelperCallback = object : ItemTouchHelper.SimpleCallback(
+            ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0
+        ) {
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean {
+                val fromPos = viewHolder.adapterPosition
+                val toPos = target.adapterPosition
+                metasAdapter.moveItem(fromPos, toPos)
+                return true
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {}
+
+            // LÓGICA INFALIBLE: Mostrar flechas cuando el sistema inicia el arrastre
+            override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
+                super.onSelectedChanged(viewHolder, actionState)
+                if (actionState == ItemTouchHelper.ACTION_STATE_DRAG) {
+                    if (viewHolder is MetasAdapter.MetaViewHolder) {
+                        viewHolder.showDragIndicator()
+                    }
+                }
+            }
+
+            // LÓGICA INFALIBLE: Ocultar flechas cuando la tarjeta se suelta
+            override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
+                super.clearView(recyclerView, viewHolder)
+                if (viewHolder is MetasAdapter.MetaViewHolder) {
+                    viewHolder.hideDragIndicator()
+                }
+            }
+
+            override fun isLongPressDragEnabled(): Boolean {
+                // Deshabilitamos el arrastre automático para controlarlo manualmente por si el modo discreto está activo
+                return false
+            }
+        }
+        itemTouchHelper = ItemTouchHelper(itemTouchHelperCallback)
+
         binding.rvMetas.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = metasAdapter
         }
+        itemTouchHelper.attachToRecyclerView(binding.rvMetas)
 
         metaViewModel.allMetas.observe(viewLifecycleOwner) { metas ->
             metasAdapter.setData(metas)

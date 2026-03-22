@@ -60,7 +60,6 @@ class CustomizationFragment : Fragment() {
 
         aplicarColorSwitchYTarjetas(switchAmoled, cardColorContainer, cardAmoledContainer, auraColor)
 
-        // Se remueve el fragmento manualmente sin tocar el Navigation Component
         val callback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 requireActivity().supportFragmentManager.beginTransaction().remove(this@CustomizationFragment).commit()
@@ -87,7 +86,7 @@ class CustomizationFragment : Fragment() {
                 R.id.colorCyan -> "#00FFFF"
                 R.id.colorTeal -> "#00FF80"
                 R.id.colorGreen -> "#00FF00"
-                R.id.colorAmber -> "#FFFF00"
+                R.id.colorAmber -> "#FBC02D"
                 R.id.colorOrange -> "#FF8000"
                 R.id.colorRed -> "#FF0000"
                 R.id.colorPink -> "#FF00FF"

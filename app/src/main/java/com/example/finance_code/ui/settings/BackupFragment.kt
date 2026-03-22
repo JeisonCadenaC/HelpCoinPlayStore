@@ -5,6 +5,7 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
+import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
@@ -106,7 +107,6 @@ class BackupFragment : Fragment() {
             requireActivity().supportFragmentManager.beginTransaction().remove(this@BackupFragment).commit()
         }
 
-        // 🛑 AHORA LANZA EL DIÁLOGO DE CONFIRMACIÓN 🛑
         cardRealizarBackup.setOnClickListener {
             mostrarDialogoConfirmarBackup()
         }
@@ -224,6 +224,10 @@ class BackupFragment : Fragment() {
         val progressBar = dialogView.findViewById<LinearProgressIndicator>(R.id.progressBarBackup)
         val txtProgress = dialogView.findViewById<TextView>(R.id.txtProgressBackup)
 
+        // 🛑 COLOR DINÁMICO DEL TEXTO SEGÚN EL TEMA 🛑
+        val isDarkTheme = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+        txtProgress.setTextColor(if (isDarkTheme) Color.WHITE else Color.BLACK)
+
         val customProgressDialog = AlertDialog.Builder(requireContext())
             .setView(dialogView)
             .setCancelable(false)
@@ -316,6 +320,10 @@ class BackupFragment : Fragment() {
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_restore, null)
         val progressBar = dialogView.findViewById<LinearProgressIndicator>(R.id.progressBarRestore)
         val txtProgress = dialogView.findViewById<TextView>(R.id.txtProgressRestore)
+
+        // 🛑 COLOR DINÁMICO DEL TEXTO SEGÚN EL TEMA 🛑
+        val isDarkTheme = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+        txtProgress.setTextColor(if (isDarkTheme) Color.WHITE else Color.BLACK)
 
         val customProgressDialog = AlertDialog.Builder(requireContext())
             .setView(dialogView)

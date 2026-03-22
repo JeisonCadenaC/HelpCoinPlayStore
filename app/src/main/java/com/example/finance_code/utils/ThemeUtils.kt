@@ -18,7 +18,13 @@ object ThemeUtils {
 
     fun getAuraColor(context: Context): Int {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val hex = prefs.getString(AURA_COLOR_KEY, DEFAULT_AURA_COLOR) ?: DEFAULT_AURA_COLOR
+        var hex = prefs.getString(AURA_COLOR_KEY, DEFAULT_AURA_COLOR) ?: DEFAULT_AURA_COLOR
+
+        // Si el usuario tenía el amarillo brillante viejo guardado, lo pasamos al nuevo
+        if (hex.uppercase() == "#FFFF00") {
+            hex = "#FBC02D"
+        }
+
         return try {
             Color.parseColor(hex)
         } catch (e: Exception) {
@@ -35,7 +41,7 @@ object ThemeUtils {
             "#00FFFF" -> R.style.Theme_FinanceCode_Cyan
             "#00FF80" -> R.style.Theme_FinanceCode_Teal
             "#00FF00" -> R.style.Theme_FinanceCode_Green
-            "#FFFF00" -> R.style.Theme_FinanceCode_Amber
+            "#FBC02D", "#FFFF00" -> R.style.Theme_FinanceCode_Amber
             "#FF8000" -> R.style.Theme_FinanceCode_Orange
             "#FF0000" -> R.style.Theme_FinanceCode_Red
             "#FF00FF" -> R.style.Theme_FinanceCode_Pink

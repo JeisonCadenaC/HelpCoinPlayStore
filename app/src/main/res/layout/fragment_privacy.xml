@@ -29,7 +29,7 @@
             android:clickable="true"
             android:focusable="true"
             android:padding="12dp"
-            android:src="@drawable/ic_volver"
+            android:src="@drawable/ic_arrow_back"
             app:tint="?attr/colorOnBackground" />
 
         <TextView

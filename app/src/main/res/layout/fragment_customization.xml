@@ -73,7 +73,8 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:paddingHorizontal="20dp"
-                    android:paddingVertical="24dp">
+                    android:paddingTop="24dp"
+                    android:paddingBottom="36dp">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -131,7 +132,7 @@
                         </FrameLayout>
 
                         <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">
-                            <androidx.cardview.widget.CardView android:id="@+id/colorAmber" android:layout_width="56dp" android:layout_height="56dp" android:layout_gravity="center" app:cardBackgroundColor="#FFFF00" app:cardCornerRadius="28dp" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackgroundBorderless"/>
+                            <androidx.cardview.widget.CardView android:id="@+id/colorAmber" android:layout_width="56dp" android:layout_height="56dp" android:layout_gravity="center" app:cardBackgroundColor="#FBC02D" app:cardCornerRadius="28dp" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackgroundBorderless"/>
                         </FrameLayout>
 
                         <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">

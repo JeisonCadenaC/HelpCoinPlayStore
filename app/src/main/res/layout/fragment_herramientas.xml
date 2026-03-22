@@ -24,7 +24,10 @@
         android:clickable="true"
         android:focusable="true"
         app:cardCornerRadius="12dp"
-        app:cardElevation="4dp"
+        app:cardElevation="2dp"
+        app:strokeWidth="0dp"
+        app:cardBackgroundColor="?attr/colorSurface"
+        android:foreground="?attr/selectableItemBackground"
         android:layout_marginBottom="16dp">
 
         <LinearLayout
@@ -72,7 +75,10 @@
         android:clickable="true"
         android:focusable="true"
         app:cardCornerRadius="12dp"
-        app:cardElevation="4dp"
+        app:cardElevation="2dp"
+        app:strokeWidth="0dp"
+        app:cardBackgroundColor="?attr/colorSurface"
+        android:foreground="?attr/selectableItemBackground"
         android:layout_marginBottom="16dp">
 
         <LinearLayout
@@ -120,7 +126,10 @@
         android:clickable="true"
         android:focusable="true"
         app:cardCornerRadius="12dp"
-        app:cardElevation="4dp"
+        app:cardElevation="2dp"
+        app:strokeWidth="0dp"
+        app:cardBackgroundColor="?attr/colorSurface"
+        android:foreground="?attr/selectableItemBackground"
         android:layout_marginBottom="16dp">
 
         <LinearLayout
@@ -168,7 +177,10 @@
         android:clickable="true"
         android:focusable="true"
         app:cardCornerRadius="12dp"
-        app:cardElevation="4dp"
+        app:cardElevation="2dp"
+        app:strokeWidth="0dp"
+        app:cardBackgroundColor="?attr/colorSurface"
+        android:foreground="?attr/selectableItemBackground"
         android:layout_marginBottom="16dp">
 
         <LinearLayout
@@ -216,7 +228,10 @@
         android:clickable="true"
         android:focusable="true"
         app:cardCornerRadius="12dp"
-        app:cardElevation="4dp"
+        app:cardElevation="2dp"
+        app:strokeWidth="0dp"
+        app:cardBackgroundColor="?attr/colorSurface"
+        android:foreground="?attr/selectableItemBackground"
         android:layout_marginBottom="16dp">
 
         <LinearLayout
