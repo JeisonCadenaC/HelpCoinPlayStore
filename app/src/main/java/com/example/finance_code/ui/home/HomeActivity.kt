@@ -121,6 +121,13 @@ class HomeActivity : AppCompatActivity() {
         if (isAmoled && isDark) {
             window.decorView.setBackgroundColor(Color.BLACK)
             binding.root.setBackgroundColor(Color.BLACK)
+            // LÓGICA AÑADIDA: Fondo negro puro para el menú de navegación inferior
+            binding.navView.setBackgroundColor(Color.BLACK)
+        } else {
+            // Si no es AMOLED, restauramos el color de superficie para el menú
+            val typedValue = TypedValue()
+            theme.resolveAttribute(com.google.android.material.R.attr.colorSurface, typedValue, true)
+            binding.navView.setBackgroundColor(typedValue.data)
         }
 
         supportFragmentManager.registerFragmentLifecycleCallbacks(object : FragmentManager.FragmentLifecycleCallbacks() {
@@ -185,7 +192,6 @@ class HomeActivity : AppCompatActivity() {
             sensorManager?.unregisterListener(shakeDetector)
         }
     }
-// ...
 
     override fun onResume() {
         super.onResume()
