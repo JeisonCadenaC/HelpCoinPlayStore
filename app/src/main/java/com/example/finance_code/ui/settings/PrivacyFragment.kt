@@ -6,9 +6,6 @@ import android.content.SharedPreferences
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
-import android.graphics.drawable.GradientDrawable
-import android.graphics.drawable.LayerDrawable
-import android.graphics.drawable.RippleDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -20,6 +17,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.widget.SwitchCompat
 import androidx.fragment.app.Fragment
 import com.example.finance_code.R
+import com.example.finance_code.ui.home.HomeActivity // IMPORTANTE: Importar el HomeActivity
 import com.example.finance_code.utils.ThemeUtils
 import com.google.android.material.card.MaterialCardView
 
@@ -107,6 +105,8 @@ class PrivacyFragment : Fragment() {
 
         switchShake.setOnCheckedChangeListener { _, isChecked ->
             sharedPrefs.edit().putBoolean("shake_mode_enabled", isChecked).apply()
+            // AQUI APAGAMOS O PRENDEMOS EL SENSOR DIRECTAMENTE EN EL ACTIVITY AL INSTANTE
+            (requireActivity() as? HomeActivity)?.updateShakeSensorRegistration()
         }
 
         return root

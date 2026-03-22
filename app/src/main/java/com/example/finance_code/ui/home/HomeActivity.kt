@@ -166,15 +166,30 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
+    // NUEVA FUNCIÓN: Gestiona el registro del sensor dinámicamente según la preferencia
+    fun updateShakeSensorRegistration() {
+        val sharedPrefs = getSharedPreferences("AppPrefe", Context.MODE_PRIVATE)
+        val isShakeEnabled = sharedPrefs.getBoolean("shake_mode_enabled", true)
+
+        if (isShakeEnabled) {
+            accelerometer?.let {
+                // Para evitar múltiples registros, primero lo desregistramos
+                sensorManager?.unregisterListener(shakeDetector)
+                sensorManager?.registerListener(shakeDetector, it, SensorManager.SENSOR_DELAY_UI)
+            }
+        } else {
+            // Desconecta el sensor completamente: ya no escucha ni gasta batería
+            sensorManager?.unregisterListener(shakeDetector)
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         isSessionActive = true
         aplicarColoresGlobalesYAmoled()
 
-        // Encender el sensor de agitación al regresar a la app
-        accelerometer?.let {
-            sensorManager?.registerListener(shakeDetector, it, SensorManager.SENSOR_DELAY_UI)
-        }
+        // Encender o apagar el sensor según las configuraciones de privacidad
+        updateShakeSensorRegistration()
 
         if (pendingTargetFragment != null) {
             navigateDirectly(pendingTargetFragment!!)
@@ -184,7 +199,7 @@ class HomeActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        // Apagar el sensor al salir de la app para ahorrar batería
+        // Apagar el sensor al salir de la app para ahorrar batería y no detectar agitación en 2do plano
         sensorManager?.unregisterListener(shakeDetector)
     }
 
