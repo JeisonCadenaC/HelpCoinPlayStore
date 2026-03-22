@@ -1,7 +1,11 @@
 package com.example.finance_code.ui.home
 
+import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
+import android.graphics.drawable.RippleDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.finance_code.R
 import com.example.finance_code.data.Movimiento
 import com.example.finance_code.DiscreetModeManager
+import com.example.finance_code.utils.ThemeUtils
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -55,6 +60,11 @@ class MovimientosAdapter(
             holder.tvHeaderTitle.text = item.title
         } else if (holder is MovimientoViewHolder && item is MovimientoListItem.Item) {
             val movimiento = item.movimiento
+            val context = holder.itemView.context
+
+            // Aplicar color del Aura al borde de la tarjeta principal del item
+            val auraColor = ThemeUtils.getAuraColor(context)
+            actualizarBordeItem(holder.itemView, auraColor, context)
 
             if (DiscreetModeManager.isDiscreetModeActive) {
                 holder.tvNombre.text = "***********"
@@ -131,6 +141,32 @@ class MovimientosAdapter(
 
     fun updateDiscreetMode() {
         notifyDataSetChanged()
+    }
+
+    // Función todoterreno adaptada para los items del RecyclerView
+    private fun actualizarBordeItem(view: View, color: Int, context: Context) {
+        val density = context.resources.displayMetrics.density
+        val strokeWidth = (2 * density).toInt()
+
+        if (view is com.google.android.material.card.MaterialCardView) {
+            view.strokeColor = color
+            view.strokeWidth = strokeWidth
+        }
+
+        var bg = view.background?.mutate()
+        if (bg is RippleDrawable) {
+            bg = bg.getDrawable(0)?.mutate()
+        }
+
+        if (bg is LayerDrawable) {
+            val lastLayerIndex = bg.numberOfLayers - 1
+            if (lastLayerIndex >= 0) {
+                val strokeItem = bg.getDrawable(lastLayerIndex) as? GradientDrawable
+                strokeItem?.setStroke(strokeWidth, color)
+            }
+        } else if (bg is GradientDrawable) {
+            bg.setStroke(strokeWidth, color)
+        }
     }
 
     inner class HeaderViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

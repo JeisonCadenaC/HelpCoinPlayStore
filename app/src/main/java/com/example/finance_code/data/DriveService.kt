@@ -75,7 +75,6 @@ class DriveService(
                     }
                 }
 
-                // --- NUEVO: Añadir imágenes de Metas Locales al ZIP ---
                 val archivosInternos = context.filesDir.listFiles()
                 if (archivosInternos != null) {
                     for (archivo in archivosInternos) {
@@ -84,7 +83,6 @@ class DriveService(
                         }
                     }
                 }
-                // ------------------------------------------------------
 
                 val userPrefsFile = java.io.File(context.cacheDir, "user_prefs.json")
                 savePrefsToJson(context, prefsName, userPrefsFile)
@@ -102,6 +100,11 @@ class DriveService(
                 val analisisPrefsFile = java.io.File(context.cacheDir, "analisis_prefs.json")
                 savePrefsToJson(context, analisisPrefsName, analisisPrefsFile)
                 addFileToZip(zipOutputStream, analisisPrefsFile, "analisis_prefs.json")
+
+                // NUEVO: Agregando las preferencias del color del Aura
+                val auraPrefsFile = java.io.File(context.cacheDir, "aura_prefs.json")
+                savePrefsToJson(context, "HelpCoinAuraPrefs", auraPrefsFile)
+                addFileToZip(zipOutputStream, auraPrefsFile, "aura_prefs.json")
 
                 zipOutputStream.close()
 
@@ -132,6 +135,7 @@ class DriveService(
                 if(appPrefsFile.exists()) appPrefsFile.delete()
                 if(loginPrefsFile.exists()) loginPrefsFile.delete()
                 if(analisisPrefsFile.exists()) analisisPrefsFile.delete()
+                if(auraPrefsFile.exists()) auraPrefsFile.delete()
 
                 fileIdToReturn
             } catch (e: Exception) {
@@ -183,7 +187,6 @@ class DriveService(
                     newImg.copyTo(destImgFile, overwrite = true)
                 }
 
-                // --- NUEVO: Restaurar imágenes de Metas Locales ---
                 val archivosExtraidos = tempDir.listFiles()
                 if (archivosExtraidos != null) {
                     for (archivo in archivosExtraidos) {
@@ -193,11 +196,13 @@ class DriveService(
                         }
                     }
                 }
-                // --------------------------------------------------
 
                 restorePrefsFromJson(context, "${userUid}_UserProfilePrefs", java.io.File(tempDir, "user_prefs.json"))
                 restorePrefsFromJson(context, "AppPrefe", java.io.File(tempDir, "app_prefs.json"))
                 restorePrefsFromJson(context, "LoginPrefs", java.io.File(tempDir, "login_prefs.json"))
+
+                // NUEVO: Restaurando las preferencias del color del Aura
+                restorePrefsFromJson(context, "HelpCoinAuraPrefs", java.io.File(tempDir, "aura_prefs.json"))
 
                 val analisisPrefsName = "analisis_prefs_$userEmail"
                 restorePrefsFromJson(context, analisisPrefsName, java.io.File(tempDir, "analisis_prefs.json"))

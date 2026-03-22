@@ -6,6 +6,9 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
+import android.graphics.drawable.RippleDrawable
 import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.net.Uri
@@ -42,6 +45,7 @@ import com.example.finance_code.data.AppDB
 import com.example.finance_code.data.Movimiento
 import com.example.finance_code.data.MovimientoRepository
 import com.example.finance_code.ui.transaction.addTransaction
+import com.example.finance_code.utils.ThemeUtils
 import com.example.finance_code.viewmodel.MovimientoViewModel
 import com.example.finance_code.viewmodel.MovimientoViewModelFactory
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -78,9 +82,12 @@ class MovimientosFragment : Fragment() {
     private lateinit var btnFiltrar: Button
     private lateinit var tvEmpty: TextView
     private lateinit var tvSaldoTotal: TextView
-    private lateinit var tvUserName: TextView
     private lateinit var btnHideBalance: ImageButton
-    private lateinit var btnDiscreetModeManual: ImageButton
+    private lateinit var cardSaldoContainer: View
+
+    // SOLUCIÓN AL CRASHEO DE COMPILACIÓN: Se cambian a opcionales para evitar conflictos de inicialización
+    private var tvUserName: TextView? = null
+    private var btnDiscreetModeManual: ImageButton? = null
 
     private lateinit var sensorManager: SensorManager
     private var accelerometer: Sensor? = null
@@ -110,7 +117,7 @@ class MovimientosFragment : Fragment() {
         userNameDisplay = if (!customName.isNullOrEmpty()) {
             customName.uppercase()
         } else if (!user?.displayName.isNullOrEmpty()) {
-            user!!.displayName!!.uppercase()
+            user.displayName!!.uppercase()
         } else {
             userEmail.substringBefore("@").uppercase()
         }
@@ -118,13 +125,20 @@ class MovimientosFragment : Fragment() {
         btnFiltrar = view.findViewById(R.id.btnFiltrarFechas)
         tvEmpty = view.findViewById(R.id.tvEmptyMessage)
         tvSaldoTotal = view.findViewById(R.id.tvSaldoTotal)
-        tvUserName = view.findViewById(R.id.tvUserName)
         btnHideBalance = view.findViewById(R.id.btnHideBalance)
+        cardSaldoContainer = view.findViewById(R.id.cardSaldoContainer)
+
+        tvUserName = view.findViewById(R.id.tvUserName)
         btnDiscreetModeManual = view.findViewById(R.id.btnDiscreetModeManual)
+
         val fabAddTransaction = view.findViewById<FloatingActionButton>(R.id.fabAddTransaction)
         val fabImportPDF = view.findViewById<MaterialButton>(R.id.fabImportPDF)
 
-        tvUserName.text = userNameDisplay
+        tvUserName?.text = userNameDisplay
+
+        // Inyectar Aura Color al contenedor de la tarjeta principal
+        val auraColor = ThemeUtils.getAuraColor(requireContext())
+        aplicarBordeTarjetaCredito(cardSaldoContainer, auraColor)
 
         cargarPreferencias()
         actualizarBotonFiltro()
@@ -148,7 +162,7 @@ class MovimientosFragment : Fragment() {
             pickPdfLauncher.launch(arrayOf("application/pdf"))
         }
 
-        btnDiscreetModeManual.setOnClickListener {
+        btnDiscreetModeManual?.setOnClickListener {
             DiscreetModeManager.toggleMode()
             actualizarUIModoDiscreto()
             updateDiscreetModeButtonIcon()
@@ -208,6 +222,27 @@ class MovimientosFragment : Fragment() {
         checkAndShowShakeAnimation()
     }
 
+    private fun aplicarBordeTarjetaCredito(view: View, color: Int) {
+        val density = resources.displayMetrics.density
+        val strokeWidth = (2 * density).toInt()
+
+        var bg = view.background?.mutate()
+
+        if (bg is RippleDrawable) {
+            bg = bg.getDrawable(0)?.mutate()
+        }
+
+        if (bg is LayerDrawable) {
+            val lastLayerIndex = bg.numberOfLayers - 1
+            if (lastLayerIndex >= 0) {
+                val strokeItem = bg.getDrawable(lastLayerIndex) as? GradientDrawable
+                strokeItem?.setStroke(strokeWidth, color)
+            }
+        } else if (bg is GradientDrawable) {
+            bg.setStroke(strokeWidth, color)
+        }
+    }
+
     private fun formatCop(monto: Double): String {
         val formatter = NumberFormat.getCurrencyInstance(Locale("es", "CO"))
         formatter.maximumFractionDigits = 0
@@ -216,6 +251,11 @@ class MovimientosFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
+
+        if (::cardSaldoContainer.isInitialized) {
+            val auraColor = ThemeUtils.getAuraColor(requireContext())
+            aplicarBordeTarjetaCredito(cardSaldoContainer, auraColor)
+        }
 
         accelerometer?.let {
             sensorManager.registerListener(shakeDetector, it, SensorManager.SENSOR_DELAY_NORMAL)
@@ -227,8 +267,8 @@ class MovimientosFragment : Fragment() {
         val profilePrefs = requireContext().getSharedPreferences(prefsName, Context.MODE_PRIVATE)
         val customName = profilePrefs.getString("user_name", null)
 
-        if (!customName.isNullOrEmpty() && ::tvUserName.isInitialized) {
-            tvUserName.text = customName.uppercase()
+        if (!customName.isNullOrEmpty()) {
+            tvUserName?.text = customName.uppercase()
         }
 
         updateDiscreetModeButtonIcon()
@@ -513,13 +553,11 @@ class MovimientosFragment : Fragment() {
     }
 
     private fun updateDiscreetModeButtonIcon() {
-        if (::btnDiscreetModeManual.isInitialized) {
-            val drawableRes = if (DiscreetModeManager.isDiscreetModeActive)
-                R.drawable.ic_visibility_off
-            else
-                R.drawable.ic_visibility
-            btnDiscreetModeManual.setImageResource(drawableRes)
-        }
+        val drawableRes = if (DiscreetModeManager.isDiscreetModeActive)
+            R.drawable.ic_visibility_off
+        else
+            R.drawable.ic_visibility
+        btnDiscreetModeManual?.setImageResource(drawableRes)
     }
 
     private fun checkAndShowShakeAnimation() {

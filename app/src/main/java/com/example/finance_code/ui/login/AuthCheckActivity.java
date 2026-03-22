@@ -1,6 +1,8 @@
 package com.example.finance_code.ui.login;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Toast;
 
@@ -40,19 +42,8 @@ public class AuthCheckActivity extends AppCompatActivity {
                     public void onAuthenticationSucceeded(
                             @NonNull BiometricPrompt.AuthenticationResult result) {
                         super.onAuthenticationSucceeded(result);
-
-                        FirebaseUser currentUser = mAuth.getCurrentUser();
-                        if (currentUser != null) {
-                            Intent currentIntent = getIntent();
-                            if (currentIntent != null && currentIntent.hasExtra(EXTRA_WIDGET_TRANSACTION_TYPE)) {
-                                int type = currentIntent.getIntExtra(EXTRA_WIDGET_TRANSACTION_TYPE, -1);
-                                goToAddTransaction(type);
-                            } else {
-                                goToHome();
-                            }
-                        } else {
-                            goToLogin();
-                        }
+                        // Si la huella es correcta, procedemos a la siguiente pantalla
+                        proceedToNextScreen();
                     }
 
                     @Override
@@ -83,7 +74,18 @@ public class AuthCheckActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        checkBiometricsAndAuthenticate();
+
+        // LECTURA DE PRIVACIDAD: Revisamos si el usuario desactivó el bloqueo biométrico
+        SharedPreferences sharedPrefs = getSharedPreferences("AppPrefe", Context.MODE_PRIVATE);
+        boolean isBiometricEnabled = sharedPrefs.getBoolean("biometric_auth", true); // True por defecto
+
+        if (!isBiometricEnabled) {
+            // Si el switch está apagado, saltamos la huella y vamos directo a la app
+            proceedToNextScreen();
+        } else {
+            // Si está encendido, ejecutamos tu lógica original
+            checkBiometricsAndAuthenticate();
+        }
     }
 
     private void checkBiometricsAndAuthenticate() {
@@ -95,18 +97,24 @@ public class AuthCheckActivity extends AppCompatActivity {
         if (canAuth == BiometricManager.BIOMETRIC_SUCCESS) {
             biometricPrompt.authenticate(promptInfo);
         } else {
-            FirebaseUser currentUser = mAuth.getCurrentUser();
-            if (currentUser != null) {
-                Intent currentIntent = getIntent();
-                if (currentIntent != null && currentIntent.hasExtra(EXTRA_WIDGET_TRANSACTION_TYPE)) {
-                    int type = currentIntent.getIntExtra(EXTRA_WIDGET_TRANSACTION_TYPE, -1);
-                    goToAddTransaction(type);
-                } else {
-                    goToHome();
-                }
+            // Si el dispositivo no tiene huella o no está configurada, lo dejamos pasar
+            proceedToNextScreen();
+        }
+    }
+
+    // Agrupé tu lógica de Firebase e Intents aquí para no repetirla y mantener el código limpio
+    private void proceedToNextScreen() {
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser != null) {
+            Intent currentIntent = getIntent();
+            if (currentIntent != null && currentIntent.hasExtra(EXTRA_WIDGET_TRANSACTION_TYPE)) {
+                int type = currentIntent.getIntExtra(EXTRA_WIDGET_TRANSACTION_TYPE, -1);
+                goToAddTransaction(type);
             } else {
-                goToLogin();
+                goToHome();
             }
+        } else {
+            goToLogin();
         }
     }
 

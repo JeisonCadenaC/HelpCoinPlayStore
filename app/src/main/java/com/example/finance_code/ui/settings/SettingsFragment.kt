@@ -9,7 +9,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.SwitchCompat
 import androidx.fragment.app.Fragment
@@ -84,23 +83,22 @@ class SettingsFragment : Fragment() {
             switchModoOscuro.isChecked = !switchModoOscuro.isChecked
         }
 
+        // AHORA REDIRIGE AL NUEVO FRAGMENTO DE PRIVACIDAD
         cardMenuPrivacy.setOnClickListener {
-            Toast.makeText(requireContext(), "Próximamente: Modo Discreto", Toast.LENGTH_SHORT).show()
-        }
-
-        // SOLUCIÓN AQUÍ: Se usa add a android.R.id.content para evitar ClassCastException al recrear
-        cardMenuCustomization.setOnClickListener {
             requireActivity().supportFragmentManager.beginTransaction()
-                .add(android.R.id.content, CustomizationFragment())
-                .addToBackStack(null)
+                .add(android.R.id.content, PrivacyFragment())
                 .commit()
         }
 
-        // SOLUCIÓN AQUÍ: Se usa add a android.R.id.content
+        cardMenuCustomization.setOnClickListener {
+            requireActivity().supportFragmentManager.beginTransaction()
+                .add(android.R.id.content, CustomizationFragment())
+                .commit()
+        }
+
         cardMenuBackup.setOnClickListener {
             requireActivity().supportFragmentManager.beginTransaction()
                 .add(android.R.id.content, BackupFragment())
-                .addToBackStack(null)
                 .commit()
         }
 

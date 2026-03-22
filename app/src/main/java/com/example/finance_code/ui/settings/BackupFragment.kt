@@ -7,6 +7,8 @@ import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -16,6 +18,7 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -89,8 +92,19 @@ class BackupFragment : Fragment() {
         root.findViewById<ImageView>(R.id.iconUpload).imageTintList = ColorStateList.valueOf(auraColor)
         root.findViewById<ImageView>(R.id.iconDownload).imageTintList = ColorStateList.valueOf(auraColor)
 
+        actualizarBorde(cardRealizarBackup, auraColor)
+        actualizarBorde(cardRestaurarBackup, auraColor)
+
+        // Se remueve el fragmento manualmente sin tocar el Navigation Component
+        val callback = object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                requireActivity().supportFragmentManager.beginTransaction().remove(this@BackupFragment).commit()
+            }
+        }
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, callback)
+
         btnBackBackup.setOnClickListener {
-            requireActivity().onBackPressedDispatcher.onBackPressed()
+            requireActivity().supportFragmentManager.beginTransaction().remove(this@BackupFragment).commit()
         }
 
         cardRealizarBackup.setOnClickListener {
@@ -102,6 +116,26 @@ class BackupFragment : Fragment() {
         }
 
         return root
+    }
+
+    private fun actualizarBorde(view: View, color: Int) {
+        if (view is MaterialCardView) {
+            view.strokeColor = color
+        }
+
+        val bg = view.background?.mutate()
+        val density = resources.displayMetrics.density
+        val strokeWidth = (2 * density).toInt()
+
+        if (bg is LayerDrawable) {
+            val lastLayerIndex = bg.numberOfLayers - 1
+            if (lastLayerIndex >= 0) {
+                val strokeItem = bg.getDrawable(lastLayerIndex) as? GradientDrawable
+                strokeItem?.setStroke(strokeWidth, color)
+            }
+        } else if (bg is GradientDrawable) {
+            bg.setStroke(strokeWidth, color)
+        }
     }
 
     override fun onResume() {

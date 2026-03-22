@@ -6,10 +6,13 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.hardware.Sensor
+import android.hardware.SensorManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
+import android.view.WindowManager
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -20,6 +23,8 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.example.finance_code.R
 import com.example.finance_code.UpdateManager
+import com.example.finance_code.DiscreetModeManager
+import com.example.finance_code.ShakeDetector
 import com.example.finance_code.databinding.ActivityHomeBinding
 import com.example.finance_code.ui.login.AuthCheckActivity
 import com.example.finance_code.utils.ThemeUtils
@@ -29,6 +34,11 @@ class HomeActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityHomeBinding
     private lateinit var navController: NavController
+
+    // Variables para el sensor de movimiento
+    private var shakeDetector: ShakeDetector? = null
+    private var sensorManager: SensorManager? = null
+    private var accelerometer: Sensor? = null
 
     companion object {
         var isSessionActive: Boolean = false
@@ -40,18 +50,43 @@ class HomeActivity : AppCompatActivity() {
     ) { }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // 1. APLICA EL TEMA GLOBAL ANTES DE CREAR LA VISTA (Tiñe progreso, bordes, botones, TODO)
         setTheme(ThemeUtils.getAuraTheme(this))
-
         super.onCreate(savedInstanceState)
+
+        // Inicializar el Manager del modo discreto
+        DiscreetModeManager.initialize(this)
+
+        val sharedPrefs = getSharedPreferences("AppPrefe", Context.MODE_PRIVATE)
+
+        // CONECTANDO PRIVACIDAD: Aplicar bloqueo de capturas de pantalla
+        if (sharedPrefs.getBoolean("secure_screen", false)) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        }
+
+        // CONECTANDO PRIVACIDAD: Modo Discreto Automático al inicio
+        if (savedInstanceState == null && sharedPrefs.getBoolean("hide_balances_startup", false)) {
+            // Si está apagado, lo encendemos usando la función permitida
+            if (!DiscreetModeManager.isDiscreetModeActive) {
+                DiscreetModeManager.toggleMode()
+            }
+        }
+
+        // CONECTANDO PRIVACIDAD: Configuración del Sensor de Agitación (Shake)
+        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        accelerometer = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+
+        shakeDetector = ShakeDetector {
+            if (sharedPrefs.getBoolean("shake_mode_enabled", true)) {
+                DiscreetModeManager.toggleMode()
+                recreate() // Recarga la vista para aplicar el cambio visual en los saldos
+            }
+        }
+
         binding = ActivityHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // 2. Teñir la barra de notificaciones superior
         window.statusBarColor = ThemeUtils.getAuraColor(this)
-
         aplicarColoresGlobalesYAmoled()
-
         solicitarPermisos()
 
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_home) as NavHostFragment
@@ -74,8 +109,8 @@ class HomeActivity : AppCompatActivity() {
 
     private fun aplicarColoresGlobalesYAmoled() {
         val auraColor = ThemeUtils.getAuraColor(this)
-
         val navColorStateList = ThemeUtils.getBottomNavColorStateList(auraColor)
+
         binding.navView.itemIconTintList = navColorStateList
         binding.navView.itemTextColor = navColorStateList
 
@@ -88,7 +123,6 @@ class HomeActivity : AppCompatActivity() {
             binding.root.setBackgroundColor(Color.BLACK)
         }
 
-        // MAGIA: Esto intercepta TODOS los fragmentos y les pone el AMOLED negro puro automáticamente
         supportFragmentManager.registerFragmentLifecycleCallbacks(object : FragmentManager.FragmentLifecycleCallbacks() {
             override fun onFragmentViewCreated(fm: FragmentManager, f: Fragment, v: View, savedInstanceState: Bundle?) {
                 super.onFragmentViewCreated(fm, f, v, savedInstanceState)
@@ -137,10 +171,21 @@ class HomeActivity : AppCompatActivity() {
         isSessionActive = true
         aplicarColoresGlobalesYAmoled()
 
+        // Encender el sensor de agitación al regresar a la app
+        accelerometer?.let {
+            sensorManager?.registerListener(shakeDetector, it, SensorManager.SENSOR_DELAY_UI)
+        }
+
         if (pendingTargetFragment != null) {
             navigateDirectly(pendingTargetFragment!!)
             pendingTargetFragment = null
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // Apagar el sensor al salir de la app para ahorrar batería
+        sensorManager?.unregisterListener(shakeDetector)
     }
 
     override fun onNewIntent(intent: Intent?) {
