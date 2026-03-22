@@ -46,7 +46,7 @@ class SettingsFragment : Fragment() {
         val iconBackup = root.findViewById<ImageView>(R.id.iconBackup)
 
         val sharedPrefs = requireActivity().getSharedPreferences("AppPrefe", Context.MODE_PRIVATE)
-        var isDarkModeOn = sharedPrefs.getBoolean("modo_oscuro", false)
+        val isDarkModeOn = sharedPrefs.getBoolean("modo_oscuro", false)
 
         val auraColor = ThemeUtils.getAuraColor(requireContext())
         val auraColorStateList = ColorStateList.valueOf(auraColor)
@@ -83,7 +83,6 @@ class SettingsFragment : Fragment() {
             switchModoOscuro.isChecked = !switchModoOscuro.isChecked
         }
 
-        // AHORA REDIRIGE AL NUEVO FRAGMENTO DE PRIVACIDAD
         cardMenuPrivacy.setOnClickListener {
             requireActivity().supportFragmentManager.beginTransaction()
                 .add(android.R.id.content, PrivacyFragment())

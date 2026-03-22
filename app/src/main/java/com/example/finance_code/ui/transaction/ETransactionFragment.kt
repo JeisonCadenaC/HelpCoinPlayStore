@@ -1,6 +1,7 @@
 package com.example.finance_code.ui.transaction
 
 import android.app.AlertDialog
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
 import android.text.Editable
@@ -30,6 +31,7 @@ import com.example.finance_code.data.AppDB
 import com.example.finance_code.data.Categoria
 import com.example.finance_code.data.Movimiento
 import com.example.finance_code.data.MovimientoRepository
+import com.example.finance_code.utils.ThemeUtils // Importamos ThemeUtils
 import com.example.finance_code.viewmodel.MovimientoViewModel
 import com.example.finance_code.viewmodel.MovimientoViewModelFactory
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -85,9 +87,13 @@ class ETransactionFragment : Fragment(R.layout.fragment_e_transaction) {
         movimiento = requireArguments().getParcelable("movimiento", Movimiento::class.java)!!
 
         val etDescripcion = view.findViewById<EditText>(R.id.etDescripcion)
-        val btnGuardar = view.findViewById<Button>(R.id.btnGuardar)
-        val btnEliminar = view.findViewById<Button>(R.id.btnEliminar)
+        val btnGuardar = view.findViewById<MaterialButton>(R.id.btnGuardar)
+        val btnEliminar = view.findViewById<MaterialButton>(R.id.btnEliminar)
         etMonto = view.findViewById(R.id.etMonto)
+
+        // 🛑 APLICAR AURA AL BOTÓN GUARDAR 🛑
+        val auraColor = ThemeUtils.getAuraColor(requireContext())
+        btnGuardar.backgroundTintList = ColorStateList.valueOf(auraColor)
 
         cardSelectorCategoria = view.findViewById(R.id.cardSelectorCategoria)
         cardEmojiFondo = view.findViewById(R.id.cardEmojiFondo)
@@ -185,7 +191,6 @@ class ETransactionFragment : Fragment(R.layout.fragment_e_transaction) {
             }
         })
 
-        // Acción Guardar
         btnGuardar.setOnClickListener {
             val descripcionTexto = etDescripcion.text.toString()
             val montoTextoLimpio = etMonto.text.toString().replace(".", "").replace(",", ".")
@@ -219,7 +224,6 @@ class ETransactionFragment : Fragment(R.layout.fragment_e_transaction) {
             findNavController().popBackStack()
         }
 
-        // Acción Eliminar (con EL NUEVO DIÁLOGO PERSONALIZADO)
         btnEliminar.setOnClickListener {
             val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_confirm_delete, null)
             val dialog = AlertDialog.Builder(requireContext()).setView(dialogView).create()
@@ -292,6 +296,10 @@ class ETransactionFragment : Fragment(R.layout.fragment_e_transaction) {
 
         val rvCategorias = view.findViewById<RecyclerView>(R.id.rvCategorias)
         val btnCrear = view.findViewById<MaterialButton>(R.id.btnCrearCategoria)
+
+        // 🛑 APLICAR AURA AL BOTÓN DE CREAR CATEGORÍA 🛑
+        val auraColor = ThemeUtils.getAuraColor(requireContext())
+        btnCrear.backgroundTintList = ColorStateList.valueOf(auraColor)
 
         val adapter = CategoryAdapter(
             categorias = listaCategoriasEnDB,
@@ -367,6 +375,10 @@ class ETransactionFragment : Fragment(R.layout.fragment_e_transaction) {
         val etHex = view.findViewById<TextInputEditText>(R.id.etHexColor)
         val btnAplicar = view.findViewById<MaterialButton>(R.id.btnAplicarColorHex)
 
+        // 🛑 APLICAR AURA AL BOTÓN APLICAR COLOR 🛑
+        val auraColor = ThemeUtils.getAuraColor(requireContext())
+        btnAplicar.backgroundTintList = ColorStateList.valueOf(auraColor)
+
         val extendedPalette = listOf(
             "#F44336", "#E57373", "#D32F2F", "#B71C1C", "#E91E63", "#F06292", "#C2185B", "#880E4F",
             "#9C27B0", "#BA68C8", "#7B1FA2", "#4A148C", "#673AB7", "#9575CD", "#512DA8", "#311B92",
@@ -421,6 +433,10 @@ class ETransactionFragment : Fragment(R.layout.fragment_e_transaction) {
         val etNombre = view.findViewById<TextInputEditText>(R.id.etNombreCategoria)
         val llColorSelector = view.findViewById<LinearLayout>(R.id.llColorSelector)
         val btnGuardar = view.findViewById<MaterialButton>(R.id.btnGuardarCategoriaNueva)
+
+        // 🛑 APLICAR AURA AL BOTÓN GUARDAR CATEGORÍA 🛑
+        val auraColor = ThemeUtils.getAuraColor(requireContext())
+        btnGuardar.backgroundTintList = ColorStateList.valueOf(auraColor)
 
         val cardLivePreview = view.findViewById<MaterialCardView>(R.id.cardLivePreview)
         val tvLivePreviewEmoji = view.findViewById<TextView>(R.id.tvLivePreviewEmoji)

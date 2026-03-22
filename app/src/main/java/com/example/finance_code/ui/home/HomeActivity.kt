@@ -166,22 +166,26 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
+
     // NUEVA FUNCIÓN: Gestiona el registro del sensor dinámicamente según la preferencia
     fun updateShakeSensorRegistration() {
         val sharedPrefs = getSharedPreferences("AppPrefe", Context.MODE_PRIVATE)
+        // Por defecto, lo dejamos encendido si no existe la preferencia
         val isShakeEnabled = sharedPrefs.getBoolean("shake_mode_enabled", true)
 
         if (isShakeEnabled) {
             accelerometer?.let {
                 // Para evitar múltiples registros, primero lo desregistramos
                 sensorManager?.unregisterListener(shakeDetector)
+                // Registramos el listener. Ahora el sensor está escuchando.
                 sensorManager?.registerListener(shakeDetector, it, SensorManager.SENSOR_DELAY_UI)
             }
         } else {
-            // Desconecta el sensor completamente: ya no escucha ni gasta batería
+            // Desconecta el sensor completamente: ya no escucha ni gasta batería. NO MÁS VIBRACIONES.
             sensorManager?.unregisterListener(shakeDetector)
         }
     }
+// ...
 
     override fun onResume() {
         super.onResume()

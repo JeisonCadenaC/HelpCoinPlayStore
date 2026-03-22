@@ -302,7 +302,9 @@
             android:paddingVertical="14dp"
             android:text="Guardar cambios"
             android:textSize="16sp"
-            app:cornerRadius="12dp" />
+            app:cornerRadius="12dp"
+            android:textColor="@color/white"
+            app:backgroundTint="?attr/colorPrimary" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnEliminar"

@@ -3,9 +3,6 @@ package com.example.finance_code.ui.home
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
-import android.graphics.drawable.LayerDrawable
-import android.graphics.drawable.RippleDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -62,9 +59,7 @@ class MovimientosAdapter(
             val movimiento = item.movimiento
             val context = holder.itemView.context
 
-            // Aplicar color del Aura al borde de la tarjeta principal del item
-            val auraColor = ThemeUtils.getAuraColor(context)
-            actualizarBordeItem(holder.itemView, auraColor, context)
+            // SE ELIMINÓ LA LÓGICA DEL BORDE DE AURA PERMANENTE
 
             if (DiscreetModeManager.isDiscreetModeActive) {
                 holder.tvNombre.text = "***********"
@@ -109,7 +104,8 @@ class MovimientosAdapter(
 
                     holder.ivIcono.setImageResource(R.drawable.ic_arrow_up)
                     holder.ivIcono.imageTintList = ColorStateList.valueOf(verde)
-                    holder.iconContainer.setCardBackgroundColor(Color.parseColor("#E8F5E9"))
+                    // FONDO NEUTRO PARA EL ÍCONO (SIN TONOS VERDES)
+                    holder.iconContainer.setCardBackgroundColor(Color.parseColor("#F5F5F5"))
                 } else {
                     holder.tvMonto.text = "- $montoFormateado"
                     val rojo = Color.parseColor("#F44336")
@@ -117,7 +113,8 @@ class MovimientosAdapter(
 
                     holder.ivIcono.setImageResource(R.drawable.ic_arrow_down)
                     holder.ivIcono.imageTintList = ColorStateList.valueOf(rojo)
-                    holder.iconContainer.setCardBackgroundColor(Color.parseColor("#FFEBEE"))
+                    // FONDO NEUTRO PARA EL ÍCONO (SIN TONOS ROSAS)
+                    holder.iconContainer.setCardBackgroundColor(Color.parseColor("#F5F5F5"))
                 }
             }
 
@@ -141,32 +138,6 @@ class MovimientosAdapter(
 
     fun updateDiscreetMode() {
         notifyDataSetChanged()
-    }
-
-    // Función todoterreno adaptada para los items del RecyclerView
-    private fun actualizarBordeItem(view: View, color: Int, context: Context) {
-        val density = context.resources.displayMetrics.density
-        val strokeWidth = (2 * density).toInt()
-
-        if (view is com.google.android.material.card.MaterialCardView) {
-            view.strokeColor = color
-            view.strokeWidth = strokeWidth
-        }
-
-        var bg = view.background?.mutate()
-        if (bg is RippleDrawable) {
-            bg = bg.getDrawable(0)?.mutate()
-        }
-
-        if (bg is LayerDrawable) {
-            val lastLayerIndex = bg.numberOfLayers - 1
-            if (lastLayerIndex >= 0) {
-                val strokeItem = bg.getDrawable(lastLayerIndex) as? GradientDrawable
-                strokeItem?.setStroke(strokeWidth, color)
-            }
-        } else if (bg is GradientDrawable) {
-            bg.setStroke(strokeWidth, color)
-        }
     }
 
     inner class HeaderViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

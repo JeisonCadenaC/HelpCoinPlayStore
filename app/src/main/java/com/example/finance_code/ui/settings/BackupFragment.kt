@@ -15,7 +15,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
-import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -33,6 +32,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.Scope
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.api.services.drive.DriveScopes
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
@@ -95,7 +95,6 @@ class BackupFragment : Fragment() {
         actualizarBorde(cardRealizarBackup, auraColor)
         actualizarBorde(cardRestaurarBackup, auraColor)
 
-        // Se remueve el fragmento manualmente sin tocar el Navigation Component
         val callback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 requireActivity().supportFragmentManager.beginTransaction().remove(this@BackupFragment).commit()
@@ -107,8 +106,9 @@ class BackupFragment : Fragment() {
             requireActivity().supportFragmentManager.beginTransaction().remove(this@BackupFragment).commit()
         }
 
+        // 🛑 AHORA LANZA EL DIÁLOGO DE CONFIRMACIÓN 🛑
         cardRealizarBackup.setOnClickListener {
-            iniciarProcesoBackup()
+            mostrarDialogoConfirmarBackup()
         }
 
         cardRestaurarBackup.setOnClickListener {
@@ -177,6 +177,29 @@ class BackupFragment : Fragment() {
         return googleClient.signInIntent
     }
 
+    // =========================================================
+    // LÓGICA DE CONFIRMACIÓN Y CREACIÓN DE BACKUP
+    // =========================================================
+
+    private fun mostrarDialogoConfirmarBackup() {
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_confirm_backup, null)
+        val btnRespaldar = dialogView.findViewById<Button>(R.id.btnConfirmarBackup)
+        val btnCancelar = dialogView.findViewById<Button>(R.id.btnCancelarBackup)
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.show()
+
+        btnCancelar.setOnClickListener { dialog.dismiss() }
+        btnRespaldar.setOnClickListener {
+            dialog.dismiss()
+            iniciarProcesoBackup()
+        }
+    }
+
     private fun iniciarProcesoBackup() {
         if (esUsuarioGoogle()) {
             val account = GoogleSignIn.getLastSignedInAccount(requireContext())
@@ -191,20 +214,6 @@ class BackupFragment : Fragment() {
         }
     }
 
-    private fun iniciarProcesoRestauracion() {
-        if (esUsuarioGoogle()) {
-            val account = GoogleSignIn.getLastSignedInAccount(requireContext())
-            if (account != null && account.grantedScopes.contains(Scope(DriveScopes.DRIVE_APPDATA))) {
-                mostrarDialogoConfirmarRestauracion(account)
-            } else {
-                googleSignInRestoreLauncher.launch(getGoogleSignInIntent())
-            }
-        } else {
-            Toast.makeText(requireContext(), "Inicia sesión con Google para restaurar", Toast.LENGTH_SHORT).show()
-            googleSignInRestoreLauncher.launch(getGoogleSignInIntent())
-        }
-    }
-
     private fun proceedWithBackup(googleAccount: GoogleSignInAccount) {
         if (userEmail == null || userUID == null) {
             Toast.makeText(requireContext(), "Error: Datos de usuario incompletos", Toast.LENGTH_SHORT).show()
@@ -212,12 +221,14 @@ class BackupFragment : Fragment() {
         }
 
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_backup, null)
-        val progressBar = dialogView.findViewById<ProgressBar>(R.id.progressBarBackup)
+        val progressBar = dialogView.findViewById<LinearProgressIndicator>(R.id.progressBarBackup)
         val txtProgress = dialogView.findViewById<TextView>(R.id.txtProgressBackup)
 
-        val builder = AlertDialog.Builder(requireContext())
-        builder.setView(dialogView).setCancelable(false)
-        val customProgressDialog = builder.create()
+        val customProgressDialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .setCancelable(false)
+            .create()
+
         customProgressDialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         customProgressDialog.show()
 
@@ -259,20 +270,41 @@ class BackupFragment : Fragment() {
         }
     }
 
+    // =========================================================
+    // LÓGICA DE CONFIRMACIÓN Y RESTAURACIÓN
+    // =========================================================
+
+    private fun iniciarProcesoRestauracion() {
+        if (esUsuarioGoogle()) {
+            val account = GoogleSignIn.getLastSignedInAccount(requireContext())
+            if (account != null && account.grantedScopes.contains(Scope(DriveScopes.DRIVE_APPDATA))) {
+                mostrarDialogoConfirmarRestauracion(account)
+            } else {
+                googleSignInRestoreLauncher.launch(getGoogleSignInIntent())
+            }
+        } else {
+            Toast.makeText(requireContext(), "Inicia sesión con Google para restaurar", Toast.LENGTH_SHORT).show()
+            googleSignInRestoreLauncher.launch(getGoogleSignInIntent())
+        }
+    }
+
     private fun mostrarDialogoConfirmarRestauracion(googleAccount: GoogleSignInAccount) {
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_confirm_restore, null)
         val btnRestaurar = dialogView.findViewById<Button>(R.id.btnConfirmarRestaurar)
         val btnCancelar = dialogView.findViewById<Button>(R.id.btnCancelarRestaurar)
 
-        val dialog = AlertDialog.Builder(requireContext()).setView(dialogView).create()
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.show()
 
         btnCancelar.setOnClickListener { dialog.dismiss() }
         btnRestaurar.setOnClickListener {
             dialog.dismiss()
             proceedWithRestore(googleAccount)
         }
-        dialog.show()
     }
 
     private fun proceedWithRestore(googleAccount: GoogleSignInAccount) {
@@ -282,12 +314,14 @@ class BackupFragment : Fragment() {
         }
 
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_restore, null)
-        val progressBar = dialogView.findViewById<ProgressBar>(R.id.progressBarRestore)
+        val progressBar = dialogView.findViewById<LinearProgressIndicator>(R.id.progressBarRestore)
         val txtProgress = dialogView.findViewById<TextView>(R.id.txtProgressRestore)
 
-        val builder = AlertDialog.Builder(requireContext())
-        builder.setView(dialogView).setCancelable(false)
-        val customProgressDialog = builder.create()
+        val customProgressDialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .setCancelable(false)
+            .create()
+
         customProgressDialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         customProgressDialog.show()
 

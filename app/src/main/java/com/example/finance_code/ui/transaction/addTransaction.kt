@@ -4,6 +4,7 @@ import android.app.Activity
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
 import android.speech.RecognizerIntent
@@ -31,6 +32,7 @@ import com.example.finance_code.data.Categoria
 import com.example.finance_code.data.EXTRA_WIDGET_TRANSACTION_TYPE
 import com.example.finance_code.data.Movimiento
 import com.example.finance_code.data.MovimientoRepository
+import com.example.finance_code.utils.ThemeUtils // Importe crucial
 import com.example.finance_code.viewmodel.MovimientoViewModel
 import com.example.finance_code.viewmodel.MovimientoViewModelFactory
 import com.google.android.material.appbar.MaterialToolbar
@@ -96,6 +98,10 @@ class addTransaction : AppCompatActivity() {
         cardEgreso = findViewById(R.id.cardEgreso)
         val btnGuardar = findViewById<MaterialButton>(R.id.btnGuardar)
         val btnVoiceInput = findViewById<ImageButton>(R.id.btnVoiceInput)
+
+        // 🛑 APLICAR AURA AL BOTÓN PRINCIPAL DE GUARDAR 🛑
+        val auraColor = ThemeUtils.getAuraColor(this)
+        btnGuardar.backgroundTintList = ColorStateList.valueOf(auraColor)
 
         cardSelectorCategoria = findViewById(R.id.cardSelectorCategoria)
         cardEmojiFondo = findViewById(R.id.cardEmojiFondo)
@@ -301,6 +307,10 @@ class addTransaction : AppCompatActivity() {
         val rvCategorias = view.findViewById<RecyclerView>(R.id.rvCategorias)
         val btnCrear = view.findViewById<MaterialButton>(R.id.btnCrearCategoria)
 
+        // 🛑 APLICAR AURA AL BOTÓN CREAR 🛑
+        val auraColor = ThemeUtils.getAuraColor(this)
+        btnCrear.backgroundTintList = ColorStateList.valueOf(auraColor)
+
         val adapter = CategoryAdapter(
             categorias = listaCategoriasEnDB,
             onCategoryClick = { categoriaSeleccionada ->
@@ -375,6 +385,10 @@ class addTransaction : AppCompatActivity() {
         val etHex = view.findViewById<TextInputEditText>(R.id.etHexColor)
         val btnAplicar = view.findViewById<MaterialButton>(R.id.btnAplicarColorHex)
 
+        // 🛑 APLICAR AURA AL BOTÓN APLICAR 🛑
+        val auraColor = ThemeUtils.getAuraColor(this)
+        btnAplicar.backgroundTintList = ColorStateList.valueOf(auraColor)
+
         val extendedPalette = listOf(
             "#F44336", "#E57373", "#D32F2F", "#B71C1C", "#E91E63", "#F06292", "#C2185B", "#880E4F",
             "#9C27B0", "#BA68C8", "#7B1FA2", "#4A148C", "#673AB7", "#9575CD", "#512DA8", "#311B92",
@@ -430,6 +444,10 @@ class addTransaction : AppCompatActivity() {
         val etPalabrasClave = view.findViewById<TextInputEditText>(R.id.etPalabrasClave)
         val llColorSelector = view.findViewById<LinearLayout>(R.id.llColorSelector)
         val btnGuardar = view.findViewById<MaterialButton>(R.id.btnGuardarCategoriaNueva)
+
+        // 🛑 APLICAR AURA AL BOTÓN GUARDAR CATEGORÍA 🛑
+        val auraColor = ThemeUtils.getAuraColor(this)
+        btnGuardar.backgroundTintList = ColorStateList.valueOf(auraColor)
 
         val cardLivePreview = view.findViewById<MaterialCardView>(R.id.cardLivePreview)
         val tvLivePreviewEmoji = view.findViewById<TextView>(R.id.tvLivePreviewEmoji)
@@ -579,23 +597,24 @@ class addTransaction : AppCompatActivity() {
     private fun seleccionarTipo(tipo: Int) {
         tipoSeleccionado = tipo
 
-        val colorIngreso = Color.parseColor("#4CAF50")
-        val colorEgreso = Color.parseColor("#F44336")
-        val colorInactive = Color.parseColor("#808080")
+        val colorIngreso = Color.parseColor("#4CAF50") // Verde
+        val colorEgreso = Color.parseColor("#F44336")  // Rojo
 
-        if (tipo == 1) {
+        if (tipo == 1) { // Ingreso Seleccionado
             cardIngreso.strokeColor = colorIngreso
             cardIngreso.strokeWidth = 6
             cardIngreso.setCardBackgroundColor(Color.argb(38, Color.red(colorIngreso), Color.green(colorIngreso), Color.blue(colorIngreso)))
-            cardEgreso.strokeColor = colorInactive
-            cardEgreso.strokeWidth = 2
+
+            // Egreso Inactivo (Limpio)
+            cardEgreso.strokeWidth = 0 // Sin borde
             cardEgreso.setCardBackgroundColor(Color.TRANSPARENT)
-        } else {
+        } else { // Egreso Seleccionado
             cardEgreso.strokeColor = colorEgreso
             cardEgreso.strokeWidth = 6
             cardEgreso.setCardBackgroundColor(Color.argb(38, Color.red(colorEgreso), Color.green(colorEgreso), Color.blue(colorEgreso)))
-            cardIngreso.strokeColor = colorInactive
-            cardIngreso.strokeWidth = 2
+
+            // Ingreso Inactivo (Limpio)
+            cardIngreso.strokeWidth = 0 // Sin borde
             cardIngreso.setCardBackgroundColor(Color.TRANSPARENT)
         }
     }

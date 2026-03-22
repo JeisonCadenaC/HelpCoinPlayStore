@@ -16,7 +16,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="28dp"
-        android:gravity="center">
+        android:gravity="center_horizontal">
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -28,8 +28,7 @@
             <ImageView
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:src="@drawable/ic_restore_backup"
-                app:tint="?attr/colorPrimary" />
+                android:src="@drawable/help_coin_logotp" />
 
             <ImageView
                 android:layout_width="24dp"
@@ -41,47 +40,54 @@
             <ImageView
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:src="@drawable/help_coin_logotp" />
+                android:src="@drawable/ic_drive_add"
+                app:tint="?attr/colorPrimary" />
         </LinearLayout>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Restaurando"
+            android:text="¿Crear Respaldo?"
             android:textSize="20sp"
             android:fontFamily="@font/montserrat_bold"
             android:textColor="?attr/colorOnSurface"
-            android:layout_marginBottom="8dp"/>
+            android:layout_marginBottom="12dp"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Recuperando tu información..."
+            android:text="Se guardarán tus movimientos, metas y configuraciones de forma segura en Google Drive."
             android:textSize="14sp"
             android:fontFamily="@font/montserrat_regular"
             android:textColor="?attr/colorOnSurfaceVariant"
-            android:layout_marginBottom="24dp"
-            android:textAlignment="center"/>
+            android:gravity="center"
+            android:layout_marginBottom="28dp"/>
 
-        <com.google.android.material.progressindicator.LinearProgressIndicator
-            android:id="@+id/progressBarRestore"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:trackThickness="8dp"
-            app:trackCornerRadius="4dp"
-            android:progress="0"
-            app:indicatorColor="?attr/colorPrimary"
-            app:trackColor="#1F6200EE" />
+            android:orientation="horizontal"
+            android:gravity="center">
 
-        <TextView
-            android:id="@+id/txtProgressRestore"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="0%"
-            android:textSize="13sp"
-            android:fontFamily="@font/montserrat_semibold"
-            android:textColor="?attr/colorPrimary"
-            android:layout_marginTop="12dp"/>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCancelarBackup"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cancelar"
+                android:fontFamily="@font/montserrat_semibold"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:layout_marginEnd="8dp"/>
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnConfirmarBackup"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Respaldar"
+                android:fontFamily="@font/montserrat_bold"
+                app:backgroundTint="?attr/colorPrimary"
+                android:textColor="@color/white"/>
+        </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
