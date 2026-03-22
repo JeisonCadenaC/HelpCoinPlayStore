@@ -44,6 +44,12 @@
         tools:layout="@layout/fragment_perfil" />
 
     <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.example.finance_code.ui.settings.SettingsFragment"
+        android:label="Ajustes"
+        tools:layout="@layout/fragment_settings" />
+
+    <fragment
         android:id="@+id/eTransactionFragment"
         android:name="com.example.finance_code.ui.transaction.ETransactionFragment"
         android:label="Transacción"

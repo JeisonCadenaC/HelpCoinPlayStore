@@ -1,14 +1,11 @@
 @file:Suppress("DEPRECATION")
 package com.example.finance_code.ui.home
 
-import android.app.Activity
 import android.app.AlertDialog
 import android.app.ProgressDialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -16,38 +13,27 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
-import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.appcompat.widget.SwitchCompat
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.example.finance_code.R
 import com.example.finance_code.data.AppDB
-import com.example.finance_code.data.DriveService
 import com.example.finance_code.databinding.FragmentPerfilBinding
+import com.example.finance_code.ui.login.LoginActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.api.ApiException
-import com.google.android.gms.common.api.Scope
 import com.google.android.material.textfield.TextInputEditText
-import com.google.api.services.drive.DriveScopes
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
-import com.example.finance_code.ui.login.LoginActivity
 import java.io.File
 import java.io.FileOutputStream
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 class PerfilFragment : Fragment() {
 
@@ -62,7 +48,6 @@ class PerfilFragment : Fragment() {
     private lateinit var tvNombreUsuario: TextView
     private lateinit var tvEmailUsuario: TextView
     private lateinit var imgEditarNombre: ImageView
-    private lateinit var switchModoOscuro: SwitchCompat
 
     private val KEY_USER_NAME = "user_name"
     private val KEY_IMAGE_PATH = "profile_image_path"
@@ -72,36 +57,6 @@ class PerfilFragment : Fragment() {
             if (uri != null) {
                 cargarImagenSeleccionada(uri)
                 guardarImagenLocalmente(uri)
-            }
-        }
-
-    private val googleSignInBackupLauncher =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                try {
-                    val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-                    val account = task.getResult(ApiException::class.java)
-                    if (account != null) {
-                        proceedWithBackup(account)
-                    }
-                } catch (e: ApiException) {
-                    Toast.makeText(requireContext(), "Error al seleccionar cuenta", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-
-    private val googleSignInRestoreLauncher =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                try {
-                    val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-                    val account = task.getResult(ApiException::class.java)
-                    if (account != null) {
-                        mostrarDialogoConfirmarRestauracion(account)
-                    }
-                } catch (e: ApiException) {
-                    Toast.makeText(requireContext(), "Error al seleccionar cuenta", Toast.LENGTH_SHORT).show()
-                }
             }
         }
 
@@ -120,7 +75,7 @@ class PerfilFragment : Fragment() {
             auth = FirebaseAuth.getInstance()
             val currentUser = auth.currentUser
             if (currentUser == null) {
-                cerrarSesion()
+                cerrarSesionForzada()
                 return
             }
             userUID = currentUser.uid
@@ -128,7 +83,7 @@ class PerfilFragment : Fragment() {
 
             if(userEmail == null) {
                 Toast.makeText(requireContext(), "Error: Email de usuario nulo", Toast.LENGTH_SHORT).show()
-                cerrarSesion()
+                cerrarSesionForzada()
                 return
             }
 
@@ -141,49 +96,22 @@ class PerfilFragment : Fragment() {
         tvNombreUsuario = binding.tvNombreUsuario
         tvEmailUsuario = binding.tvEmailUsuario
         imgEditarNombre = binding.imgEditarNombre
-        switchModoOscuro = binding.switchModoOscuro
 
-        val tvVersionApp = view.findViewById<TextView>(R.id.tvVersionApp)
-        if (tvVersionApp != null) {
-            try {
-                val packageInfo = requireContext().packageManager.getPackageInfo(requireContext().packageName, 0)
-                tvVersionApp.text = "Versión: ${packageInfo.versionName}"
-            } catch (e: Exception) {
-                tvVersionApp.text = "Versión: Desconocida"
-            }
-        } else {
-            try {
-                val packageInfo = requireContext().packageManager.getPackageInfo(requireContext().packageName, 0)
-                binding.tvVersionApp.text = "Versión: ${packageInfo.versionName}"
-            } catch (e: Exception) {
-            }
+        try {
+            val packageInfo = requireContext().packageManager.getPackageInfo(requireContext().packageName, 0)
+            binding.tvVersionApp.text = "Versión: ${packageInfo.versionName} (Evolution)"
+        } catch (e: Exception) {
+            binding.tvVersionApp.text = "Versión: Desconocida"
         }
 
         cargarDatosUsuario()
-        cargarPreferenciasModoOscuro()
-
-        binding.btnCerrarSesion.setOnClickListener {
-            cerrarSesion()
-        }
 
         binding.cardViewImagen.setOnClickListener {
-            lanzarSelectorFoto()
+            photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         }
 
         imgEditarNombre.setOnClickListener {
             mostrarDialogoEditarNombre()
-        }
-
-        switchModoOscuro.setOnCheckedChangeListener { _, isChecked ->
-            configurarModoOscuro(isChecked)
-        }
-
-        binding.btnHacerBackup.setOnClickListener {
-            iniciarProcesoBackup()
-        }
-
-        binding.btnRestaurar.setOnClickListener {
-            iniciarProcesoRestauracion()
         }
 
         if (esUsuarioGoogle()) {
@@ -204,7 +132,6 @@ class PerfilFragment : Fragment() {
         }
 
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_cambiar_contrasena, null)
-
         val etContrasenaActual = dialogView.findViewById<TextInputEditText>(R.id.etContrasenaActual)
         val etNuevaContrasena = dialogView.findViewById<TextInputEditText>(R.id.etNuevaContrasena)
         val etConfirmarContrasena = dialogView.findViewById<TextInputEditText>(R.id.etConfirmarContrasena)
@@ -218,9 +145,7 @@ class PerfilFragment : Fragment() {
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
         dialog.show()
 
-        btnCancelar.setOnClickListener {
-            dialog.dismiss()
-        }
+        btnCancelar.setOnClickListener { dialog.dismiss() }
 
         btnGuardar.setOnClickListener {
             val actualPass = etContrasenaActual.text.toString()
@@ -259,11 +184,7 @@ class PerfilFragment : Fragment() {
                 if (reauthTask.isSuccessful) {
                     actualizarContrasena(user, nuevaPass, progressDialog, dialog)
                 } else {
-                    try {
-                        throw reauthTask.exception!!
-                    } catch (e: Exception) {
-                        Toast.makeText(requireContext(), "Error de autenticación: Contraseña actual incorrecta.", Toast.LENGTH_LONG).show()
-                    }
+                    Toast.makeText(requireContext(), "Error de autenticación: Contraseña actual incorrecta.", Toast.LENGTH_LONG).show()
                 }
             }
     }
@@ -283,7 +204,7 @@ class PerfilFragment : Fragment() {
                         throw updateTask.exception!!
                     } catch (e: FirebaseAuthRecentLoginRequiredException) {
                         Toast.makeText(requireContext(), "Error de sesión. Por favor, vuelve a iniciar sesión.", Toast.LENGTH_LONG).show()
-                        cerrarSesion()
+                        cerrarSesionForzada()
                     } catch (e: Exception) {
                         Toast.makeText(requireContext(), "Error al actualizar: ${e.message}", Toast.LENGTH_LONG).show()
                     }
@@ -291,196 +212,10 @@ class PerfilFragment : Fragment() {
             }
     }
 
-    private fun getDbIdentifier(email: String): String {
-        return email.replace(Regex("[^a-zA-Z0-9]"), "_")
-    }
-
     private fun esUsuarioGoogle(): Boolean {
         return auth.currentUser?.providerData?.any {
             it.providerId == GoogleAuthProvider.PROVIDER_ID
         } ?: false
-    }
-
-    private fun getGoogleSignInIntent(): Intent {
-        val googleConf = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(getString(R.string.default_web_client_id))
-            .requestEmail()
-            .requestScopes(Scope(DriveScopes.DRIVE_APPDATA))
-            .build()
-        val googleClient = GoogleSignIn.getClient(requireActivity(), googleConf)
-        return googleClient.signInIntent
-    }
-
-    private fun iniciarProcesoBackup() {
-        if (esUsuarioGoogle()) {
-            val account = GoogleSignIn.getLastSignedInAccount(requireContext())
-            if (account != null && account.grantedScopes.contains(Scope(DriveScopes.DRIVE_APPDATA))) {
-                proceedWithBackup(account)
-            } else {
-                googleSignInBackupLauncher.launch(getGoogleSignInIntent())
-            }
-        } else {
-            Toast.makeText(requireContext(), "Selecciona una cuenta de Google para guardar", Toast.LENGTH_SHORT).show()
-            googleSignInBackupLauncher.launch(getGoogleSignInIntent())
-        }
-    }
-
-    private fun iniciarProcesoRestauracion() {
-        if (esUsuarioGoogle()) {
-            val account = GoogleSignIn.getLastSignedInAccount(requireContext())
-            if (account != null && account.grantedScopes.contains(Scope(DriveScopes.DRIVE_APPDATA))) {
-                mostrarDialogoConfirmarRestauracion(account)
-            } else {
-                googleSignInRestoreLauncher.launch(getGoogleSignInIntent())
-            }
-        } else {
-            Toast.makeText(requireContext(), "Selecciona la cuenta de Google de la que quieres restaurar", Toast.LENGTH_SHORT).show()
-            googleSignInRestoreLauncher.launch(getGoogleSignInIntent())
-        }
-    }
-
-    private fun reiniciarApp() {
-        val intent = Intent(requireContext(), SplashActivity::class.java)
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        startActivity(intent)
-        requireActivity().finish()
-        Runtime.getRuntime().exit(0)
-    }
-
-    private fun proceedWithBackup(googleAccount: GoogleSignInAccount) {
-        if (userEmail == null || userUID == null) {
-            Toast.makeText(requireContext(), "Error: Datos de usuario incompletos", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_backup, null)
-        val progressBar = dialogView.findViewById<ProgressBar>(R.id.progressBarBackup)
-        val txtProgress = dialogView.findViewById<TextView>(R.id.txtProgressBackup)
-
-        val builder = AlertDialog.Builder(requireContext())
-        builder.setView(dialogView)
-        builder.setCancelable(false)
-        val customProgressDialog = builder.create()
-        customProgressDialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-        customProgressDialog.show()
-
-        val progressJob = viewLifecycleOwner.lifecycleScope.launch {
-            var progress = 0
-            while (progress < 95) {
-                progress += (2..5).random()
-                if (progress > 95) progress = 95
-                progressBar.progress = progress
-                txtProgress.text = "Subiendo datos... $progress%"
-                delay(40)
-            }
-        }
-
-        val dbIdentifier = getDbIdentifier(userEmail!!)
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                AppDB.checkpointAndClose(requireContext(), userEmail!!)
-                val driveService = DriveService(requireContext(), googleAccount, dbIdentifier)
-                val fileId = driveService.uploadFullBackup(userEmail!!, userUID!!)
-
-                progressJob.cancel()
-                progressBar.progress = 100
-                txtProgress.text = "¡Completado! 100%"
-                delay(500)
-
-                customProgressDialog.dismiss()
-
-                if (fileId != null) {
-                    Toast.makeText(requireContext(), "Copia de seguridad guardada exitosamente", Toast.LENGTH_LONG).show()
-                } else {
-                    Toast.makeText(requireContext(), "Error al subir el archivo a Drive", Toast.LENGTH_LONG).show()
-                }
-            } catch (e: Exception) {
-                progressJob.cancel()
-                customProgressDialog.dismiss()
-                Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_LONG).show()
-            }
-        }
-    }
-
-    // --- NUEVO DIALOGO BONITO DE CONFIRMAR RESTAURACION ---
-    private fun mostrarDialogoConfirmarRestauracion(googleAccount: GoogleSignInAccount) {
-        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_confirm_restore, null)
-
-        val btnRestaurar = dialogView.findViewById<Button>(R.id.btnConfirmarRestaurar)
-        val btnCancelar = dialogView.findViewById<Button>(R.id.btnCancelarRestaurar)
-
-        val dialog = AlertDialog.Builder(requireContext())
-            .setView(dialogView)
-            .create()
-
-        // Fondo transparente para que se vean las esquinas redondeadas
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-
-        btnCancelar.setOnClickListener { dialog.dismiss() }
-        btnRestaurar.setOnClickListener {
-            dialog.dismiss()
-            proceedWithRestore(googleAccount)
-        }
-
-        dialog.show()
-    }
-
-    private fun proceedWithRestore(googleAccount: GoogleSignInAccount) {
-        if (userEmail == null || userUID == null) {
-            Toast.makeText(requireContext(), "Error: Datos de usuario incompletos", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_restore, null)
-        val progressBar = dialogView.findViewById<ProgressBar>(R.id.progressBarRestore)
-        val txtProgress = dialogView.findViewById<TextView>(R.id.txtProgressRestore)
-
-        val builder = AlertDialog.Builder(requireContext())
-        builder.setView(dialogView)
-        builder.setCancelable(false)
-        val customProgressDialog = builder.create()
-        customProgressDialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-        customProgressDialog.show()
-
-        val progressJob = viewLifecycleOwner.lifecycleScope.launch {
-            var progress = 0
-            while (progress < 95) {
-                progress += (2..5).random()
-                if (progress > 95) progress = 95
-                progressBar.progress = progress
-                txtProgress.text = "Descargando datos... $progress%"
-                delay(40)
-            }
-        }
-
-        val dbIdentifier = getDbIdentifier(userEmail!!)
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                AppDB.closeInstance()
-                val driveService = DriveService(requireContext(), googleAccount, dbIdentifier)
-                val exito = driveService.restoreFullBackup(userEmail!!, userUID!!)
-
-                progressJob.cancel()
-
-                if (exito) {
-                    progressBar.progress = 100
-                    txtProgress.text = "¡Completado! 100%"
-                    delay(500)
-                    customProgressDialog.dismiss()
-                    Toast.makeText(requireContext(), "Restauración completada. Reiniciando...", Toast.LENGTH_LONG).show()
-                    reiniciarApp()
-                } else {
-                    customProgressDialog.dismiss()
-                    Toast.makeText(requireContext(), "No se encontró copia completa para este usuario", Toast.LENGTH_LONG).show()
-                }
-            } catch (e: Exception) {
-                progressJob.cancel()
-                customProgressDialog.dismiss()
-                Toast.makeText(requireContext(), "Error al restaurar: ${e.message}", Toast.LENGTH_LONG).show()
-            }
-        }
     }
 
     private fun getPrefs(): SharedPreferences? {
@@ -494,14 +229,8 @@ class PerfilFragment : Fragment() {
         return "${uid}_profile_image.jpg"
     }
 
-    private fun lanzarSelectorFoto() {
-        photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-    }
-
     private fun cargarImagenSeleccionada(uri: Uri) {
-        Glide.with(this)
-            .load(uri)
-            .into(imgPerfil)
+        Glide.with(this).load(uri).into(imgPerfil)
     }
 
     private fun guardarImagenLocalmente(uri: Uri) {
@@ -522,22 +251,18 @@ class PerfilFragment : Fragment() {
         }
     }
 
-
     private fun mostrarDialogoEditarNombre() {
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_edit_name, null)
-
         val etNombre = dialogView.findViewById<TextInputEditText>(R.id.etNuevoNombre)
         val btnGuardar = dialogView.findViewById<Button>(R.id.btnGuardarNombre)
         val btnCancelar = dialogView.findViewById<Button>(R.id.btnCancelarNombre)
 
-        // Rellenar con el nombre actual
         etNombre.setText(tvNombreUsuario.text)
 
         val dialog = AlertDialog.Builder(requireContext())
             .setView(dialogView)
             .create()
 
-        // Fondo transparente para que se vean las esquinas redondeadas
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
 
         btnCancelar.setOnClickListener { dialog.dismiss() }
@@ -545,16 +270,12 @@ class PerfilFragment : Fragment() {
         btnGuardar.setOnClickListener {
             val nuevoNombre = etNombre.text.toString().trim()
             if (nuevoNombre.isNotEmpty()) {
-                val prefs = getPrefs()
-                prefs?.edit()?.putString(KEY_USER_NAME, nuevoNombre)?.commit()
+                getPrefs()?.edit()?.putString(KEY_USER_NAME, nuevoNombre)?.apply()
                 tvNombreUsuario.text = nuevoNombre
             }
             dialog.dismiss()
         }
-
         dialog.show()
-
-        // Poner el foco en el campo de texto y mostrar el teclado si lo deseas
         etNombre.requestFocus()
         etNombre.selectAll()
     }
@@ -572,60 +293,20 @@ class PerfilFragment : Fragment() {
         if (rutaImagenGuardada != null) {
             val file = File(rutaImagenGuardada)
             if (file.exists()) {
-                Glide.with(this)
-                    .load(file)
-                    .placeholder(R.drawable.ic_perfil)
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .skipMemoryCache(true)
-                    .into(imgPerfil)
+                Glide.with(this).load(file).placeholder(R.drawable.ic_perfil).diskCacheStrategy(DiskCacheStrategy.NONE).skipMemoryCache(true).into(imgPerfil)
+            } else if (googlePhotoUrl != null) {
+                Glide.with(this).load(googlePhotoUrl).placeholder(R.drawable.ic_perfil).into(imgPerfil)
             } else {
-                if (googlePhotoUrl != null) {
-                    Glide.with(this)
-                        .load(googlePhotoUrl)
-                        .placeholder(R.drawable.ic_perfil)
-                        .into(imgPerfil)
-                } else {
-                    Glide.with(this)
-                        .load(R.drawable.ic_perfil)
-                        .into(imgPerfil)
-                }
+                Glide.with(this).load(R.drawable.ic_perfil).into(imgPerfil)
             }
         } else if (googlePhotoUrl != null) {
-            Glide.with(this)
-                .load(googlePhotoUrl)
-                .placeholder(R.drawable.ic_perfil)
-                .into(imgPerfil)
+            Glide.with(this).load(googlePhotoUrl).placeholder(R.drawable.ic_perfil).into(imgPerfil)
         } else {
-            Glide.with(this)
-                .load(R.drawable.ic_perfil)
-                .into(imgPerfil)
+            Glide.with(this).load(R.drawable.ic_perfil).into(imgPerfil)
         }
     }
 
-    private fun cargarPreferenciasModoOscuro() {
-        val sharedPreferences = requireActivity().getSharedPreferences("AppPrefe", Context.MODE_PRIVATE)
-        val modoOscuroActivado = sharedPreferences.getBoolean("modo_oscuro", false)
-        switchModoOscuro.isChecked = modoOscuroActivado
-    }
-
-    private fun configurarModoOscuro(activado: Boolean) {
-        val sharedPreferences = requireActivity().getSharedPreferences("AppPrefe", Context.MODE_PRIVATE)
-        with(sharedPreferences.edit()) {
-            putBoolean("modo_oscuro", activado)
-            apply()
-        }
-        aplicarModoOscuro(activado)
-    }
-
-    private fun aplicarModoOscuro(activado: Boolean) {
-        if (activado) {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-        } else {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-        }
-    }
-
-    private fun cerrarSesion() {
+    private fun cerrarSesionForzada() {
         auth.signOut()
 
         val googleConf = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)

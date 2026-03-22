@@ -29,6 +29,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.finance_code.R
 import com.example.finance_code.data.AppDB
 import com.example.finance_code.data.Categoria
@@ -58,6 +59,7 @@ import com.google.android.material.chip.ChipGroup
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
+import java.io.File
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -149,6 +151,28 @@ class InicioFragment : Fragment() {
             binding.txtHolaNombre.text = "¡Hola, Bienvenido!"
         }
 
+        // 🛑 LÓGICA DE FOTO Y NAVEGACIÓN A PERFIL DISCRETO 🛑
+        val btnIrPerfil = view.findViewById<ImageView>(R.id.btnIrPerfil)
+        if (uid != null) {
+            val prefs = requireContext().getSharedPreferences("${uid}_UserProfilePrefs", Context.MODE_PRIVATE)
+            val rutaImagenGuardada = prefs.getString("profile_image_path", null)
+            val googlePhotoUrl = prefs.getString("google_photo_url", null)
+
+            if (rutaImagenGuardada != null && File(rutaImagenGuardada).exists()) {
+                btnIrPerfil.setPadding(0, 0, 0, 0)
+                Glide.with(this).load(File(rutaImagenGuardada)).centerCrop().into(btnIrPerfil)
+            } else if (googlePhotoUrl != null) {
+                btnIrPerfil.setPadding(0, 0, 0, 0)
+                Glide.with(this).load(googlePhotoUrl).centerCrop().into(btnIrPerfil)
+            } else {
+                btnIrPerfil.setPadding(16, 16, 16, 16)
+            }
+        }
+        btnIrPerfil.setOnClickListener {
+            findNavController().navigate(R.id.perfilFragment)
+        }
+        // 🛑 FIN DE LA LÓGICA DEL BOTÓN 🛑
+
         if (userEmail != "default") {
             database = AppDB.getDatabase(requireContext(), userEmail)
             val repository = MovimientoRepository(database.movimientoDao())
@@ -167,7 +191,6 @@ class InicioFragment : Fragment() {
         }
 
         cargarPreferencias()
-
         setupRecyclerView()
         setupCalendar()
 
@@ -286,15 +309,13 @@ class InicioFragment : Fragment() {
     private fun restaurarUIGastos(view: View) {
         val txtRango = obtenerTextoRango(pTipoGastos, pInicioGastos, pFinGastos)
         view.findViewById<TextView>(R.id.txtRangoFechas).text = txtRango
-        view.findViewById<MaterialButton>(R.id.btnConfigurarAnalisisGastos).text =
-            "Periodo: $txtRango"
+        view.findViewById<MaterialButton>(R.id.btnConfigurarAnalisisGastos).text = "Periodo: $txtRango"
     }
 
     private fun restaurarUIIngresos(view: View) {
         val txtRango = obtenerTextoRango(pTipoIngresos, pInicioIngresos, pFinIngresos)
         view.findViewById<TextView>(R.id.txtRangoFechasIngresos).text = txtRango
-        view.findViewById<MaterialButton>(R.id.btnConfigurarAnalisisIngresos).text =
-            "Periodo: $txtRango"
+        view.findViewById<MaterialButton>(R.id.btnConfigurarAnalisisIngresos).text = "Periodo: $txtRango"
     }
 
     private fun setupAnalisisGastosLayout(view: View) {
@@ -311,15 +332,13 @@ class InicioFragment : Fragment() {
                 layoutColapsable.visibility = View.VISIBLE
                 imgExpandir.animate().rotation(180f).setDuration(250).start()
                 view.findViewById<PieChart>(R.id.pieChartResumen).animateY(1000)
-                if (cTipoGastos != -1) view.findViewById<PieChart>(R.id.pieChartComparacion)
-                    .animateY(1000)
+                if (cTipoGastos != -1) view.findViewById<PieChart>(R.id.pieChartComparacion).animateY(1000)
             } else {
                 layoutColapsable.visibility = View.GONE
                 imgExpandir.animate().rotation(0f).setDuration(250).start()
                 view.findViewById<LinearLayout>(R.id.layoutDetalleSlice).visibility = View.GONE
             }
         }
-
         btnConfigurar.setOnClickListener { mostrarBottomSheetAnalisis(view, 0) }
     }
 
@@ -340,11 +359,9 @@ class InicioFragment : Fragment() {
             } else {
                 layoutColapsable.visibility = View.GONE
                 imgExpandir.animate().rotation(0f).setDuration(250).start()
-                view.findViewById<LinearLayout>(R.id.layoutDetalleSliceIngresos).visibility =
-                    View.GONE
+                view.findViewById<LinearLayout>(R.id.layoutDetalleSliceIngresos).visibility = View.GONE
             }
         }
-
         btnConfigurar.setOnClickListener { mostrarBottomSheetAnalisis(view, 1) }
     }
 
@@ -412,8 +429,7 @@ class InicioFragment : Fragment() {
         val actualizarEstiloChips = { group: ChipGroup ->
             for (i in 0 until group.childCount) {
                 val chip = group.getChildAt(i) as? Chip
-                chip?.typeface =
-                    if (chip?.isChecked == true) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+                chip?.typeface = if (chip?.isChecked == true) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
             }
         }
 
@@ -459,31 +475,13 @@ class InicioFragment : Fragment() {
             val (iniP, finP) = if (nuevoPTipo == 6) Pair(tempPIni, tempPFin) else calcularFechasAbsolutas(nuevoPTipo)
             val (iniC, finC) = if (nuevoCTipo == 6) Pair(tempCIni, tempCFin) else calcularFechasAbsolutas(nuevoCTipo)
 
-            aplicarSeleccion(
-                parentView,
-                tipoAnalisis,
-                nuevoPTipo,
-                iniP,
-                finP,
-                nuevoCTipo,
-                iniC,
-                finC
-            )
+            aplicarSeleccion(parentView, tipoAnalisis, nuevoPTipo, iniP, finP, nuevoCTipo, iniC, finC)
             bottomSheetDialog.dismiss()
         }
         bottomSheetDialog.show()
     }
 
-    private fun aplicarSeleccion(
-        view: View,
-        tipoAnalisis: Int,
-        pTipo: Int,
-        pIni: Long,
-        pFin: Long,
-        cTipo: Int,
-        cIni: Long,
-        cFin: Long
-    ) {
+    private fun aplicarSeleccion(view: View, tipoAnalisis: Int, pTipo: Int, pIni: Long, pFin: Long, cTipo: Int, cIni: Long, cFin: Long) {
         if (tipoAnalisis == 0) {
             pTipoGastos = pTipo; pInicioGastos = pIni; pFinGastos = pFin
             cTipoGastos = cTipo; cInicioGastos = cIni; cFinGastos = cFin
@@ -492,8 +490,7 @@ class InicioFragment : Fragment() {
             procesarGraficoGastos(view)
             if (isChartExpandedGastos) {
                 view.findViewById<PieChart>(R.id.pieChartResumen).animateY(800)
-                if (cTipoGastos != -1) view.findViewById<PieChart>(R.id.pieChartComparacion)
-                    .animateY(800)
+                if (cTipoGastos != -1) view.findViewById<PieChart>(R.id.pieChartComparacion).animateY(800)
             }
         } else {
             pTipoIngresos = pTipo; pInicioIngresos = pIni; pFinIngresos = pFin
@@ -501,8 +498,7 @@ class InicioFragment : Fragment() {
             guardarPreferencias(1)
             restaurarUIIngresos(view)
             procesarGraficoIngresos(view)
-            if (isChartExpandedIngresos) view.findViewById<LineChart>(R.id.lineChartIngresos)
-                .animateX(800)
+            if (isChartExpandedIngresos) view.findViewById<LineChart>(R.id.lineChartIngresos).animateX(800)
         }
     }
 
@@ -545,76 +541,46 @@ class InicioFragment : Fragment() {
                 cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH))
                 fin = maximizeTime(cal).timeInMillis
             }
-            2 -> {
-                fin = hoy
-                cal.add(Calendar.DAY_OF_YEAR, -7)
-                inicio = resetTime(cal).timeInMillis
-            }
-            3 -> {
-                fin = hoy
-                cal.add(Calendar.DAY_OF_YEAR, -30)
-                inicio = resetTime(cal).timeInMillis
-            }
+            2 -> { fin = hoy; cal.add(Calendar.DAY_OF_YEAR, -7); inicio = resetTime(cal).timeInMillis }
+            3 -> { fin = hoy; cal.add(Calendar.DAY_OF_YEAR, -30); inicio = resetTime(cal).timeInMillis }
             4 -> {
-                cal.set(Calendar.MONTH, Calendar.JANUARY)
-                cal.set(Calendar.DAY_OF_MONTH, 1)
+                cal.set(Calendar.MONTH, Calendar.JANUARY); cal.set(Calendar.DAY_OF_MONTH, 1)
                 inicio = resetTime(cal).timeInMillis
-                cal.set(Calendar.MONTH, Calendar.DECEMBER)
-                cal.set(Calendar.DAY_OF_MONTH, 31)
-                fin = maximizeTime(cal).timeInMillis
-                fin = minOf(fin, hoy)
+                cal.set(Calendar.MONTH, Calendar.DECEMBER); cal.set(Calendar.DAY_OF_MONTH, 31)
+                fin = maximizeTime(cal).timeInMillis; fin = minOf(fin, hoy)
             }
-            7 -> {
-                inicio = resetTime(cal).timeInMillis
-                fin = maximizeTime(cal).timeInMillis
-            }
+            7 -> { inicio = resetTime(cal).timeInMillis; fin = maximizeTime(cal).timeInMillis }
         }
         return Pair(inicio, fin)
     }
 
-    private fun abrirSelectorFechas(
-        view: View,
-        tipoAnalisis: Int,
-        isComp: Boolean,
-        onSeleccion: (Long, Long) -> Unit
-    ) {
+    private fun abrirSelectorFechas(view: View, tipoAnalisis: Int, isComp: Boolean, onSeleccion: (Long, Long) -> Unit) {
         val builder = MaterialDatePicker.Builder.dateRangePicker()
         builder.setTitleText(if (isComp) "Seleccionar Periodo de Comparación" else "Seleccionar Periodo de Análisis")
         val picker = builder.build()
-
-        picker.addOnPositiveButtonClickListener { selection ->
-            onSeleccion(selection.first, selection.second)
-        }
+        picker.addOnPositiveButtonClickListener { selection -> onSeleccion(selection.first, selection.second) }
         picker.show(parentFragmentManager, "DATE_PICKER")
     }
 
     private fun resetTime(cal: Calendar): Calendar {
-        cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0); cal.set(
-            Calendar.SECOND,
-            0
-        ); cal.set(Calendar.MILLISECOND, 0); return cal
+        cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0); cal.set(Calendar.SECOND, 0); cal.set(Calendar.MILLISECOND, 0); return cal
     }
 
     private fun maximizeTime(cal: Calendar): Calendar {
-        cal.set(Calendar.HOUR_OF_DAY, 23); cal.set(Calendar.MINUTE, 59); cal.set(
-            Calendar.SECOND,
-            59
-        ); cal.set(Calendar.MILLISECOND, 999); return cal
+        cal.set(Calendar.HOUR_OF_DAY, 23); cal.set(Calendar.MINUTE, 59); cal.set(Calendar.SECOND, 59); cal.set(Calendar.MILLISECOND, 999); return cal
     }
 
     private fun obtenerFechasComparacionAuto(pTipo: Int, pIni: Long, pFin: Long): Pair<Long, Long> {
         val cal = Calendar.getInstance()
         return when (pTipo) {
             0 -> {
-                cal.add(Calendar.MONTH, -1)
-                cal.set(Calendar.DAY_OF_MONTH, 1)
+                cal.add(Calendar.MONTH, -1); cal.set(Calendar.DAY_OF_MONTH, 1)
                 val i = resetTime(cal.clone() as Calendar).timeInMillis
                 cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH))
                 Pair(i, maximizeTime(cal).timeInMillis)
             }
             1 -> {
-                cal.add(Calendar.MONTH, -2)
-                cal.set(Calendar.DAY_OF_MONTH, 1)
+                cal.add(Calendar.MONTH, -2); cal.set(Calendar.DAY_OF_MONTH, 1)
                 val i = resetTime(cal.clone() as Calendar).timeInMillis
                 cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH))
                 Pair(i, maximizeTime(cal).timeInMillis)
@@ -622,18 +588,12 @@ class InicioFragment : Fragment() {
             2 -> Pair(pIni - 7L * 24 * 60 * 60 * 1000, pIni - 1)
             3 -> Pair(pIni - 30L * 24 * 60 * 60 * 1000, pIni - 1)
             4 -> {
-                cal.add(Calendar.YEAR, -1)
-                cal.set(Calendar.MONTH, Calendar.JANUARY)
-                cal.set(Calendar.DAY_OF_MONTH, 1)
+                cal.add(Calendar.YEAR, -1); cal.set(Calendar.MONTH, Calendar.JANUARY); cal.set(Calendar.DAY_OF_MONTH, 1)
                 val i = resetTime(cal.clone() as Calendar).timeInMillis
-                cal.set(Calendar.MONTH, Calendar.DECEMBER)
-                cal.set(Calendar.DAY_OF_MONTH, 31)
+                cal.set(Calendar.MONTH, Calendar.DECEMBER); cal.set(Calendar.DAY_OF_MONTH, 31)
                 Pair(i, maximizeTime(cal).timeInMillis)
             }
-            6 -> {
-                val duracion = pFin - pIni
-                Pair(pIni - duracion - 1, pIni - 1)
-            }
+            6 -> { val duracion = pFin - pIni; Pair(pIni - duracion - 1, pIni - 1) }
             else -> Pair(0L, 0L)
         }
     }
@@ -647,44 +607,24 @@ class InicioFragment : Fragment() {
             4 -> "vs Este Año"
             5 -> "vs Historial"
             6 -> "vs Rango Personalizado"
-            -2 -> {
-                when (pTipo) {
-                    0 -> "vs Mes Anterior"
-                    1 -> "vs Hace 2 Meses"
-                    2 -> "vs 7 Días Previos"
-                    3 -> "vs 30 Días Previos"
-                    4 -> "vs Año Anterior"
-                    6 -> "vs Periodo Previo"
-                    else -> "vs Anterior"
-                }
+            -2 -> when (pTipo) {
+                0 -> "vs Mes Anterior"
+                1 -> "vs Hace 2 Meses"
+                2 -> "vs 7 Días Previos"
+                3 -> "vs 30 Días Previos"
+                4 -> "vs Año Anterior"
+                6 -> "vs Periodo Previo"
+                else -> "vs Anterior"
             }
             else -> ""
         }
     }
 
-    private fun actualizarUITendencia(
-        view: View,
-        tipoAnalisis: Int,
-        actual: Double,
-        anterior: Double,
-        textoModo: String
-    ) {
-        val cardTendencia =
-            if (tipoAnalisis == 0) view.findViewById<CardView>(R.id.cardTendenciaGastos) else view.findViewById<CardView>(
-                R.id.cardTendenciaIngresos
-            )
-        val txtTendencia =
-            if (tipoAnalisis == 0) view.findViewById<TextView>(R.id.txtTendenciaGastos) else view.findViewById<TextView>(
-                R.id.txtTendenciaIngresos
-            )
-        val txtModo =
-            if (tipoAnalisis == 0) view.findViewById<TextView>(R.id.txtTendenciaModoGastos) else view.findViewById<TextView>(
-                R.id.txtTendenciaModoIngresos
-            )
-        val imgTendencia =
-            if (tipoAnalisis == 0) view.findViewById<ImageView>(R.id.imgTendenciaGastos) else view.findViewById<ImageView>(
-                R.id.imgTendenciaIngresos
-            )
+    private fun actualizarUITendencia(view: View, tipoAnalisis: Int, actual: Double, anterior: Double, textoModo: String) {
+        val cardTendencia = if (tipoAnalisis == 0) view.findViewById<CardView>(R.id.cardTendenciaGastos) else view.findViewById<CardView>(R.id.cardTendenciaIngresos)
+        val txtTendencia = if (tipoAnalisis == 0) view.findViewById<TextView>(R.id.txtTendenciaGastos) else view.findViewById<TextView>(R.id.txtTendenciaIngresos)
+        val txtModo = if (tipoAnalisis == 0) view.findViewById<TextView>(R.id.txtTendenciaModoGastos) else view.findViewById<TextView>(R.id.txtTendenciaModoIngresos)
+        val imgTendencia = if (tipoAnalisis == 0) view.findViewById<ImageView>(R.id.imgTendenciaGastos) else view.findViewById<ImageView>(R.id.imgTendenciaIngresos)
 
         cardTendencia.visibility = View.VISIBLE
         txtModo.text = " $textoModo"
@@ -745,18 +685,11 @@ class InicioFragment : Fragment() {
                     txtCat.text = e.label
 
                     val format = NumberFormat.getCurrencyInstance(Locale("es", "CO"))
-                    val porcentaje = String.format(
-                        Locale.getDefault(),
-                        "%.1f%%",
-                        (e.y / pieChart.data.yValueSum) * 100
-                    )
+                    val porcentaje = String.format(Locale.getDefault(), "%.1f%%", (e.y / pieChart.data.yValueSum) * 100)
                     txtMonto.text = "${format.format(e.value)}\nRepresenta el $porcentaje"
                 }
             }
-
-            override fun onNothingSelected() {
-                view.findViewById<LinearLayout>(R.id.layoutDetalleSlice).visibility = View.GONE
-            }
+            override fun onNothingSelected() { view.findViewById<LinearLayout>(R.id.layoutDetalleSlice).visibility = View.GONE }
         })
     }
 
@@ -777,21 +710,16 @@ class InicioFragment : Fragment() {
         legend.setDrawInside(false)
         legend.textSize = 14f
         legend.formSize = 14f
-        legend.textColor =
-            ContextCompat.getColor(requireContext(), android.R.color.tab_indicator_text)
+        legend.textColor = ContextCompat.getColor(requireContext(), android.R.color.tab_indicator_text)
 
         val xAxis = lineChart.xAxis
         xAxis.position = XAxis.XAxisPosition.BOTTOM
         xAxis.setDrawGridLines(false)
         xAxis.granularity = 1f
         xAxis.textSize = 13f
-        xAxis.textColor =
-            ContextCompat.getColor(requireContext(), android.R.color.tab_indicator_text)
+        xAxis.textColor = ContextCompat.getColor(requireContext(), android.R.color.tab_indicator_text)
         xAxis.valueFormatter = object : ValueFormatter() {
-            override fun getAxisLabel(
-                value: Float,
-                axis: com.github.mikephil.charting.components.AxisBase?
-            ): String {
+            override fun getAxisLabel(value: Float, axis: com.github.mikephil.charting.components.AxisBase?): String {
                 val index = value.toInt()
                 return if (index >= 0 && index < fechasIngresosFormat.size) fechasIngresosFormat[index] else ""
             }
@@ -801,18 +729,10 @@ class InicioFragment : Fragment() {
         yAxis.setDrawGridLines(true)
         yAxis.gridColor = Color.parseColor("#33888888")
         yAxis.textSize = 13f
-        yAxis.textColor =
-            ContextCompat.getColor(requireContext(), android.R.color.tab_indicator_text)
+        yAxis.textColor = ContextCompat.getColor(requireContext(), android.R.color.tab_indicator_text)
         yAxis.valueFormatter = object : ValueFormatter() {
-            override fun getAxisLabel(
-                value: Float,
-                axis: com.github.mikephil.charting.components.AxisBase?
-            ): String {
-                return if (value >= 1000000) String.format(
-                    Locale.getDefault(),
-                    "%.1fM",
-                    value / 1000000
-                )
+            override fun getAxisLabel(value: Float, axis: com.github.mikephil.charting.components.AxisBase?): String {
+                return if (value >= 1000000) String.format(Locale.getDefault(), "%.1fM", value / 1000000)
                 else if (value >= 1000) String.format(Locale.getDefault(), "%.0fk", value / 1000)
                 else value.toInt().toString()
             }
@@ -826,31 +746,20 @@ class InicioFragment : Fragment() {
 
                 layoutDetalle.visibility = View.VISIBLE
                 val index = e?.x?.toInt() ?: 0
-                if (index >= 0 && index < fechasIngresosFormat.size) {
-                    txtFecha.text = "Ingresos del ${fechasIngresosFormat[index]}"
-                } else {
-                    txtFecha.text = "Dato Anterior"
-                }
+                if (index >= 0 && index < fechasIngresosFormat.size) txtFecha.text = "Ingresos del ${fechasIngresosFormat[index]}"
+                else txtFecha.text = "Dato Anterior"
                 val format = NumberFormat.getCurrencyInstance(Locale("es", "CO"))
                 txtMonto.text = format.format(e?.y ?: 0f)
             }
-
-            override fun onNothingSelected() {
-                view.findViewById<LinearLayout>(R.id.layoutDetalleSliceIngresos).visibility =
-                    View.GONE
-            }
+            override fun onNothingSelected() { view.findViewById<LinearLayout>(R.id.layoutDetalleSliceIngresos).visibility = View.GONE }
         })
     }
 
     private fun obtenerDatosCategoriaReal(mov: Movimiento): Pair<String, Int> {
         val catEncontrada = listaCategoriasGlobal.find { it.id == mov.categoriaId }
-
         return if (catEncontrada != null) {
-            try {
-                Pair("${catEncontrada.emoji} ${catEncontrada.nombre}", Color.parseColor(catEncontrada.colorHex))
-            } catch (e: Exception) {
-                Pair("${catEncontrada.emoji} ${catEncontrada.nombre}", Color.GRAY)
-            }
+            try { Pair("${catEncontrada.emoji} ${catEncontrada.nombre}", Color.parseColor(catEncontrada.colorHex)) }
+            catch (e: Exception) { Pair("${catEncontrada.emoji} ${catEncontrada.nombre}", Color.GRAY) }
         } else {
             Pair("📦 ${mov.categoria}", Color.parseColor("#9E9E9E"))
         }
@@ -901,8 +810,7 @@ class InicioFragment : Fragment() {
             try {
                 val parsed = SimpleDateFormat(f, Locale.getDefault()).parse(fecha)
                 if (parsed != null) return parsed.time
-            } catch (e: Exception) {
-            }
+            } catch (e: Exception) {}
         }
         return 0L
     }
@@ -921,9 +829,7 @@ class InicioFragment : Fragment() {
 
         val gastosActuales = listaMovimientosReal.filter { it.tipo == 0 }.filter { mov ->
             if (pInicioGastos == 0L && pFinGastos == Long.MAX_VALUE) true
-            else {
-                val time = parseDateToMillis(mov.fecha); time in pInicioGastos..pFinGastos
-            }
+            else { val time = parseDateToMillis(mov.fecha); time in pInicioGastos..pFinGastos }
         }
 
         val totalGastos = gastosActuales.sumOf { it.cantidad }
@@ -959,17 +865,11 @@ class InicioFragment : Fragment() {
             txtActual.text = "Actual\n($txtFechaActual)"
             layoutComp.visibility = View.VISIBLE
 
-            val (cIni, cFin) = if (cTipoGastos == -2) obtenerFechasComparacionAuto(
-                pTipoGastos,
-                pInicioGastos,
-                pFinGastos
-            ) else Pair(cInicioGastos, cFinGastos)
+            val (cIni, cFin) = if (cTipoGastos == -2) obtenerFechasComparacionAuto(pTipoGastos, pInicioGastos, pFinGastos) else Pair(cInicioGastos, cFinGastos)
 
             val gastosAnt = listaMovimientosReal.filter { it.tipo == 0 }.filter { mov ->
                 if (cIni == 0L && cFin == Long.MAX_VALUE) true
-                else {
-                    val time = parseDateToMillis(mov.fecha); time in cIni..cFin
-                }
+                else { val time = parseDateToMillis(mov.fecha); time in cIni..cFin }
             }
 
             rellenarPieChart(pieChartComp, gastosAnt)
@@ -986,15 +886,8 @@ class InicioFragment : Fragment() {
             }
 
             txtAnterior.text = "Anterior\n($txtFechaAnt)"
-
             val totalAnt = gastosAnt.sumOf { it.cantidad }
-            actualizarUITendencia(
-                view,
-                0,
-                totalGastos,
-                totalAnt,
-                obtenerNombreModo(cTipoGastos, pTipoGastos)
-            )
+            actualizarUITendencia(view, 0, totalGastos, totalAnt, obtenerNombreModo(cTipoGastos, pTipoGastos))
         } else {
             txtActual.text = txtFechaActual
             layoutComp.visibility = View.GONE
@@ -1015,9 +908,7 @@ class InicioFragment : Fragment() {
 
         val ingresosActuales = ingresosBase.filter { mov ->
             if (pInicioIngresos == 0L && pFinIngresos == Long.MAX_VALUE) true
-            else {
-                val time = parseDateToMillis(mov.fecha); time in pInicioIngresos..pFinIngresos
-            }
+            else { val time = parseDateToMillis(mov.fecha); time in pInicioIngresos..pFinIngresos }
         }
 
         val agrupadoActual = HashMap<String, Double>()
@@ -1059,11 +950,7 @@ class InicioFragment : Fragment() {
 
         val sdfSort = SimpleDateFormat("dd/MM", Locale.getDefault())
         val listaOrdenadaAct = agrupadoActual.entries.sortedBy {
-            try {
-                sdfSort.parse(it.key)?.time ?: 0L
-            } catch (e: Exception) {
-                0L
-            }
+            try { sdfSort.parse(it.key)?.time ?: 0L } catch (e: Exception) { 0L }
         }
 
         val entriesAct = ArrayList<Entry>()
@@ -1089,17 +976,11 @@ class InicioFragment : Fragment() {
         if (entriesAct.isNotEmpty()) lineData.addDataSet(dataSetAct)
 
         if (cTipoIngresos != -1) {
-            val (cIni, cFin) = if (cTipoIngresos == -2) obtenerFechasComparacionAuto(
-                pTipoIngresos,
-                pInicioIngresos,
-                pFinIngresos
-            ) else Pair(cInicioIngresos, cFinIngresos)
+            val (cIni, cFin) = if (cTipoIngresos == -2) obtenerFechasComparacionAuto(pTipoIngresos, pInicioIngresos, pFinIngresos) else Pair(cInicioIngresos, cFinIngresos)
 
             val ingresosAnt = ingresosBase.filter { mov ->
                 if (cIni == 0L && cFin == Long.MAX_VALUE) true
-                else {
-                    val time = parseDateToMillis(mov.fecha); time in cIni..cFin
-                }
+                else { val time = parseDateToMillis(mov.fecha); time in cIni..cFin }
             }
 
             val agrupadoAnt = HashMap<String, Double>()
@@ -1109,11 +990,7 @@ class InicioFragment : Fragment() {
             }
 
             val listaOrdenadaAnt = agrupadoAnt.entries.sortedBy {
-                try {
-                    sdfSort.parse(it.key)?.time ?: 0L
-                } catch (e: Exception) {
-                    0L
-                }
+                try { sdfSort.parse(it.key)?.time ?: 0L } catch (e: Exception) { 0L }
             }
             val entriesAnt = ArrayList<Entry>()
             for ((index, entry) in listaOrdenadaAnt.withIndex()) {
@@ -1121,8 +998,7 @@ class InicioFragment : Fragment() {
             }
 
             if (entriesAnt.isNotEmpty()) {
-                val dataSetAnt =
-                    LineDataSet(entriesAnt, obtenerNombreModo(cTipoIngresos, pTipoIngresos))
+                val dataSetAnt = LineDataSet(entriesAnt, obtenerNombreModo(cTipoIngresos, pTipoIngresos))
                 dataSetAnt.color = Color.parseColor("#9E9E9E")
                 dataSetAnt.setCircleColor(Color.parseColor("#9E9E9E"))
                 dataSetAnt.lineWidth = 2f
@@ -1136,13 +1012,7 @@ class InicioFragment : Fragment() {
             }
 
             val totalAnt = ingresosAnt.sumOf { it.cantidad }
-            actualizarUITendencia(
-                view,
-                1,
-                totalIngresos,
-                totalAnt,
-                obtenerNombreModo(cTipoIngresos, pTipoIngresos)
-            )
+            actualizarUITendencia(view, 1, totalIngresos, totalAnt, obtenerNombreModo(cTipoIngresos, pTipoIngresos))
         } else {
             cardTendencia.visibility = View.GONE
         }
@@ -1173,17 +1043,12 @@ class InicioFragment : Fragment() {
         val eventosDelDia = mutableListOf<EventoCombinado>()
         val startMillis = obtenerInicioDia(selectedDate)
         val endMillis = obtenerFinDia(selectedDate)
-        val filtradosApp =
-            listaRecordatoriosApp.filter { it.fechaMillis in startMillis..endMillis }.map {
-                EventoCombinado(it.id.toString(), it.nombre, it.fechaMillis, "Finanzas App")
-            }
+        val filtradosApp = listaRecordatoriosApp.filter { it.fechaMillis in startMillis..endMillis }.map {
+            EventoCombinado(it.id.toString(), it.nombre, it.fechaMillis, "Finanzas App")
+        }
         eventosDelDia.addAll(filtradosApp)
 
-        if (ContextCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.READ_CALENDAR
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED) {
             eventosDelDia.addAll(obtenerEventosSistema(startMillis, endMillis))
         }
 
@@ -1196,24 +1061,12 @@ class InicioFragment : Fragment() {
 
     private fun obtenerEventosSistema(startMillis: Long, endMillis: Long): List<EventoCombinado> {
         val lista = mutableListOf<EventoCombinado>()
-        val projection = arrayOf(
-            CalendarContract.Events._ID,
-            CalendarContract.Events.TITLE,
-            CalendarContract.Events.DTSTART,
-            CalendarContract.Events.CALENDAR_DISPLAY_NAME
-        )
-        val selection =
-            "(( ${CalendarContract.Events.DTSTART} >= ?) AND ( ${CalendarContract.Events.DTSTART} <= ?))"
+        val projection = arrayOf(CalendarContract.Events._ID, CalendarContract.Events.TITLE, CalendarContract.Events.DTSTART, CalendarContract.Events.CALENDAR_DISPLAY_NAME)
+        val selection = "(( ${CalendarContract.Events.DTSTART} >= ?) AND ( ${CalendarContract.Events.DTSTART} <= ?))"
         val selectionArgs = arrayOf(startMillis.toString(), endMillis.toString())
 
         try {
-            val cursor: Cursor? = requireContext().contentResolver.query(
-                CalendarContract.Events.CONTENT_URI,
-                projection,
-                selection,
-                selectionArgs,
-                "${CalendarContract.Events.DTSTART} ASC"
-            )
+            val cursor: Cursor? = requireContext().contentResolver.query(CalendarContract.Events.CONTENT_URI, projection, selection, selectionArgs, "${CalendarContract.Events.DTSTART} ASC")
             cursor?.use {
                 val idIdx = it.getColumnIndex(CalendarContract.Events._ID)
                 val titleIdx = it.getColumnIndex(CalendarContract.Events.TITLE)
@@ -1228,8 +1081,7 @@ class InicioFragment : Fragment() {
                     lista.add(EventoCombinado(id, titulo, fecha, fuente))
                 }
             }
-        } catch (e: Exception) {
-        }
+        } catch (e: Exception) {}
         return lista
     }
 
@@ -1256,11 +1108,7 @@ class InicioFragment : Fragment() {
                 .setNegativeButton("Cancelar", null)
                 .show()
         } else {
-            Toast.makeText(
-                requireContext(),
-                "Este evento es del calendario del sistema, bórralo en su app.",
-                Toast.LENGTH_LONG
-            ).show()
+            Toast.makeText(requireContext(), "Este evento es del calendario del sistema, bórralo en su app.", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -1283,21 +1131,18 @@ class InicioFragment : Fragment() {
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AgendaViewHolder {
-            val view = LayoutInflater.from(parent.context)
-                .inflate(R.layout.item_recordatorio, parent, false)
+            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_recordatorio, parent, false)
             return AgendaViewHolder(view)
         }
 
         override fun onBindViewHolder(holder: AgendaViewHolder, position: Int) {
             val evento = eventos[position]
             holder.tvNombre.text = evento.titulo
-            val hora =
-                SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(evento.horaMillis))
+            val hora = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(evento.horaMillis))
             holder.tvFecha.text = "$hora • ${evento.fuente}"
 
             val esDeMiApp = evento.fuente == "Finanzas App"
-            holder.btnEliminar.visibility =
-                if (esDeMiApp && evento.id == idItemSeleccionado) View.VISIBLE else View.GONE
+            holder.btnEliminar.visibility = if (esDeMiApp && evento.id == idItemSeleccionado) View.VISIBLE else View.GONE
 
             holder.itemView.setOnLongClickListener {
                 if (esDeMiApp) {
@@ -1305,11 +1150,7 @@ class InicioFragment : Fragment() {
                     notifyDataSetChanged()
                     true
                 } else {
-                    Toast.makeText(
-                        holder.itemView.context,
-                        "Evento externo (no se puede borrar aquí)",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    Toast.makeText(holder.itemView.context, "Evento externo (no se puede borrar aquí)", Toast.LENGTH_SHORT).show()
                     false
                 }
             }
@@ -1329,8 +1170,6 @@ class InicioFragment : Fragment() {
         }
 
         override fun getItemCount() = eventos.size
-        fun actualizarLista(nuevosEventos: List<EventoCombinado>) {
-            eventos = nuevosEventos; notifyDataSetChanged()
-        }
+        fun actualizarLista(nuevosEventos: List<EventoCombinado>) { eventos = nuevosEventos; notifyDataSetChanged() }
     }
 }

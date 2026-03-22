@@ -1,53 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="white">#FFFFFF</color> <color name="black">#000000</color>
+
     <color name="purple_500">#6200EE</color>
     <color name="purple_700">#3700B3</color>
+    <color name="primary_color">#6200EE</color>
+    <color name="secondary_color">#03DAC5</color>
+    <color name="accent_primary">#6200EE</color>
+    <color name="primary_brand_color">#6200EE</color>
+    <color name="accent">#03DAC5</color>
+
+    <color name="background_main">#F0F3F8</color> <color name="surface_card">#FFFFFF</color> <color name="background_color">#F0F3F8</color>
+    <color name="colorSurface">#FFFFFF</color>
+
+    <color name="text_primary">#1A1A24</color>
+    <color name="text_secondary">#6E7381</color>
+    <color name="colorOnSurface">#1A1A24</color>
+
     <color name="teal_200">#03DAC5</color>
     <color name="teal_700">#018786</color>
-    <color name="white">#FFFFFF</color>
-    <color name="black">#000000</color>
     <color name="gray">#9E9E9E</color>
     <color name="dark_gray">#616161</color>
-
-    <color name="card_dark">#1E1E1E</color>
-    <color name="background_dark">#121212</color>
     <color name="beige">#FFC4A484</color>
     <color name="grey">#FF9E9E9E</color>
     <color name="red">#FFFF0000</color>
     <color name="green">#FF32CD32</color>
     <color name="yellow">#FFFFEB3B</color>
+
+    <color name="card_dark">#FFFFFF</color>
+    <color name="background_dark">#F0F3F8</color>
     <color name="button_light">#FFF4C2</color>
-    <color name="fab_icon_tint">#FFFFFFFF</color>
+    <color name="fab_icon_tint">#FFFFFF</color>
 
-    <color name="boton_nav_background">@color/grey</color>
-    <color name="boton_nav_select_item">#673AB7</color>
-    <color name="boton_nav_item">#4CAF50</color>
+    <color name="boton_nav_background">#FFFFFF</color>
+    <color name="boton_nav_select_item">#6200EE</color>
+    <color name="boton_nav_item">#6E7381</color>
 
-    <color name="background_main">#121212</color>
-    <color name="surface_card">#1E1E1E</color>
-    <color name="accent_primary">#BB86FC</color>
-    <color name="text_primary">#FFFFFF</color>
-    <color name="text_secondary">#B0B0B0</color>
-    <color name="income_green">#00E676</color>
-    <color name="expense_red">#CF6679</color>
+    <color name="income_green">#00C853</color> <color name="expense_red">#D50000</color> <color name="colorIngreso">#00C853</color>
+    <color name="colorEgreso">#D50000</color>
+    <color name="transaction_expense">#D50000</color>
+    <color name="transaction_income">#00C853</color>
+    <color name="transaction_expense_pastel">#FFEBEE</color>
+    <color name="transaction_income_pastel">#E8F5E9</color>
 
-    <color name="primary_brand_color">#0288D1</color>
-    <color name="accent">#00BFA6</color>
-    <color name="colorIngreso">@color/income_green</color>
-    <color name="colorEgreso">@color/expense_red</color>
-    <color name="primary_color">@color/accent_primary</color>
-    <color name="colorPrimary">@color/accent_primary</color>
-    <color name="colorSurface">@color/surface_card</color>
-    <color name="colorOnSurface">@color/text_primary</color>
-    <color name="background_color">@color/background_main</color>
+    <color name="card_start">#FFFFFF</color>
+    <color name="card_mid">#F8F9FA</color>
+    <color name="card_end">#F0F3F8</color>
+    <color name="card_text_primary">#1A1A24</color>
+    <color name="card_text_secondary">#6E7381</color>
+    <color name="card_logo_tint">#6200EE</color>
 
-    <color name="card_start">#E0E0E0</color>
-    <color name="card_mid">#BDBDBD</color>
-    <color name="card_end">#9E9E9E</color>
-    <color name="card_text_primary">#212121</color>
-    <color name="card_text_secondary">#616161</color>
-    <color name="card_logo_tint">#424242</color>
-
-    <color name="transaction_expense">#D32F2F</color> <color name="transaction_income">#388E3C</color>  <color name="transaction_expense_pastel">#FFEBEE</color> <color name="transaction_income_pastel">#E8F5E9</color>  <color name="stroke_inactive">#E0E0E0</color>
-    <color name="icon_inactive">#757575</color>
+    <color name="stroke_inactive">#E0E0E0</color>
+    <color name="icon_inactive">#9094A0</color>
+    <color name="colorPrimary">#6200EE</color>
 </resources>

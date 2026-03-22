@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="white">#FFFFFF</color> <color name="black">#000000</color>
+
+    <color name="purple_500">#6200EE</color> <color name="purple_700">#3700B3</color>
+    <color name="primary_color">#6200EE</color>
+    <color name="secondary_color">#03DAC5</color>
+    <color name="accent_primary">#6200EE</color>
+    <color name="primary_brand_color">#6200EE</color>
+    <color name="accent">#03DAC5</color>
+
+    <color name="background_main">#0B0F19</color> <color name="surface_card">#151A28</color> <color name="background_color">#0B0F19</color>
+    <color name="colorSurface">#151A28</color>
+
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#8A95A5</color>
+    <color name="colorOnSurface">#FFFFFF</color>
+
+    <color name="teal_200">#03DAC5</color>
+    <color name="teal_700">#018786</color>
+    <color name="gray">#9E9E9E</color>
+    <color name="dark_gray">#BDBDBD</color>
+    <color name="beige">#FFC4A484</color>
+    <color name="grey">#FF9E9E9E</color>
+    <color name="red">#EF5350</color>
+    <color name="green">#66BB6A</color>
+    <color name="yellow">#FFEE58</color>
+
+    <color name="card_dark">#151A28</color>
+    <color name="background_dark">#0B0F19</color>
+    <color name="button_light">#37474F</color> <color name="fab_icon_tint">#FFFFFF</color>
+
+    <color name="boton_nav_background">#151A28</color>
+    <color name="boton_nav_select_item">#6200EE</color>
+    <color name="boton_nav_item">#8A95A5</color>
+
+    <color name="income_green">#00E676</color>
+    <color name="expense_red">#FF5252</color>
+    <color name="colorIngreso">#00E676</color>
+    <color name="colorEgreso">#FF5252</color>
+    <color name="transaction_expense">#FF5252</color>
+    <color name="transaction_income">#00E676</color>
+    <color name="transaction_expense_pastel">#3B2426</color>
+    <color name="transaction_income_pastel">#203624</color>
+
+    <color name="card_start">#1C2336</color> <color name="card_mid">#151A28</color>
+    <color name="card_end">#0B0F19</color>
+    <color name="card_text_primary">#FFFFFF</color>
+    <color name="card_text_secondary">#8A95A5</color>
+    <color name="card_logo_tint">#6200EE</color>
+
+    <color name="stroke_inactive">#37474F</color>
+    <color name="icon_inactive">#8A95A5</color>
+    <color name="colorPrimary">#6200EE</color>
+</resources>
