@@ -111,4 +111,11 @@ dependencies {
     // --- GOOGLE PLAY CONSOLE ---
     implementation("com.google.android.play:app-update-ktx:2.1.0")
     implementation("com.google.android.play:review-ktx:2.0.1")
+
+    // Google AI Edge SDK para inferencia local
+    implementation("com.google.ai.client.generativeai:generativeai:0.7.0")
+    // ML Kit para extracción de entidades (montos, fechas) sin API
+    implementation("com.google.mlkit:entity-extraction:16.0.0-beta5")
+    // Corrutinas para no bloquear la UI
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 }

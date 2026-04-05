@@ -6,6 +6,7 @@ import android.content.SharedPreferences
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.text.InputType
 import android.text.method.LinkMovementMethod
@@ -36,7 +37,6 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.Scope
-import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.checkbox.MaterialCheckBox
@@ -120,6 +120,58 @@ class LoginActivity : AppCompatActivity() {
 
         sharedPreferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         termsAndConditionsCheckbox.movementMethod = LinkMovementMethod.getInstance()
+
+        // ----------------------------------------------------------------------
+        // INYECCIÓN ABSOLUTA DEL AURA (SOLUCIÓN OJO Y BORDE REGISTRO)
+        // ----------------------------------------------------------------------
+        val auraColor = ThemeUtils.getAuraColor(this)
+        val colorStateList = ColorStateList.valueOf(auraColor)
+        val density = resources.displayMetrics.density
+        val strokeWidth = (2f * density).toInt()
+
+        // 1. Textos y botón principal
+        loginButton.backgroundTintList = colorStateList
+        registerButton.setTextColor(auraColor)
+        binding.tvForgotPassword.setTextColor(auraColor)
+        termsAndConditionsCheckbox.setLinkTextColor(auraColor)
+
+        // 2. Cajas de texto (Bordes)
+        val emailBg = emailEditText.background.mutate() as? GradientDrawable
+        emailBg?.setStroke(strokeWidth, auraColor)
+
+        val passBg = passwordEditText.background.mutate() as? GradientDrawable
+        passBg?.setStroke(strokeWidth, auraColor)
+
+        // 3. ¡SOLUCIÓN OJO DE LA CONTRASEÑA! (Forzamos el color gris independientemente del aura)
+        binding.passwordInputLayout.setEndIconTintList(ColorStateList.valueOf(Color.parseColor("#9E9E9E")))
+
+        // 4. ¡SOLUCIÓN BORDE BOTÓN REGISTRARSE!
+        // Creamos la forma desde cero: fondo transparente y borde color aura
+        val borderDrawable = GradientDrawable()
+        borderDrawable.shape = GradientDrawable.RECTANGLE
+        borderDrawable.setColor(Color.TRANSPARENT)
+        borderDrawable.setStroke(strokeWidth, auraColor)
+        borderDrawable.cornerRadius = 100f // Bordes tipo pastilla perfectamente redondos
+
+        registerButton.background = borderDrawable
+        registerButton.backgroundTintList = null // Clave: Borramos cualquier rastro morado oculto
+
+        // 5. Ícono (Sol/Luna)
+        toggleDarkModeButton?.imageTintList = colorStateList
+
+        // 6. Checkboxes (manteniendo la palomita visible)
+        val isDark = themePreferences.getBoolean("modo_oscuro", false)
+        val colorBordeInactivo = if (isDark) Color.LTGRAY else Color.DKGRAY
+        val checkboxStates = ColorStateList(
+            arrayOf(
+                intArrayOf(android.R.attr.state_checked),
+                intArrayOf(-android.R.attr.state_checked)
+            ),
+            intArrayOf(auraColor, colorBordeInactivo)
+        )
+        termsAndConditionsCheckbox.buttonTintList = checkboxStates
+        rememberEmailCheckbox.buttonTintList = checkboxStates
+        // ----------------------------------------------------------------------
 
         loginButton.setOnClickListener { login() }
         registerButton.setOnClickListener { register() }
@@ -330,11 +382,7 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    // --- ALERTA GENERAL (Para contraseñas incorrectas, etc) ---
     private fun showAlert(title: String, message: String) {
-        // En lugar de usar un layout customizado que está generando problemas de compilación,
-        // usamos el AlertDialog estándar de Android pero con el color de la app inyectado en el botón.
-        // Esto garantiza 100% de éxito en la compilación.
         val builder = AlertDialog.Builder(this)
         builder.setTitle(title)
         builder.setMessage(message)
@@ -344,20 +392,20 @@ class LoginActivity : AppCompatActivity() {
         val dialog = builder.create()
         dialog.show()
 
-        // Pinta el botón "Entendido" del color Aura
         try {
             val auraColor = ThemeUtils.getAuraColor(this)
             dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(auraColor)
         } catch (e: Exception) {
-            // Falla silenciosa si no puede pintar el botón
         }
     }
 
-    // --- ALERTA DE TÉRMINOS Y CONDICIONES (La ventana Premium que querías) ---
     private fun mostrarDialogoTerminos() {
-        val dialog = BottomSheetDialog(this)
+        val builder = AlertDialog.Builder(this)
         val view = layoutInflater.inflate(R.layout.layout_terms_conditions, null)
-        dialog.setContentView(view)
+        builder.setView(view)
+
+        val dialog = builder.create()
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
         val btnAceptar = view.findViewById<MaterialButton>(R.id.btnAceptarContinuar)
         val ivIcono = view.findViewById<ImageView>(R.id.ivIconoTerminos)
@@ -367,27 +415,48 @@ class LoginActivity : AppCompatActivity() {
         val tvEnlaceWeb = view.findViewById<TextView>(R.id.tvEnlaceWeb)
 
         if (btnAceptar == null || ivIcono == null || frameIcono == null || cbAceptar == null || cardCheckbox == null || tvEnlaceWeb == null) {
-            // Failsafe por si algún ID del XML falla
             Toast.makeText(this, "Debe aceptar los términos y condiciones.", Toast.LENGTH_LONG).show()
-            dialog.dismiss()
             return
         }
-
-        cbAceptar.isChecked = termsAndConditionsCheckbox.isChecked
 
         val auraColor = ThemeUtils.getAuraColor(this)
         val colorStateList = ColorStateList.valueOf(auraColor)
 
-        btnAceptar.backgroundTintList = colorStateList
-        cbAceptar.buttonTintList = colorStateList
+        val isDark = themePreferences.getBoolean("modo_oscuro", false)
+        val colorBordeInactivo = if (isDark) Color.LTGRAY else Color.DKGRAY
+        val checkboxStates = ColorStateList(
+            arrayOf(
+                intArrayOf(android.R.attr.state_checked),
+                intArrayOf(-android.R.attr.state_checked)
+            ),
+            intArrayOf(auraColor, colorBordeInactivo)
+        )
+
+        cbAceptar.buttonTintList = checkboxStates
         ivIcono.imageTintList = colorStateList
         tvEnlaceWeb.setTextColor(auraColor)
 
         val alphaColor = Color.argb(38, Color.red(auraColor), Color.green(auraColor), Color.blue(auraColor))
         frameIcono.backgroundTintList = ColorStateList.valueOf(alphaColor)
 
+        cbAceptar.isChecked = termsAndConditionsCheckbox.isChecked
+
+        val updateButtonState = { isChecked: Boolean ->
+            btnAceptar.isEnabled = isChecked
+            if (isChecked) {
+                btnAceptar.backgroundTintList = colorStateList
+                btnAceptar.setTextColor(Color.WHITE)
+            } else {
+                btnAceptar.backgroundTintList = ColorStateList.valueOf(Color.GRAY)
+                btnAceptar.setTextColor(Color.LTGRAY)
+            }
+        }
+
+        updateButtonState(cbAceptar.isChecked)
+
         cbAceptar.setOnCheckedChangeListener { _, isChecked ->
             termsAndConditionsCheckbox.isChecked = isChecked
+            updateButtonState(isChecked)
         }
 
         cardCheckbox.setOnClickListener {

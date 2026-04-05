@@ -19,8 +19,7 @@
         android:padding="4dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_theme_sun"
-        app:tint="?attr/colorPrimary" />
+        app:srcCompat="@drawable/ic_theme_sun" />
 
     <ImageView
         android:id="@+id/imageView"
@@ -85,7 +84,6 @@
         android:layout_marginTop="4dp"
         android:layout_marginEnd="24dp"
         android:text="¿Olvidaste tu contraseña?"
-        android:textColor="?attr/colorPrimary"
         android:textSize="14sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
@@ -98,7 +96,6 @@
         android:layout_marginStart="24dp"
         android:layout_marginTop="12dp"
         android:layout_marginEnd="24dp"
-        android:buttonTint="?attr/colorPrimary"
         android:text="@string/accept_terms_and_conditions"
         android:textColor="?attr/colorOnBackground"
         app:layout_constraintEnd_toEndOf="parent"
@@ -112,7 +109,6 @@
         android:layout_marginStart="24dp"
         android:layout_marginTop="4dp"
         android:layout_marginEnd="24dp"
-        android:buttonTint="?attr/colorPrimary"
         android:text="Recordar email"
         android:textColor="?attr/colorOnBackground"
         app:layout_constraintEnd_toEndOf="parent"
@@ -127,7 +123,6 @@
         android:layout_marginTop="16dp"
         android:layout_marginEnd="24dp"
         android:background="@drawable/button_rounded"
-        android:backgroundTint="?attr/colorPrimary"
         android:text="@string/login_button_text"
         android:textColor="?attr/colorOnPrimary"
         app:layout_constraintEnd_toEndOf="parent"
@@ -144,7 +139,6 @@
         android:background="@drawable/button_rounded_border"
         android:backgroundTint="@android:color/transparent"
         android:text="@string/register_button_text"
-        android:textColor="?attr/colorPrimary"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/btnsingUpButton" />

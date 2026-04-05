@@ -131,14 +131,12 @@ class PerfilFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        // Ocultar menú inferior como si fuera una ventana completa
         val bottomNav = requireActivity().findViewById<View>(R.id.nav_view)
         bottomNav?.visibility = View.GONE
     }
 
     override fun onStop() {
         super.onStop()
-        // Restaurar menú inferior al salir
         val bottomNav = requireActivity().findViewById<View>(R.id.nav_view)
         bottomNav?.visibility = View.VISIBLE
     }
@@ -340,7 +338,7 @@ class PerfilFragment : Fragment() {
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         requireActivity().finish()
-        Runtime.getRuntime().exit(0)
+        // Eliminado: Runtime.getRuntime().exit(0)
     }
 
     override fun onDestroyView() {

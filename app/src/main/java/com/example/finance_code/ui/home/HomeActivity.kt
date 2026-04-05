@@ -26,6 +26,7 @@ import com.example.finance_code.R
 import com.example.finance_code.UpdateManager
 import com.example.finance_code.DiscreetModeManager
 import com.example.finance_code.ShakeDetector
+import com.example.finance_code.chatbot.ChatFragment
 import com.example.finance_code.databinding.ActivityHomeBinding
 import com.example.finance_code.ui.login.AuthCheckActivity
 import com.example.finance_code.utils.ThemeUtils
@@ -53,24 +54,20 @@ class HomeActivity : AppCompatActivity() {
         setTheme(ThemeUtils.getAuraTheme(this))
         super.onCreate(savedInstanceState)
 
-        // Inicializar el Manager del modo discreto
         DiscreetModeManager.initialize(this)
 
         val sharedPrefs = getSharedPreferences("AppPrefe", Context.MODE_PRIVATE)
 
-        // CONECTANDO PRIVACIDAD: Aplicar bloqueo de capturas de pantalla
         if (sharedPrefs.getBoolean("secure_screen", false)) {
             window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         }
 
-        // CONECTANDO PRIVACIDAD: Modo Discreto Automático al inicio
         if (savedInstanceState == null && sharedPrefs.getBoolean("hide_balances_startup", false)) {
             if (!DiscreetModeManager.isDiscreetModeActive) {
                 DiscreetModeManager.toggleMode()
             }
         }
 
-        // CONECTANDO PRIVACIDAD: Configuración del Sensor de Agitación (Shake)
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         accelerometer = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
 
@@ -78,10 +75,9 @@ class HomeActivity : AppCompatActivity() {
             val prefs = getSharedPreferences("AppPrefe", Context.MODE_PRIVATE)
             val isShakeDisabled = prefs.getBoolean("disable_shake_gesture", false)
 
-            // Si NO está desactivado, entonces hacemos el toggle
             if (!isShakeDisabled) {
                 DiscreetModeManager.toggleMode()
-                recreate() // Recarga la vista para aplicar el cambio visual en los saldos
+                recreate()
             }
         }
 
@@ -95,6 +91,16 @@ class HomeActivity : AppCompatActivity() {
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_home) as NavHostFragment
         navController = navHostFragment.navController
         binding.navView.setupWithNavController(navController)
+
+        // Acción del Botón Flotante Estilo Meta AI
+        binding.fabMetaAI.setOnClickListener {
+            // Abrimos el chat de forma superpuesta con una animación de fade in
+            supportFragmentManager.beginTransaction()
+                .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
+                .add(android.R.id.content, ChatFragment())
+                .addToBackStack(null)
+                .commit()
+        }
 
         if (!isSessionActive) {
             val target = intent.getStringExtra(ReminderHelper.EXTRA_TARGET_FRAGMENT)
@@ -116,6 +122,9 @@ class HomeActivity : AppCompatActivity() {
 
         binding.navView.itemIconTintList = navColorStateList
         binding.navView.itemTextColor = navColorStateList
+
+        // Sincronizar color del botón flotante
+        binding.fabMetaAI.backgroundTintList = android.content.res.ColorStateList.valueOf(auraColor)
 
         val sharedPrefs = getSharedPreferences("AppPrefe", Context.MODE_PRIVATE)
         val isAmoled = sharedPrefs.getBoolean("amoled_mode", false)
@@ -174,10 +183,8 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    // GESTIÓN DEL SENSOR: Conecta y desconecta el sensor de hardware según la preferencia
     fun updateShakeSensorRegistration() {
         val sharedPrefs = getSharedPreferences("AppPrefe", Context.MODE_PRIVATE)
-        // Leemos la variable tal cual la guarda PrivacyFragment
         val isShakeEnabled = sharedPrefs.getBoolean("shake_mode_enabled", true)
 
         if (isShakeEnabled) {
@@ -186,7 +193,6 @@ class HomeActivity : AppCompatActivity() {
                 sensorManager?.registerListener(shakeDetector, it, SensorManager.SENSOR_DELAY_UI)
             }
         } else {
-            // Esto es lo que detiene las vibraciones y el parpadeo
             sensorManager?.unregisterListener(shakeDetector)
         }
     }
@@ -195,8 +201,6 @@ class HomeActivity : AppCompatActivity() {
         super.onResume()
         isSessionActive = true
         aplicarColoresGlobalesYAmoled()
-
-        // Evaluamos si conectar o desconectar el sensor al volver a la app
         updateShakeSensorRegistration()
 
         if (pendingTargetFragment != null) {
@@ -207,7 +211,6 @@ class HomeActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        // Apagar el sensor al salir de la app para ahorrar batería
         sensorManager?.unregisterListener(shakeDetector)
     }
 
