@@ -15,6 +15,7 @@ import android.text.TextWatcher
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
+import android.view.View
 import android.widget.FrameLayout
 import android.widget.GridLayout
 import android.widget.ImageButton
@@ -90,9 +91,20 @@ class addTransaction : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // SOLUCIÓN 1: Forzar el tema de Aura ANTES de crear la vista
+        setTheme(ThemeUtils.getAuraTheme(this))
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_add_transaction)
+
+        // SOLUCIÓN 2: Respetar el modo AMOLED en fondos de esta actividad
+        val sharedPrefs = getSharedPreferences("AppPrefe", Context.MODE_PRIVATE)
+        val isAmoled = sharedPrefs.getBoolean("amoled_mode", false)
+        val isDark = sharedPrefs.getBoolean("modo_oscuro", false)
+        if (isAmoled && isDark) {
+            window.decorView.setBackgroundColor(Color.BLACK)
+            findViewById<View>(android.R.id.content).setBackgroundColor(Color.BLACK)
+        }
 
         val viewModel: MovimientoViewModel
 
@@ -108,14 +120,11 @@ class addTransaction : AppCompatActivity() {
         val btnVoiceInput = findViewById<ImageButton>(R.id.btnVoiceInput)
         val voiceContainer = findViewById<LinearLayout>(R.id.voiceInputContainer)
 
-        // APLICAR AURA AL BOTÓN PRINCIPAL DE GUARDAR
         val auraColor = ThemeUtils.getAuraColor(this)
         btnGuardar.backgroundTintList = ColorStateList.valueOf(auraColor)
 
-        // FORZAR EL COLOR AL BOTÓN DE DICTADO
         btnVoiceInput.setColorFilter(auraColor, PorterDuff.Mode.SRC_IN)
 
-        // PINTAR EL BORDE DEL CONTENEDOR DEL DICTADO CON EL COLOR DEL AURA
         val voiceBg = voiceContainer.background?.mutate() as? android.graphics.drawable.GradientDrawable
         if (voiceBg != null) {
             voiceBg.setStroke((1 * resources.displayMetrics.density).toInt(), auraColor)
@@ -128,7 +137,6 @@ class addTransaction : AppCompatActivity() {
             voiceContainer.background = newBg
         }
 
-        // APLICAR AURA SOLO AL FOCO DE LOS CONTENEDORES DE TEXTO
         tilDescripcion.boxStrokeColor = auraColor
         tilDescripcion.hintTextColor = ColorStateList.valueOf(auraColor)
 
@@ -308,17 +316,14 @@ class addTransaction : AppCompatActivity() {
                     val reviewInfo = task.result
                     val flow = reviewManager.launchReviewFlow(this, reviewInfo)
                     flow.addOnCompleteListener {
-                        // Marcamos para que no vuelva a salir por crear transacción
                         sharedPrefs.edit().putBoolean("has_shown_review_after_tx", true).apply()
                         finish()
                     }
                 } else {
-                    // Si falla la petición (ej. no está en Play Store aún), cerramos normal
                     finish()
                 }
             }
         } else {
-            // Si ya se mostró antes, simplemente cerramos la actividad
             finish()
         }
     }
@@ -368,7 +373,7 @@ class addTransaction : AppCompatActivity() {
 
         val auraColor = ThemeUtils.getAuraColor(this)
         btnCrear.backgroundTintList = ColorStateList.valueOf(auraColor)
-        btnCrear.setTextColor(Color.WHITE) // Asegurar texto blanco
+        btnCrear.setTextColor(Color.WHITE)
 
         val adapter = CategoryAdapter(
             categorias = listaCategoriasEnDB,

@@ -21,6 +21,10 @@
 
         <item name="elevationOverlayEnabled">false</item>
 
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:enforceStatusBarContrast" tools:targetApi="q">false</item>
+
         <item name="android:statusBarColor">@color/background_main</item>
         <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
         <item name="android:navigationBarColor">@color/surface_card</item>
@@ -74,5 +78,4 @@
         <item name="colorPrimary">#FF00FF</item>
         <item name="colorSecondaryContainer">#33FF00FF</item>
     </style>
-
 </resources>

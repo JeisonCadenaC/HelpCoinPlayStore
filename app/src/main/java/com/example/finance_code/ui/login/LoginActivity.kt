@@ -3,6 +3,9 @@ package com.example.finance_code.ui.login
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.res.ColorStateList
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.text.InputType
 import android.text.method.LinkMovementMethod
@@ -12,6 +15,8 @@ import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,11 +30,16 @@ import com.example.finance_code.R
 import com.example.finance_code.UpdateManager
 import com.example.finance_code.databinding.ActivityLoginBinding
 import com.example.finance_code.ui.home.HomeActivity
+import com.example.finance_code.utils.ThemeUtils
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.Scope
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.card.MaterialCardView
+import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.api.services.drive.DriveScopes
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
@@ -91,8 +101,6 @@ class LoginActivity : AppCompatActivity() {
         }
 
         setup()
-
-        // Llamada de actualización si el usuario entra a la pantalla de Login
         UpdateManager(this).checkForUpdates()
     }
 
@@ -131,7 +139,7 @@ class LoginActivity : AppCompatActivity() {
                 val googleClient = GoogleSignIn.getClient(this, googleConf)
                 googleSignInLauncher.launch(googleClient.signInIntent)
             } else {
-                showAlert("Términos y Condiciones", getString(R.string.error_accept_terms))
+                mostrarDialogoTerminos()
             }
         }
 
@@ -176,7 +184,7 @@ class LoginActivity : AppCompatActivity() {
 
     private fun login() {
         if (!termsAndConditionsCheckbox.isChecked) {
-            showAlert("Términos y Condiciones", getString(R.string.error_accept_terms))
+            mostrarDialogoTerminos()
             return
         }
 
@@ -212,7 +220,7 @@ class LoginActivity : AppCompatActivity() {
 
     private fun register() {
         if (!termsAndConditionsCheckbox.isChecked) {
-            showAlert("Términos y Condiciones", getString(R.string.error_accept_terms))
+            mostrarDialogoTerminos()
             return
         }
 
@@ -322,12 +330,81 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
+    // --- ALERTA GENERAL (Para contraseñas incorrectas, etc) ---
     private fun showAlert(title: String, message: String) {
+        // En lugar de usar un layout customizado que está generando problemas de compilación,
+        // usamos el AlertDialog estándar de Android pero con el color de la app inyectado en el botón.
+        // Esto garantiza 100% de éxito en la compilación.
         val builder = AlertDialog.Builder(this)
         builder.setTitle(title)
         builder.setMessage(message)
-        builder.setPositiveButton("Aceptar", null)
-        builder.create().show()
+        builder.setPositiveButton("Entendido") { dialog, _ ->
+            dialog.dismiss()
+        }
+        val dialog = builder.create()
+        dialog.show()
+
+        // Pinta el botón "Entendido" del color Aura
+        try {
+            val auraColor = ThemeUtils.getAuraColor(this)
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(auraColor)
+        } catch (e: Exception) {
+            // Falla silenciosa si no puede pintar el botón
+        }
+    }
+
+    // --- ALERTA DE TÉRMINOS Y CONDICIONES (La ventana Premium que querías) ---
+    private fun mostrarDialogoTerminos() {
+        val dialog = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.layout_terms_conditions, null)
+        dialog.setContentView(view)
+
+        val btnAceptar = view.findViewById<MaterialButton>(R.id.btnAceptarContinuar)
+        val ivIcono = view.findViewById<ImageView>(R.id.ivIconoTerminos)
+        val frameIcono = view.findViewById<FrameLayout>(R.id.frameIconoTerminos)
+        val cbAceptar = view.findViewById<MaterialCheckBox>(R.id.cbAceptarTerminos)
+        val cardCheckbox = view.findViewById<MaterialCardView>(R.id.cardCheckbox)
+        val tvEnlaceWeb = view.findViewById<TextView>(R.id.tvEnlaceWeb)
+
+        if (btnAceptar == null || ivIcono == null || frameIcono == null || cbAceptar == null || cardCheckbox == null || tvEnlaceWeb == null) {
+            // Failsafe por si algún ID del XML falla
+            Toast.makeText(this, "Debe aceptar los términos y condiciones.", Toast.LENGTH_LONG).show()
+            dialog.dismiss()
+            return
+        }
+
+        cbAceptar.isChecked = termsAndConditionsCheckbox.isChecked
+
+        val auraColor = ThemeUtils.getAuraColor(this)
+        val colorStateList = ColorStateList.valueOf(auraColor)
+
+        btnAceptar.backgroundTintList = colorStateList
+        cbAceptar.buttonTintList = colorStateList
+        ivIcono.imageTintList = colorStateList
+        tvEnlaceWeb.setTextColor(auraColor)
+
+        val alphaColor = Color.argb(38, Color.red(auraColor), Color.green(auraColor), Color.blue(auraColor))
+        frameIcono.backgroundTintList = ColorStateList.valueOf(alphaColor)
+
+        cbAceptar.setOnCheckedChangeListener { _, isChecked ->
+            termsAndConditionsCheckbox.isChecked = isChecked
+        }
+
+        cardCheckbox.setOnClickListener {
+            cbAceptar.isChecked = !cbAceptar.isChecked
+        }
+
+        tvEnlaceWeb.setOnClickListener {
+            val url = "https://helpcoinevo.com/terminos"
+            val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url))
+            startActivity(intent)
+        }
+
+        btnAceptar.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     private fun showPrincipalView() {

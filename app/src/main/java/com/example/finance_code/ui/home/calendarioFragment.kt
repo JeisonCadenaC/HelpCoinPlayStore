@@ -2,10 +2,10 @@ package com.example.finance_code.ui.home
 
 import android.Manifest
 import android.app.AlarmManager
-import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.os.Build
 import android.os.Bundle
 import android.provider.CalendarContract
@@ -21,10 +21,10 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.example.finance_code.data.Recordatorio
 import com.example.finance_code.databinding.FragmentCalendarioBinding
+import com.example.finance_code.utils.ThemeUtils
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
-import com.example.finance_code.R
 
 class CalendarioFragment : Fragment() {
 
@@ -49,6 +49,10 @@ class CalendarioFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // SOLUCIÓN: Aplicar el color Aura al botón para quitar el morado por defecto
+        val auraColor = ThemeUtils.getAuraColor(requireContext())
+        binding.btnGuardarRecordatorio.backgroundTintList = ColorStateList.valueOf(auraColor)
 
         updateDateSummary(selectedDate)
 
@@ -113,7 +117,7 @@ class CalendarioFragment : Fragment() {
         try {
             val intent = Intent(Intent.ACTION_INSERT)
                 .setData(CalendarContract.Events.CONTENT_URI)
-                .putExtra(CalendarContract.Events.TITLE, calendarTitle) // Usamos el título marcado
+                .putExtra(CalendarContract.Events.TITLE, calendarTitle)
                 .putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, fechaMillis)
                 .putExtra(CalendarContract.EXTRA_EVENT_END_TIME, fechaMillis + 3600000)
             startActivity(intent)
