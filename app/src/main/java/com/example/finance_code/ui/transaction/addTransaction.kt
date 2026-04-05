@@ -3,6 +3,7 @@ package com.example.finance_code.ui.transaction
 import android.app.Activity
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Color
@@ -11,6 +12,7 @@ import android.os.Bundle
 import android.speech.RecognizerIntent
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.widget.FrameLayout
@@ -42,6 +44,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import com.google.android.play.core.review.ReviewManagerFactory
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -287,9 +290,36 @@ class addTransaction : AppCompatActivity() {
 
                 runOnUiThread {
                     Toast.makeText(this@addTransaction, "✅ Transacción guardada", Toast.LENGTH_SHORT).show()
+                    checkAndRequestReview()
+                }
+            }
+        }
+    }
+
+    private fun checkAndRequestReview() {
+        val sharedPrefs = getSharedPreferences("HelpCoinPrefs", Context.MODE_PRIVATE)
+        val hasShownReview = sharedPrefs.getBoolean("has_shown_review_after_tx", false)
+
+        if (!hasShownReview) {
+            val reviewManager = ReviewManagerFactory.create(this)
+            val request = reviewManager.requestReviewFlow()
+            request.addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val reviewInfo = task.result
+                    val flow = reviewManager.launchReviewFlow(this, reviewInfo)
+                    flow.addOnCompleteListener {
+                        // Marcamos para que no vuelva a salir por crear transacción
+                        sharedPrefs.edit().putBoolean("has_shown_review_after_tx", true).apply()
+                        finish()
+                    }
+                } else {
+                    // Si falla la petición (ej. no está en Play Store aún), cerramos normal
                     finish()
                 }
             }
+        } else {
+            // Si ya se mostró antes, simplemente cerramos la actividad
+            finish()
         }
     }
 

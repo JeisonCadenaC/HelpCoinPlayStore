@@ -1,6 +1,5 @@
 package com.example.finance_code.ui.home
 
-import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.view.LayoutInflater
@@ -13,8 +12,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.finance_code.R
 import com.example.finance_code.data.Movimiento
 import com.example.finance_code.DiscreetModeManager
-import com.example.finance_code.utils.ThemeUtils
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.checkbox.MaterialCheckBox
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -27,10 +26,12 @@ class MovimientosAdapter(
     private var items: List<MovimientoListItem>
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    private var onItemLongClickListener: ((Movimiento) -> Unit)? = null
+    // --- NUEVAS VARIABLES DE SELECCIÓN MÚLTIPLE ---
+    var isSelectionMode = false
+    val selectedItems = mutableSetOf<Movimiento>()
 
-    // Variable para rastrear la posición seleccionada actualmente
-    private var selectedPosition = RecyclerView.NO_POSITION
+    var onItemClickListener: ((Movimiento) -> Unit)? = null
+    var onSelectionModeChangeListener: ((Boolean, Int) -> Unit)? = null
 
     companion object {
         private const val TYPE_HEADER = 0
@@ -63,6 +64,7 @@ class MovimientosAdapter(
             val movimiento = item.movimiento
             val context = holder.itemView.context
 
+            // --- TU LÓGICA VISUAL ORIGINAL (INTACTA) ---
             if (DiscreetModeManager.isDiscreetModeActive) {
                 holder.tvNombre.text = "***********"
                 holder.tvFecha.text = "--/--/----"
@@ -118,10 +120,15 @@ class MovimientosAdapter(
                 }
             }
 
-            // --- LÓGICA DE SELECCIÓN Y BORDES DINÁMICOS ---
-            val isSelected = selectedPosition == holder.adapterPosition
+            // --- NUEVA LÓGICA DE SELECCIÓN MÚLTIPLE (Adaptada a tus bordes dinámicos) ---
+            val isSelected = selectedItems.contains(movimiento)
             val materialCardView = holder.itemView as MaterialCardView
 
+            // Mostramos u ocultamos el checkbox dependiendo si estamos en modo selección masiva
+            holder.cbSeleccion.visibility = if (isSelectionMode) View.VISIBLE else View.GONE
+            holder.cbSeleccion.isChecked = isSelected
+
+            // Tu efecto de borde original, pero ahora se activa con la selección múltiple
             if (isSelected) {
                 val strokeWidthPx = (2 * context.resources.displayMetrics.density).toInt()
                 materialCardView.strokeWidth = strokeWidthPx
@@ -136,42 +143,42 @@ class MovimientosAdapter(
                 materialCardView.strokeColor = Color.TRANSPARENT
             }
 
+            // --- CONTROL DE CLICS (Integrando lo tuyo con la nueva función) ---
             holder.itemView.setOnClickListener {
-                val currentPosition = holder.adapterPosition
-                if (currentPosition == RecyclerView.NO_POSITION) return@setOnClickListener
-
-                val previousPosition = selectedPosition
-
-                if (previousPosition == currentPosition) {
-                    selectedPosition = RecyclerView.NO_POSITION
-                    notifyItemChanged(previousPosition)
-                } else {
-                    selectedPosition = currentPosition
-                    if (previousPosition != RecyclerView.NO_POSITION) {
-                        notifyItemChanged(previousPosition)
+                if (isSelectionMode) {
+                    if (selectedItems.contains(movimiento)) {
+                        selectedItems.remove(movimiento)
+                    } else {
+                        selectedItems.add(movimiento)
                     }
-                    notifyItemChanged(selectedPosition)
+                    notifyItemChanged(position)
+                    onSelectionModeChangeListener?.invoke(isSelectionMode, selectedItems.size)
+                } else {
+                    // Si no estamos seleccionando, abre la pantalla de edición como querías
+                    onItemClickListener?.invoke(movimiento)
                 }
             }
 
+            // Reemplazo del Long Click original para activar el modo selección múltiple
             holder.itemView.setOnLongClickListener {
-                val currentPosition = holder.adapterPosition
-                if (currentPosition != RecyclerView.NO_POSITION) {
-                    val previousPosition = selectedPosition
-
-                    if (previousPosition != currentPosition) {
-                        // Selecciona el nuevo y deselecciona el anterior al mantener presionado
-                        selectedPosition = currentPosition
-                        if (previousPosition != RecyclerView.NO_POSITION) {
-                            notifyItemChanged(previousPosition)
-                        }
-                        notifyItemChanged(selectedPosition)
-                    }
+                if (!isSelectionMode) {
+                    setSelectionModeActive(true)
+                    selectedItems.add(movimiento)
+                    notifyDataSetChanged() // Refresca todo para que aparezcan los checkboxes
+                    onSelectionModeChangeListener?.invoke(isSelectionMode, selectedItems.size)
                 }
-                onItemLongClickListener?.invoke(movimiento)
                 true
             }
-            // ----------------------------------------------
+
+            holder.cbSeleccion.setOnClickListener {
+                if (holder.cbSeleccion.isChecked) {
+                    selectedItems.add(movimiento)
+                } else {
+                    selectedItems.remove(movimiento)
+                }
+                notifyItemChanged(position)
+                onSelectionModeChangeListener?.invoke(isSelectionMode, selectedItems.size)
+            }
         }
     }
 
@@ -179,24 +186,34 @@ class MovimientosAdapter(
 
     fun setData(nuevosItems: List<MovimientoListItem>) {
         this.items = nuevosItems
-        selectedPosition = RecyclerView.NO_POSITION
+        // Solo limpiamos la selección si no estamos en modo selección activa
+        if (!isSelectionMode) {
+            selectedItems.clear()
+        }
         notifyDataSetChanged()
-    }
-
-    fun setOnItemLongClickListener(listener: (Movimiento) -> Unit) {
-        onItemLongClickListener = listener
     }
 
     fun updateDiscreetMode() {
         notifyDataSetChanged()
     }
 
-    fun clearSelection() {
-        val previousPosition = selectedPosition
-        selectedPosition = RecyclerView.NO_POSITION
-        if (previousPosition != RecyclerView.NO_POSITION) {
-            notifyItemChanged(previousPosition)
+    // Funciones para manejar el modo selección múltiple
+    fun setSelectionModeActive(active: Boolean) {
+        isSelectionMode = active
+        if (!active) {
+            selectedItems.clear()
         }
+        notifyDataSetChanged()
+        onSelectionModeChangeListener?.invoke(isSelectionMode, selectedItems.size)
+    }
+
+    fun selectAll() {
+        selectedItems.clear()
+        items.forEach {
+            if (it is MovimientoListItem.Item) selectedItems.add(it.movimiento)
+        }
+        notifyDataSetChanged()
+        onSelectionModeChangeListener?.invoke(isSelectionMode, selectedItems.size)
     }
 
     inner class HeaderViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -210,5 +227,8 @@ class MovimientosAdapter(
         val tvFecha: TextView = itemView.findViewById(R.id.tvFecha)
         val iconContainer: CardView = itemView.findViewById(R.id.iconContainer)
         val tvBanco: TextView = itemView.findViewById(R.id.tvBancoMovimiento)
+
+        // El nuevo checkbox
+        val cbSeleccion: MaterialCheckBox = itemView.findViewById(R.id.cbSeleccion)
     }
 }

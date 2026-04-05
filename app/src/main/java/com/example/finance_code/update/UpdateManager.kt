@@ -2,6 +2,7 @@ package com.example.finance_code
 
 import android.animation.ObjectAnimator
 import android.app.AlertDialog
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
@@ -16,6 +17,9 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.install.model.AppUpdateType
+import com.google.android.play.core.install.model.UpdateAvailability
 import com.google.gson.Gson
 import okhttp3.*
 import java.io.File
@@ -34,6 +38,7 @@ class UpdateManager(private val activity: AppCompatActivity) {
     companion object {
         // Variable estática que sobrevive a la recreación de la Activity al cambiar de tema
         private var isSkippedThisSession = false
+        private const val PLAY_UPDATE_REQUEST_CODE = 1001
     }
 
     private val UPDATE_JSON_URL = "https://raw.githubusercontent.com/JeisonCadenaC/HelpCoinUpdater/main/version.json"
@@ -59,10 +64,60 @@ class UpdateManager(private val activity: AppCompatActivity) {
         }
     }
 
+    // Método para detectar el origen de la instalación
+    private fun getAppSource(context: Context): String {
+        val pm = context.packageManager
+        val installer = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            try {
+                pm.getInstallSourceInfo(context.packageName).installingPackageName
+            } catch (e: Exception) {
+                null
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            pm.getInstallerPackageName(context.packageName)
+        }
+
+        return when (installer) {
+            "com.android.vending" -> "PLAY_STORE"
+            else -> "OTHER" // Incluye sideload, GitHub, Debug, etc.
+        }
+    }
+
     fun checkForUpdates() {
-        // Si el usuario ya le dio a "Ahora no" en esta sesión, cancelamos la búsqueda
         if (isSkippedThisSession) return
 
+        val source = getAppSource(activity)
+        if (source == "PLAY_STORE") {
+            checkGooglePlayUpdate()
+        } else {
+            checkGitHubUpdate()
+        }
+    }
+
+    private fun checkGooglePlayUpdate() {
+        val appUpdateManager = AppUpdateManagerFactory.create(activity)
+        val appUpdateInfoTask = appUpdateManager.appUpdateInfo
+
+        appUpdateInfoTask.addOnSuccessListener { appUpdateInfo ->
+            if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+                && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)
+            ) {
+                try {
+                    appUpdateManager.startUpdateFlowForResult(
+                        appUpdateInfo,
+                        AppUpdateType.IMMEDIATE,
+                        activity,
+                        PLAY_UPDATE_REQUEST_CODE
+                    )
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
+    private fun checkGitHubUpdate() {
         val urlFresca = "$UPDATE_JSON_URL?t=${System.currentTimeMillis()}"
 
         val request = Request.Builder()

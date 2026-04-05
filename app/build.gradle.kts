@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     id("kotlin-kapt")
     id("kotlin-parcelize")
+    id("com.google.firebase.crashlytics")
 }
 
 android {
@@ -18,6 +19,7 @@ android {
         versionName = "2.00"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
         packaging {
             resources {
                 excludes.add("META-INF/DEPENDENCIES")
@@ -34,7 +36,6 @@ android {
         dataBinding = true
     }
 
-
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -44,10 +45,12 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     kotlinOptions {
         jvmTarget = "11"
     }
@@ -76,34 +79,36 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
+    // --- FIREBASE (Centralizado y limpio con un solo BoM) ---
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
-    implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
-    implementation(libs.play.services.auth)
-    implementation("com.google.android.material:material:1.12.0")
-    implementation(libs.androidx.gridlayout)
-    implementation(libs.androidx.biometric)
-    implementation("com.google.firebase:firebase-firestore-ktx")
-    implementation("com.google.firebase:firebase-storage-ktx")
-    implementation("com.github.bumptech.glide:glide:4.16.0")
+    implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-storage")
+    implementation("com.google.firebase:firebase-crashlytics")
 
+    // --- SERVICIOS DE GOOGLE Y AUTENTICACIÓN ---
+    implementation(libs.play.services.auth)
     implementation(libs.google.api.client)
     implementation(libs.google.api.services.drive)
     implementation(libs.google.api.client.android)
-    implementation("androidx.work:work-runtime-ktx:2.9.0")
     implementation("com.google.api-client:google-api-client-android:2.2.0")
-    implementation("com.google.firebase:firebase-firestore")
 
+    // --- LIBRERÍAS DE INTERFAZ Y UTILIDADES ---
+    implementation("com.google.android.material:material:1.12.0")
+    implementation(libs.androidx.gridlayout)
+    implementation(libs.androidx.biometric)
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
     implementation("com.airbnb.android:lottie:6.0.0")
-
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
     implementation("com.google.code.gson:gson:2.10.1")
-
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
-
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.1")
     implementation("androidx.localbroadcastmanager:localbroadcastmanager:1.0.0")
-
     implementation("com.tom-roush:pdfbox-android:2.0.27.0")
+
+    // --- GOOGLE PLAY CONSOLE ---
+    implementation("com.google.android.play:app-update-ktx:2.1.0")
+    implementation("com.google.android.play:review-ktx:2.0.1")
 }

@@ -79,7 +79,10 @@ class PrivacyFragment : Fragment() {
 
         switchSecureScreen.isChecked = sharedPrefs.getBoolean("secure_screen", false)
         switchHideBalances.isChecked = sharedPrefs.getBoolean("hide_balances_startup", false)
-        switchShake.isChecked = sharedPrefs.getBoolean("shake_mode_enabled", true)
+
+        // CORRECCIÓN: Como el switch dice "Desactivar", su estado es inverso al "enabled"
+        // Si shake_mode_enabled es false, el switch debe verse ENCENDIDO.
+        switchShake.isChecked = !sharedPrefs.getBoolean("shake_mode_enabled", true)
 
         switchBiometric.setOnCheckedChangeListener { _, isChecked ->
             if (!isChecked) {
@@ -104,7 +107,8 @@ class PrivacyFragment : Fragment() {
         }
 
         switchShake.setOnCheckedChangeListener { _, isChecked ->
-            sharedPrefs.edit().putBoolean("shake_mode_enabled", isChecked).apply()
+            // CORRECCIÓN: Si el switch de "Desactivar" se enciende (true), guardamos "shake_mode_enabled" como false
+            sharedPrefs.edit().putBoolean("shake_mode_enabled", !isChecked).apply()
             // AQUI APAGAMOS O PRENDEMOS EL SENSOR DIRECTAMENTE EN EL ACTIVITY AL INSTANTE
             (requireActivity() as? HomeActivity)?.updateShakeSensorRegistration()
         }

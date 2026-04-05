@@ -4,6 +4,7 @@ import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
@@ -26,6 +27,7 @@ import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -53,8 +55,12 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.datepicker.MaterialDatePicker
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -75,19 +81,31 @@ class MovimientosFragment : Fragment() {
     private var fTipo: Int = 5
     private var fInicio: Long = 0L
     private var fFin: Long = Long.MAX_VALUE
-
     private var fAgrupacion: Int = 1
     private var isBalanceHidden = false
 
+    // Vistas
     private lateinit var btnFiltrar: Button
     private lateinit var tvEmpty: TextView
     private lateinit var tvSaldoTotal: TextView
     private lateinit var btnHideBalance: ImageButton
     private lateinit var cardSaldoContainer: View
-
-    // SOLUCIÓN AL CRASHEO DE COMPILACIÓN: Se cambian a opcionales para evitar conflictos de inicialización
     private var tvUserName: TextView? = null
     private var btnDiscreetModeManual: ImageButton? = null
+
+    // Multi-selección Vistas
+    private lateinit var cardSelectionMode: View
+    private lateinit var tvSelectedCount: TextView
+    private lateinit var btnSelectAll: ImageButton
+    private lateinit var btnDeleteSelected: ImageButton
+    private lateinit var btnCancelSelection: ImageButton
+
+    // FAB Expandible (Corregido el nombre fabAddTransaction)
+    private var isFabOpen = false
+    private lateinit var fabAddTransaction: FloatingActionButton
+    private lateinit var fabManual: ExtendedFloatingActionButton
+    private lateinit var fabImportPDF: ExtendedFloatingActionButton
+    private lateinit var bgFabDim: View
 
     private lateinit var sensorManager: SensorManager
     private var accelerometer: Sensor? = null
@@ -122,46 +140,115 @@ class MovimientosFragment : Fragment() {
             userEmail.substringBefore("@").uppercase()
         }
 
+        // Enlace de vistas básicas
         btnFiltrar = view.findViewById(R.id.btnFiltrarFechas)
         tvEmpty = view.findViewById(R.id.tvEmptyMessage)
         tvSaldoTotal = view.findViewById(R.id.tvSaldoTotal)
         btnHideBalance = view.findViewById(R.id.btnHideBalance)
         cardSaldoContainer = view.findViewById(R.id.cardSaldoContainer)
-
         tvUserName = view.findViewById(R.id.tvUserName)
         btnDiscreetModeManual = view.findViewById(R.id.btnDiscreetModeManual)
 
-        val fabAddTransaction = view.findViewById<FloatingActionButton>(R.id.fabAddTransaction)
-        val fabImportPDF = view.findViewById<MaterialButton>(R.id.fabImportPDF)
+        // Enlace Multi-selección
+        cardSelectionMode = view.findViewById(R.id.cardSelectionMode)
+        tvSelectedCount = view.findViewById(R.id.tvSelectedCount)
+        btnSelectAll = view.findViewById(R.id.btnSelectAll)
+        btnDeleteSelected = view.findViewById(R.id.btnDeleteSelected)
+        btnCancelSelection = view.findViewById(R.id.btnCancelSelection)
+
+        // Enlace FABs (Nombres corregidos)
+        fabAddTransaction = view.findViewById(R.id.fabAddTransaction)
+        fabManual = view.findViewById(R.id.fabAddManual)
+        fabImportPDF = view.findViewById(R.id.fabImportPDF)
+        bgFabDim = view.findViewById(R.id.bgFabDim)
 
         tvUserName?.text = userNameDisplay
 
-        // Inyectar Aura Color al contenedor de la tarjeta principal
         val auraColor = ThemeUtils.getAuraColor(requireContext())
         aplicarBordeTarjetaCredito(cardSaldoContainer, auraColor)
+        fabAddTransaction.backgroundTintList = ColorStateList.valueOf(auraColor)
 
         cargarPreferencias()
         actualizarBotonFiltro()
 
+        // Lógica del Adapter con Modo Selección
         adapter = MovimientosAdapter(emptyList())
-        adapter.setOnItemLongClickListener { mov ->
+        adapter.onItemClickListener = { mov ->
             val bundle = Bundle().apply { putParcelable("movimiento", mov) }
             findNavController().navigate(R.id.action_movimientosFragment_to_eTransactionFragment, bundle)
         }
 
+        adapter.onSelectionModeChangeListener = { isSelectionMode, count ->
+            if (isSelectionMode) {
+                btnFiltrar.visibility = View.GONE
+                cardSelectionMode.visibility = View.VISIBLE
+                tvSelectedCount.text = "$count seleccionados"
+
+                // Ocultar FABs en modo selección para no molestar
+                if (isFabOpen) toggleFabMenu()
+                fabAddTransaction.hide()
+            } else {
+                btnFiltrar.visibility = View.VISIBLE
+                cardSelectionMode.visibility = View.GONE
+                fabAddTransaction.show()
+            }
+        }
+
+        // Lógica Botones de Selección
+        btnSelectAll.setOnClickListener { adapter.selectAll() }
+        btnCancelSelection.setOnClickListener { adapter.setSelectionModeActive(false) }
+        btnDeleteSelected.setOnClickListener {
+            val eliminados = adapter.selectedItems.toList()
+            if (eliminados.isEmpty()) return@setOnClickListener
+
+            val dialogView = layoutInflater.inflate(R.layout.dialog_delete_confirm, null)
+            val dialog = AlertDialog.Builder(requireContext())
+                .setView(dialogView)
+                .create()
+
+            dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+            val tvMensaje = dialogView.findViewById<TextView>(R.id.tvMensajeDelete)
+            val btnCancel = dialogView.findViewById<Button>(R.id.btnCancelDelete)
+            val btnConfirm = dialogView.findViewById<Button>(R.id.btnConfirmDelete)
+
+            tvMensaje.text = "¿Estás seguro de eliminar permanentemente ${eliminados.size} movimientos?"
+
+            btnCancel.setOnClickListener { dialog.dismiss() }
+
+            btnConfirm.setOnClickListener {
+                CoroutineScope(Dispatchers.IO).launch {
+                    eliminados.forEach { database.movimientoDao().eliminar(it) }
+                    activity?.runOnUiThread {
+                        adapter.setSelectionModeActive(false)
+                        Toast.makeText(requireContext(), "Movimientos eliminados", Toast.LENGTH_SHORT).show()
+                        dialog.dismiss()
+                    }
+                }
+            }
+            dialog.show()
+        }
+
+        // Configuración RecyclerView
         val recyclerView = view.findViewById<RecyclerView>(R.id.listMovies)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         recyclerView.adapter = adapter
 
-        fabAddTransaction.setOnClickListener {
-            val intent = Intent(requireContext(), addTransaction::class.java)
-            startActivity(intent)
+        // Lógica Menú FAB Expandible
+        bgFabDim.setOnClickListener { if (isFabOpen) toggleFabMenu() }
+        fabAddTransaction.setOnClickListener { toggleFabMenu() }
+
+        fabManual.setOnClickListener {
+            toggleFabMenu()
+            startActivity(Intent(requireContext(), addTransaction::class.java))
         }
 
         fabImportPDF.setOnClickListener {
+            toggleFabMenu()
             pickPdfLauncher.launch(arrayOf("application/pdf"))
         }
 
+        // Lógica Modo Discreto y Ocultar Saldo
         btnDiscreetModeManual?.setOnClickListener {
             DiscreetModeManager.toggleMode()
             actualizarUIModoDiscreto()
@@ -176,6 +263,7 @@ class MovimientosFragment : Fragment() {
             actualizarSaldoTotal()
         }
 
+        // Database y ViewModel
         if (userEmail != "default") {
             database = AppDB.getDatabase(requireContext(), userEmail)
             val repository = MovimientoRepository(database.movimientoDao())
@@ -193,33 +281,66 @@ class MovimientosFragment : Fragment() {
             mostrarBottomSheetFiltros()
         }
 
+        // CANDADO DEL SENSOR
         sensorManager = requireContext().getSystemService(Context.SENSOR_SERVICE) as SensorManager
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-
         val vibrator = ContextCompat.getSystemService(requireContext(), Vibrator::class.java)
 
         shakeDetector = ShakeDetector {
-            activity?.runOnUiThread {
-                DiscreetModeManager.toggleMode()
-                actualizarUIModoDiscreto()
-                updateDiscreetModeButtonIcon()
+            val sharedPrefs = requireContext().getSharedPreferences("AppPrefe", Context.MODE_PRIVATE)
+            val isShakeDisabled = sharedPrefs.getBoolean("disable_shake_gesture", false)
 
-                if (vibrator != null) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE))
-                    } else {
-                        vibrator.vibrate(100)
+            if (!isShakeDisabled) {
+                activity?.runOnUiThread {
+                    DiscreetModeManager.toggleMode()
+                    actualizarUIModoDiscreto()
+                    updateDiscreetModeButtonIcon()
+
+                    if (vibrator != null) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE))
+                        } else {
+                            vibrator.vibrate(100)
+                        }
                     }
+                    val mensaje = if (DiscreetModeManager.isDiscreetModeActive) "Modo Discreto Activado" else "Modo Visible Activado"
+                    Toast.makeText(requireContext(), mensaje, Toast.LENGTH_SHORT).show()
                 }
-
-                val mensaje = if (DiscreetModeManager.isDiscreetModeActive) "Modo Discreto Activado" else "Modo Visible Activado"
-                Toast.makeText(requireContext(), mensaje, Toast.LENGTH_SHORT).show()
             }
         }
 
         actualizarUIModoDiscreto()
         updateDiscreetModeButtonIcon()
         checkAndShowShakeAnimation()
+    }
+
+    private fun toggleFabMenu() {
+        isFabOpen = !isFabOpen
+        if (isFabOpen) {
+            bgFabDim.visibility = View.VISIBLE
+            fabManual.show()
+            fabImportPDF.show()
+            fabAddTransaction.animate().rotation(45f).setDuration(200).start()
+
+            fabManual.translationY = 50f
+            fabManual.alpha = 0f
+            fabManual.animate().translationY(0f).alpha(1f).setDuration(200).start()
+
+            fabImportPDF.translationY = 50f
+            fabImportPDF.alpha = 0f
+            fabImportPDF.animate().translationY(0f).alpha(1f).setDuration(200).start()
+        } else {
+            bgFabDim.visibility = View.GONE
+            fabAddTransaction.animate().rotation(0f).setDuration(200).start()
+
+            fabManual.animate().translationY(50f).alpha(0f).setDuration(200).withEndAction {
+                fabManual.hide()
+            }.start()
+
+            fabImportPDF.animate().translationY(50f).alpha(0f).setDuration(200).withEndAction {
+                fabImportPDF.hide()
+            }.start()
+        }
     }
 
     private fun aplicarBordeTarjetaCredito(view: View, color: Int) {
@@ -257,18 +378,15 @@ class MovimientosFragment : Fragment() {
             aplicarBordeTarjetaCredito(cardSaldoContainer, auraColor)
         }
 
-        accelerometer?.let {
-            sensorManager.registerListener(shakeDetector, it, SensorManager.SENSOR_DELAY_NORMAL)
-        }
+        val sharedPrefs = requireContext().getSharedPreferences("AppPrefe", Context.MODE_PRIVATE)
+        val isShakeDisabled = sharedPrefs.getBoolean("disable_shake_gesture", false)
 
-        val user = FirebaseAuth.getInstance().currentUser
-        val uid = user?.uid ?: "default"
-        val prefsName = "${uid}_UserProfilePrefs"
-        val profilePrefs = requireContext().getSharedPreferences(prefsName, Context.MODE_PRIVATE)
-        val customName = profilePrefs.getString("user_name", null)
-
-        if (!customName.isNullOrEmpty()) {
-            tvUserName?.text = customName.uppercase()
+        if (!isShakeDisabled) {
+            accelerometer?.let {
+                sensorManager.registerListener(shakeDetector, it, SensorManager.SENSOR_DELAY_NORMAL)
+            }
+        } else {
+            sensorManager.unregisterListener(shakeDetector)
         }
 
         updateDiscreetModeButtonIcon()
@@ -334,10 +452,7 @@ class MovimientosFragment : Fragment() {
         if (fecha.isNullOrEmpty()) return 0L
         val h = if (hora.isNullOrEmpty()) "00:00:00" else hora
         val dateTimeStr = "$fecha $h"
-        val formats = arrayOf(
-            "yyyy-MM-dd HH:mm:ss", "dd/MM/yyyy HH:mm:ss", "dd-MM-yyyy HH:mm:ss",
-            "yyyy-MM-dd", "dd/MM/yyyy", "dd-MM-yyyy"
-        )
+        val formats = arrayOf("yyyy-MM-dd HH:mm:ss", "dd/MM/yyyy HH:mm:ss", "dd-MM-yyyy HH:mm:ss", "yyyy-MM-dd", "dd/MM/yyyy", "dd-MM-yyyy")
         for (f in formats) {
             try { return SimpleDateFormat(f, Locale.getDefault()).parse(dateTimeStr)?.time ?: 0L } catch (e: Exception) {}
         }
@@ -383,6 +498,10 @@ class MovimientosFragment : Fragment() {
                 }
                 itemsFinales.add(MovimientoListItem.Item(mov))
             }
+        }
+
+        if (adapter.isSelectionMode) {
+            adapter.setSelectionModeActive(false)
         }
 
         adapter.setData(itemsFinales)

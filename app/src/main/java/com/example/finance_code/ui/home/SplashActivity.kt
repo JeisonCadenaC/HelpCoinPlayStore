@@ -12,10 +12,16 @@ import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.lifecycleScope
 import com.example.finance_code.R
 import com.example.finance_code.ui.login.AuthCheckActivity
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class SplashActivity : AppCompatActivity() {
+
+    // Candado de seguridad para evitar múltiples aperturas del Login
+    private var yaSalto = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,7 +41,6 @@ class SplashActivity : AppCompatActivity() {
 
         val videoView = findViewById<VideoView>(R.id.videoViewSplash)
 
-
         val path = "android.resource://$packageName/${R.raw.splash_screnhc}"
         val uri = path.toUri()
         videoView.setVideoURI(uri)
@@ -45,23 +50,31 @@ class SplashActivity : AppCompatActivity() {
             mp.setVideoScalingMode(MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING)
         }
 
-
         videoView.setOnErrorListener { _, what, extra ->
             Log.e("SplashActivity", "Error al reproducir video. Codigo: $what, Extra: $extra")
             saltarAlLogin()
             true
         }
 
-
         videoView.setOnCompletionListener {
             saltarAlLogin()
         }
 
-
         videoView.start()
+
+        // Failsafe Timeout: Si el motor de video falla silenciosamente (ej. se bloquea la pantalla
+        // y al volver queda en negro), este temporizador asegura la entrada tras 6 segundos.
+        lifecycleScope.launch {
+            delay(6000) // Ajusta ligeramente
+            saltarAlLogin()
+        }
     }
 
+    @Synchronized
     private fun saltarAlLogin() {
+        if (yaSalto) return
+        yaSalto = true
+
         val intent = Intent(this, AuthCheckActivity::class.java)
         startActivity(intent)
         finish()

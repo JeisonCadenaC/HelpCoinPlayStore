@@ -2,6 +2,7 @@ package com.example.finance_code.ui.settings
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.app.TimePickerDialog
 import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
@@ -16,14 +17,22 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.example.finance_code.R
 import com.example.finance_code.data.AppDB
+import com.example.finance_code.data.BackupWorker
 import com.example.finance_code.data.DriveService
 import com.example.finance_code.ui.home.SplashActivity
 import com.example.finance_code.utils.ThemeUtils
@@ -32,19 +41,44 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.Scope
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.progressindicator.LinearProgressIndicator
+import com.google.android.material.radiobutton.MaterialRadioButton
 import com.google.api.services.drive.DriveScopes
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 class BackupFragment : Fragment() {
 
     private lateinit var auth: FirebaseAuth
     private var userUID: String? = null
-    private var userEmail: String? = null
+    private var userEmail: String? = null // Email original de login (Solo para copias manuales y nombre del archivo)
+
+    // Preferencias para el Backup Automático
+    private val PREFS_NAME = "HelpCoinBackupPrefs"
+    private val KEY_FREQ = "backup_frequency"
+    private val KEY_HOUR = "backup_hour"
+    private val KEY_MINUTE = "backup_minute"
+    private val KEY_ACCOUNT = "backup_account" // Email exclusivo de Drive
+
+    private var selectedHour = 2
+    private var selectedMinute = 0
+
+    // Vistas de los ajustes automáticos (estilo WhatsApp)
+    private lateinit var layoutFrecuencia: LinearLayout
+    private lateinit var layoutHora: LinearLayout
+    private lateinit var layoutCuenta: LinearLayout
+    private lateinit var tvFrecuenciaSeleccionada: TextView
+    private lateinit var tvHoraSeleccionada: TextView
+    private lateinit var tvCuentaSeleccionada: TextView
+    private lateinit var dividerHora: View
 
     private val googleSignInBackupLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -76,6 +110,25 @@ class BackupFragment : Fragment() {
             }
         }
 
+    // Launcher exclusivo para seleccionar la cuenta del backup automático
+    private val googleSignInAutoBackupLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                try {
+                    val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+                    val account = task.getResult(ApiException::class.java)
+                    if (account != null && account.email != null) {
+                        // Guardamos el correo seleccionado y actualizamos en tiempo real
+                        saveAccountPreference(account.email!!)
+                        updateAutoBackupUI()
+                        Toast.makeText(requireContext(), "Cuenta enlazada: ${account.email}", Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: ApiException) {
+                    Toast.makeText(requireContext(), "Error al enlazar cuenta", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -85,9 +138,19 @@ class BackupFragment : Fragment() {
         userUID = auth.currentUser?.uid
         userEmail = auth.currentUser?.email
 
+        // Inicializar vistas manuales
         val btnBackBackup = root.findViewById<ImageView>(R.id.btnBackBackup)
         val cardRealizarBackup = root.findViewById<MaterialCardView>(R.id.cardRealizarBackup)
         val cardRestaurarBackup = root.findViewById<MaterialCardView>(R.id.cardRestaurarBackup)
+
+        // Inicializar vistas automáticas
+        layoutFrecuencia = root.findViewById(R.id.layoutFrecuencia)
+        layoutHora = root.findViewById(R.id.layoutHora)
+        layoutCuenta = root.findViewById(R.id.layoutCuenta)
+        tvFrecuenciaSeleccionada = root.findViewById(R.id.tvFrecuenciaSeleccionada)
+        tvHoraSeleccionada = root.findViewById(R.id.tvHoraSeleccionada)
+        tvCuentaSeleccionada = root.findViewById(R.id.tvCuentaSeleccionada)
+        dividerHora = root.findViewById(R.id.dividerHora)
 
         val auraColor = ThemeUtils.getAuraColor(requireContext())
         root.findViewById<ImageView>(R.id.iconUpload).imageTintList = ColorStateList.valueOf(auraColor)
@@ -107,13 +170,18 @@ class BackupFragment : Fragment() {
             requireActivity().supportFragmentManager.beginTransaction().remove(this@BackupFragment).commit()
         }
 
-        cardRealizarBackup.setOnClickListener {
-            mostrarDialogoConfirmarBackup()
-        }
+        // Listeners para copias manuales
+        cardRealizarBackup.setOnClickListener { mostrarDialogoConfirmarBackup() }
+        cardRestaurarBackup.setOnClickListener { iniciarProcesoRestauracion() }
 
-        cardRestaurarBackup.setOnClickListener {
-            iniciarProcesoRestauracion()
-        }
+        // Listeners para copias automáticas
+        layoutFrecuencia.setOnClickListener { mostrarDialogoFrecuencia() }
+        layoutHora.setOnClickListener { mostrarSelectorHora() }
+        layoutCuenta.setOnClickListener { seleccionarCuentaGoogleAutoBackup() }
+
+        // Cargar preferencias previas de copias automáticas
+        loadPreferences()
+        updateAutoBackupUI()
 
         return root
     }
@@ -178,7 +246,205 @@ class BackupFragment : Fragment() {
     }
 
     // =========================================================
-    // LÓGICA DE CONFIRMACIÓN Y CREACIÓN DE BACKUP
+    // LÓGICA DE BACKUP AUTOMÁTICO (ESTILO WHATSAPP Y MD3)
+    // =========================================================
+
+    private fun loadPreferences() {
+        val prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        selectedHour = prefs.getInt(KEY_HOUR, 2) // Por defecto a las 2:00 AM
+        selectedMinute = prefs.getInt(KEY_MINUTE, 0)
+    }
+
+    private fun updateAutoBackupUI() {
+        val prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val freq = prefs.getString(KEY_FREQ, "Nunca") ?: "Nunca"
+        val savedAccount = prefs.getString(KEY_ACCOUNT, "")
+
+        tvFrecuenciaSeleccionada.text = freq
+
+        // Mostrar cuenta elegida o mensaje por defecto
+        if (savedAccount.isNullOrEmpty()) {
+            tvCuentaSeleccionada.text = "Ninguna cuenta seleccionada"
+        } else {
+            tvCuentaSeleccionada.text = savedAccount
+        }
+
+        // Mostrar u ocultar la selección de hora si es "Nunca"
+        if (freq == "Nunca") {
+            layoutHora.visibility = View.GONE
+            dividerHora.visibility = View.GONE
+        } else {
+            layoutHora.visibility = View.VISIBLE
+            dividerHora.visibility = View.VISIBLE
+
+            // Formatear hora (Ej: 02:00 AM)
+            val cal = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, selectedHour)
+                set(Calendar.MINUTE, selectedMinute)
+            }
+            val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
+            tvHoraSeleccionada.text = timeFormat.format(cal.time)
+        }
+    }
+
+    private fun mostrarDialogoFrecuencia() {
+        val dialog = BottomSheetDialog(requireContext())
+        val view = layoutInflater.inflate(R.layout.layout_bottom_sheet_frecuencia, null)
+        dialog.setContentView(view)
+
+        val rgFrecuencia = view.findViewById<RadioGroup>(R.id.rgFrecuencia)
+        val rbNunca = view.findViewById<MaterialRadioButton>(R.id.rbNunca)
+        val rbDiariamente = view.findViewById<MaterialRadioButton>(R.id.rbDiariamente)
+        val rbSemanalmente = view.findViewById<MaterialRadioButton>(R.id.rbSemanalmente)
+        val rbMensualmente = view.findViewById<MaterialRadioButton>(R.id.rbMensualmente)
+
+        // Configurar color Aura para los RadioButtons
+        val auraColor = ThemeUtils.getAuraColor(requireContext())
+        val colorStateList = ColorStateList(
+            arrayOf(
+                intArrayOf(-android.R.attr.state_checked),
+                intArrayOf(android.R.attr.state_checked)
+            ),
+            intArrayOf(
+                Color.GRAY, // Inactivo
+                auraColor   // Activo
+            )
+        )
+
+        rbNunca.buttonTintList = colorStateList
+        rbDiariamente.buttonTintList = colorStateList
+        rbSemanalmente.buttonTintList = colorStateList
+        rbMensualmente.buttonTintList = colorStateList
+
+        // Leer preferencia actual
+        val prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val currentFreq = prefs.getString(KEY_FREQ, "Nunca")
+
+        when (currentFreq) {
+            "Diariamente" -> rbDiariamente.isChecked = true
+            "Semanalmente" -> rbSemanalmente.isChecked = true
+            "Mensualmente" -> rbMensualmente.isChecked = true
+            else -> rbNunca.isChecked = true
+        }
+
+        rgFrecuencia.setOnCheckedChangeListener { _, checkedId ->
+            val seleccion = when (checkedId) {
+                R.id.rbDiariamente -> "Diariamente"
+                R.id.rbSemanalmente -> "Semanalmente"
+                R.id.rbMensualmente -> "Mensualmente"
+                else -> "Nunca"
+            }
+
+            prefs.edit().putString(KEY_FREQ, seleccion).apply()
+
+            // Si selecciona algo diferente a nunca y no ha vinculado cuenta, lo forzamos
+            if (seleccion != "Nunca" && prefs.getString(KEY_ACCOUNT, "") == "") {
+                seleccionarCuentaGoogleAutoBackup()
+            }
+
+            updateAutoBackupUI()
+            reprogramarWorkManager()
+
+            // Pequeño delay para que se vea el efecto de selección
+            view.postDelayed({ dialog.dismiss() }, 250)
+        }
+
+        dialog.show()
+    }
+
+    private fun mostrarSelectorHora() {
+        val timePickerDialog = TimePickerDialog(
+            requireContext(),
+            { _, hourOfDay, minute ->
+                selectedHour = hourOfDay
+                selectedMinute = minute
+                val prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                prefs.edit()
+                    .putInt(KEY_HOUR, selectedHour)
+                    .putInt(KEY_MINUTE, selectedMinute)
+                    .apply()
+
+                updateAutoBackupUI()
+                reprogramarWorkManager()
+            },
+            selectedHour, selectedMinute, false // Formato 12 horas (AM/PM)
+        )
+        timePickerDialog.show()
+    }
+
+    private fun seleccionarCuentaGoogleAutoBackup() {
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestEmail()
+            .requestScopes(Scope(DriveScopes.DRIVE_APPDATA))
+            .build()
+
+        val googleSignInClient = GoogleSignIn.getClient(requireActivity(), gso)
+
+        // Forzamos signOut para que el usuario pueda elegir otra cuenta en lugar de autologear la actual
+        googleSignInClient.signOut().addOnCompleteListener {
+            val signInIntent = googleSignInClient.signInIntent
+            googleSignInAutoBackupLauncher.launch(signInIntent)
+        }
+    }
+
+    private fun saveAccountPreference(email: String) {
+        val prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putString(KEY_ACCOUNT, email).apply()
+    }
+
+    private fun reprogramarWorkManager() {
+        val prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val freq = prefs.getString(KEY_FREQ, "Nunca") ?: "Nunca"
+        val workManager = WorkManager.getInstance(requireContext())
+
+        if (freq == "Nunca") {
+            workManager.cancelUniqueWork("HelpCoinAutoBackup")
+            return
+        }
+
+        // Intervalos de repetición en días
+        val repeatIntervalDays = when (freq) {
+            "Diariamente" -> 1L
+            "Semanalmente" -> 7L
+            "Mensualmente" -> 30L
+            else -> return
+        }
+
+        // Calcular el retraso inicial para ejecutarlo a la hora elegida (Ej: 02:00 AM)
+        val currentDate = Calendar.getInstance()
+        val dueDate = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, selectedHour)
+            set(Calendar.MINUTE, selectedMinute)
+            set(Calendar.SECOND, 0)
+        }
+
+        // Si la hora ya pasó hoy, se programa para mañana
+        if (dueDate.before(currentDate)) {
+            dueDate.add(Calendar.HOUR_OF_DAY, 24)
+        }
+        val initialDelay = dueDate.timeInMillis - currentDate.timeInMillis
+
+        // Solo requiere internet, así ahorramos batería
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val backupRequest = PeriodicWorkRequestBuilder<BackupWorker>(repeatIntervalDays, TimeUnit.DAYS)
+            .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
+            .setConstraints(constraints)
+            .build()
+
+        workManager.enqueueUniquePeriodicWork(
+            "HelpCoinAutoBackup",
+            ExistingPeriodicWorkPolicy.UPDATE,
+            backupRequest
+        )
+
+        Toast.makeText(requireContext(), "Copia programada a las ${tvHoraSeleccionada.text}", Toast.LENGTH_SHORT).show()
+    }
+
+    // =========================================================
+    // LÓGICA DE CONFIRMACIÓN Y CREACIÓN DE BACKUP MANUAL
     // =========================================================
 
     private fun mostrarDialogoConfirmarBackup() {

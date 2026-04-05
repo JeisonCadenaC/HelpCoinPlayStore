@@ -149,6 +149,64 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/lblHistorial" />
 
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardSelectionMode"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="24dp"
+        android:layout_marginStart="16dp"
+        android:visibility="gone"
+        app:cardBackgroundColor="?attr/colorSurfaceVariant"
+        app:cardCornerRadius="16dp"
+        app:strokeWidth="0dp"
+        app:layout_constraintBottom_toBottomOf="@+id/lblHistorial"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/lblHistorial">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="4dp">
+
+            <TextView
+                android:id="@+id/tvSelectedCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:fontFamily="sans-serif-medium"
+                android:text="1 sel."
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="14sp" />
+
+            <ImageButton
+                android:id="@+id/btnSelectAll"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_select_all"
+                app:tint="?attr/colorOnSurfaceVariant" />
+
+            <ImageButton
+                android:id="@+id/btnDeleteSelected"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_delete_sweep"
+                app:tint="@android:color/holo_red_dark" />
+
+            <ImageButton
+                android:id="@+id/btnCancelSelection"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_close"
+                app:tint="?attr/colorOnSurfaceVariant" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
     <TextView
         android:id="@+id/tvEmptyMessage"
         android:layout_width="wrap_content"
@@ -172,28 +230,43 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/fabImportPDF"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
+    <View
+        android:id="@+id/bgFabDim"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#80000000"
+        android:visibility="gone"
+        android:elevation="6dp" />
+
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/fabAddManual"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_marginEnd="24dp"
         android:layout_marginBottom="16dp"
-        android:text="PDF"
-        android:textSize="12sp"
-        android:textColor="#FFFFFF"
-        android:textStyle="bold"
-        android:padding="0dp"
-        android:minWidth="0dp"
-        android:minHeight="0dp"
-        android:insetLeft="0dp"
-        android:insetTop="0dp"
-        android:insetRight="0dp"
-        android:insetBottom="0dp"
-        app:cornerRadius="28dp"
-        app:backgroundTint="#D32F2F"
-        app:elevation="6dp"
+        android:text="Añadir Manual"
+        android:textAlignment="viewStart"
+        app:icon="@drawable/ic_money"
+        app:iconGravity="end"
+        android:visibility="gone"
+        app:elevation="8dp"
         app:layout_constraintBottom_toTopOf="@id/fabAddTransaction"
         app:layout_constraintEnd_toEndOf="parent" />
+
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/fabImportPDF"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:text="Importar PDF"
+        android:textAlignment="viewStart"
+        app:icon="@drawable/ic_picture_as_pdf"
+        app:iconGravity="end"
+        android:visibility="gone"
+        app:elevation="8dp"
+        app:layout_constraintBottom_toTopOf="@id/fabAddManual"
+        app:layout_constraintEnd_toEndOf="@id/fabAddManual"
+        app:layout_constraintStart_toStartOf="@id/fabAddManual" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAddTransaction"
@@ -206,5 +279,4 @@
         app:elevation="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>

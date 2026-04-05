@@ -11,6 +11,7 @@ import android.hardware.SensorManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.util.TypedValue
 import android.view.View
 import android.view.WindowManager
 import androidx.activity.result.contract.ActivityResultContracts
@@ -28,7 +29,6 @@ import com.example.finance_code.ShakeDetector
 import com.example.finance_code.databinding.ActivityHomeBinding
 import com.example.finance_code.ui.login.AuthCheckActivity
 import com.example.finance_code.utils.ThemeUtils
-import android.util.TypedValue
 
 class HomeActivity : AppCompatActivity() {
 
@@ -65,7 +65,6 @@ class HomeActivity : AppCompatActivity() {
 
         // CONECTANDO PRIVACIDAD: Modo Discreto Automático al inicio
         if (savedInstanceState == null && sharedPrefs.getBoolean("hide_balances_startup", false)) {
-            // Si está apagado, lo encendemos usando la función permitida
             if (!DiscreetModeManager.isDiscreetModeActive) {
                 DiscreetModeManager.toggleMode()
             }
@@ -76,7 +75,11 @@ class HomeActivity : AppCompatActivity() {
         accelerometer = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
 
         shakeDetector = ShakeDetector {
-            if (sharedPrefs.getBoolean("shake_mode_enabled", true)) {
+            val prefs = getSharedPreferences("AppPrefe", Context.MODE_PRIVATE)
+            val isShakeDisabled = prefs.getBoolean("disable_shake_gesture", false)
+
+            // Si NO está desactivado, entonces hacemos el toggle
+            if (!isShakeDisabled) {
                 DiscreetModeManager.toggleMode()
                 recreate() // Recarga la vista para aplicar el cambio visual en los saldos
             }
@@ -121,10 +124,8 @@ class HomeActivity : AppCompatActivity() {
         if (isAmoled && isDark) {
             window.decorView.setBackgroundColor(Color.BLACK)
             binding.root.setBackgroundColor(Color.BLACK)
-            // LÓGICA AÑADIDA: Fondo negro puro para el menú de navegación inferior
             binding.navView.setBackgroundColor(Color.BLACK)
         } else {
-            // Si no es AMOLED, restauramos el color de superficie para el menú
             val typedValue = TypedValue()
             theme.resolveAttribute(com.google.android.material.R.attr.colorSurface, typedValue, true)
             binding.navView.setBackgroundColor(typedValue.data)
@@ -173,22 +174,19 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-
-    // NUEVA FUNCIÓN: Gestiona el registro del sensor dinámicamente según la preferencia
+    // GESTIÓN DEL SENSOR: Conecta y desconecta el sensor de hardware según la preferencia
     fun updateShakeSensorRegistration() {
         val sharedPrefs = getSharedPreferences("AppPrefe", Context.MODE_PRIVATE)
-        // Por defecto, lo dejamos encendido si no existe la preferencia
+        // Leemos la variable tal cual la guarda PrivacyFragment
         val isShakeEnabled = sharedPrefs.getBoolean("shake_mode_enabled", true)
 
         if (isShakeEnabled) {
             accelerometer?.let {
-                // Para evitar múltiples registros, primero lo desregistramos
                 sensorManager?.unregisterListener(shakeDetector)
-                // Registramos el listener. Ahora el sensor está escuchando.
                 sensorManager?.registerListener(shakeDetector, it, SensorManager.SENSOR_DELAY_UI)
             }
         } else {
-            // Desconecta el sensor completamente: ya no escucha ni gasta batería. NO MÁS VIBRACIONES.
+            // Esto es lo que detiene las vibraciones y el parpadeo
             sensorManager?.unregisterListener(shakeDetector)
         }
     }
@@ -198,7 +196,7 @@ class HomeActivity : AppCompatActivity() {
         isSessionActive = true
         aplicarColoresGlobalesYAmoled()
 
-        // Encender o apagar el sensor según las configuraciones de privacidad
+        // Evaluamos si conectar o desconectar el sensor al volver a la app
         updateShakeSensorRegistration()
 
         if (pendingTargetFragment != null) {
@@ -209,7 +207,7 @@ class HomeActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        // Apagar el sensor al salir de la app para ahorrar batería y no detectar agitación en 2do plano
+        // Apagar el sensor al salir de la app para ahorrar batería
         sensorManager?.unregisterListener(shakeDetector)
     }
 

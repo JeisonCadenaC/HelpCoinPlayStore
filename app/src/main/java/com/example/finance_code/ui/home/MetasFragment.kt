@@ -221,18 +221,24 @@ class MetasFragment : Fragment() {
         val vibrator = ContextCompat.getSystemService(requireContext(), Vibrator::class.java)
 
         shakeDetector = ShakeDetector {
-            DiscreetModeManager.toggleMode()
+            // 🛑 CANDADO INFALIBLE: Revisamos si la función está prohibida antes de reaccionar
+            val sharedPrefs = requireContext().getSharedPreferences("AppPrefe", Context.MODE_PRIVATE)
+            val isShakeDisabled = sharedPrefs.getBoolean("disable_shake_gesture", false)
 
-            if (vibrator != null) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE))
-                } else {
-                    vibrator.vibrate(100)
+            if (!isShakeDisabled) {
+                DiscreetModeManager.toggleMode()
+
+                if (vibrator != null) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE))
+                    } else {
+                        vibrator.vibrate(100)
+                    }
                 }
-            }
 
-            val mensaje = if (DiscreetModeManager.isDiscreetModeActive) "Modo Discreto Activado" else "Modo Visible Activado"
-            Toast.makeText(requireContext(), mensaje, Toast.LENGTH_SHORT).show()
+                val mensaje = if (DiscreetModeManager.isDiscreetModeActive) "Modo Discreto Activado" else "Modo Visible Activado"
+                Toast.makeText(requireContext(), mensaje, Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -246,8 +252,16 @@ class MetasFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        accelerometer?.also { accel ->
-            sensorManager?.registerListener(shakeDetector, accel, SensorManager.SENSOR_DELAY_UI)
+
+        val sharedPrefs = requireContext().getSharedPreferences("AppPrefe", Context.MODE_PRIVATE)
+        val isShakeDisabled = sharedPrefs.getBoolean("disable_shake_gesture", false)
+
+        if (!isShakeDisabled) {
+            accelerometer?.also { accel ->
+                sensorManager?.registerListener(shakeDetector, accel, SensorManager.SENSOR_DELAY_UI)
+            }
+        } else {
+            sensorManager?.unregisterListener(shakeDetector)
         }
 
         DiscreetModeManager.modeChangeListener = {
