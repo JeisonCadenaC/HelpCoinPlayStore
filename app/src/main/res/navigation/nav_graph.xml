@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/inicioFragment"
-        android:name="com.example.finance_code.ui.home.InicioFragment"
+        android:name="com.help.finance_code.ui.home.InicioFragment"
         android:label="@string/title_inicio"
         tools:layout="@layout/fragment_inicio">
         <action
@@ -17,7 +17,7 @@
 
     <fragment
         android:id="@+id/movimientosFragment"
-        android:name="com.example.finance_code.ui.home.MovimientosFragment"
+        android:name="com.help.finance_code.ui.home.MovimientosFragment"
         android:label="@string/title_movimientos"
         tools:layout="@layout/fragment_movimientos">
         <action
@@ -27,61 +27,61 @@
 
     <fragment
         android:id="@+id/metasFragment"
-        android:name="com.example.finance_code.ui.home.MetasFragment"
+        android:name="com.help.finance_code.ui.home.MetasFragment"
         android:label="@string/title_metas"
         tools:layout="@layout/fragment_metas" />
 
     <fragment
         android:id="@+id/calendarioFragment"
-        android:name="com.example.finance_code.ui.home.CalendarioFragment"
+        android:name="com.help.finance_code.ui.home.CalendarioFragment"
         android:label="@string/title_calendario"
         tools:layout="@layout/fragment_calendario" />
 
     <fragment
         android:id="@+id/perfilFragment"
-        android:name="com.example.finance_code.ui.home.PerfilFragment"
+        android:name="com.help.finance_code.ui.home.PerfilFragment"
         android:label="@string/title_perfil"
         tools:layout="@layout/fragment_perfil" />
 
     <fragment
         android:id="@+id/settingsFragment"
-        android:name="com.example.finance_code.ui.settings.SettingsFragment"
+        android:name="com.help.finance_code.ui.settings.SettingsFragment"
         android:label="Ajustes"
         tools:layout="@layout/fragment_settings" />
 
     <fragment
         android:id="@+id/eTransactionFragment"
-        android:name="com.example.finance_code.ui.transaction.ETransactionFragment"
+        android:name="com.help.finance_code.ui.transaction.ETransactionFragment"
         android:label="Transacción"
         tools:layout="@layout/fragment_e_transaction" />
 
     <fragment
         android:id="@+id/calculadoraAhorroFragment"
-        android:name="com.example.finance_code.ui.home.CalculadoraAhorroFragment"
+        android:name="com.help.finance_code.ui.home.CalculadoraAhorroFragment"
         android:label="@string/calculadora_ahorro_title"
         tools:layout="@layout/fragment_calculadora_ahorro" />
 
     <fragment
         android:id="@+id/calculadoraPrestamoFragment"
-        android:name="com.example.finance_code.ui.home.CalculadoraPrestamoFragment"
+        android:name="com.help.finance_code.ui.home.CalculadoraPrestamoFragment"
         android:label="@string/calculadora_prestamo_title"
         tools:layout="@layout/fragment_calculadora_prestamo" />
 
     <fragment
         android:id="@+id/calculadoraAmortizacionFragment"
-        android:name="com.example.finance_code.ui.home.CalculadoraAmortizacionFragment"
+        android:name="com.help.finance_code.ui.home.CalculadoraAmortizacionFragment"
         android:label="@string/calculadora_amortizacion_title"
         tools:layout="@layout/fragment_calculadora_amortizacion" />
 
     <fragment
         android:id="@+id/calculadoraPresupuestoFragment"
-        android:name="com.example.finance_code.ui.home.CalculadoraPresupuestoFragment"
+        android:name="com.help.finance_code.ui.home.CalculadoraPresupuestoFragment"
         android:label="@string/calculadora_presupuesto_title"
         tools:layout="@layout/fragment_calculadora_presupuesto" />
 
     <fragment
         android:id="@+id/herramientasFragment"
-        android:name="com.example.finance_code.ui.home.HerramientasFragment"
+        android:name="com.help.finance_code.ui.home.HerramientasFragment"
         android:label="@string/title_herramientas"
         tools:layout="@layout/fragment_herramientas">
 
@@ -105,7 +105,7 @@
 
     <fragment
         android:id="@+id/calculadoraImpuestosFragment"
-        android:name="com.example.finance_code.ui.home.CalculadoraImpuestosFragment"
+        android:name="com.help.finance_code.ui.home.CalculadoraImpuestosFragment"
         android:label="Calculadora de Impuestos e IVA"
         tools:layout="@layout/fragment_calculadora_impuestos" />
 </navigation>

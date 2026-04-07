@@ -1,21 +1,35 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Añadir reglas predeterminadas de ofuscación general
+-dontwarn okio.**
+-dontwarn okhttp3.**
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# -------------------------------------------------------------
+# REGLAS PARA PDFBOX (Solución del error de compilación JP2Decoder)
+# -------------------------------------------------------------
+-dontwarn com.gemalto.jp2.**
+-dontwarn com.tom_roush.pdfbox.**
+-keep class com.tom_roush.pdfbox.** { *; }
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# -------------------------------------------------------------
+# REGLAS PARA GSON, ROOM Y FIREBASE (Data Classes)
+# -------------------------------------------------------------
+# Evita que se ofusquen los nombres de las clases y atributos de tus datos
+# Esto es vital para que al leer y escribir en Firestore o Room no dé NullPointer
+-keep class com.example.finance_code.data.** { *; }
+-keep class com.example.finance_code.chatbot.** { *; }
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Mantener la información de los atributos genéricos (Listas, HashMaps, etc.)
+-keepattributes Signature
+-keepattributes *Annotation*
+-keepattributes EnclosingMethod
+
+# -------------------------------------------------------------
+# REGLAS PARA MPAndroidChart
+# -------------------------------------------------------------
+-keep class com.github.mikephil.charting.** { *; }
+-keep class com.github.mikephil.charting.data.** { *; }
+
+# -------------------------------------------------------------
+# REGLAS PARA GOOGLE APIS Y DRIVE
+# -------------------------------------------------------------
+-keep class com.google.api.services.drive.** { *; }
+-keep class com.google.api.client.** { *; }

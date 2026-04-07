@@ -8,15 +8,15 @@ plugins {
 }
 
 android {
-    namespace = "com.example.finance_code"
+    namespace = "com.help.finance_code"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.finance_code"
+        applicationId = "com.help.finance_code"
         minSdk = 28
         targetSdk = 36
-        versionCode = 7
-        versionName = "2.00"
+        versionCode = 8
+        versionName = "2.10"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -38,7 +38,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

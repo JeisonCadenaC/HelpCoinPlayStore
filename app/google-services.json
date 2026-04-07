@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:548171447107:android:77ce9d0bc140fb78dd0df6",
         "android_client_info": {
-          "package_name": "com.example.finance_code"
+          "package_name": "com.help.finance_code"
         }
       },
       "oauth_client": [
@@ -17,7 +17,7 @@
           "client_id": "548171447107-m7radl1gqt56joai14stsgkndj7hkqk3.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.finance_code",
+            "package_name": "com.help.finance_code",
             "certificate_hash": "83872f8b7d23b984d84d52659ac3f0913f0e1a04"
           }
         },
