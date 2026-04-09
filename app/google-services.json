@@ -9,12 +9,113 @@
       "client_info": {
         "mobilesdk_app_id": "1:548171447107:android:77ce9d0bc140fb78dd0df6",
         "android_client_info": {
+          "package_name": "com.example.finance_code"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "548171447107-17cgtb4203gqq0taj44h67of6283kb55.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.finance_code",
+            "certificate_hash": "aaec6fe4d75c884cea0dbb8a5ac4d3d9f0448956"
+          }
+        },
+        {
+          "client_id": "548171447107-c2a81j3uuiq292lffml0ltek29orgrvb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.finance_code",
+            "certificate_hash": "875b71d3e8f1a20c4bf1d2d91022c43ee735b0cb"
+          }
+        },
+        {
+          "client_id": "548171447107-jp9sjfmdik4vdi5oikr0gm7kddornrsv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.finance_code",
+            "certificate_hash": "84d1ab46e40b5edd60703b2498c9c739fee2ecbf"
+          }
+        },
+        {
+          "client_id": "548171447107-m7radl1gqt56joai14stsgkndj7hkqk3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.finance_code",
+            "certificate_hash": "83872f8b7d23b984d84d52659ac3f0913f0e1a04"
+          }
+        },
+        {
+          "client_id": "548171447107-m9u29pc2gr22k08b1403eus81lr4injh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.finance_code",
+            "certificate_hash": "10c346b32ca92824c052160ed2223e347e804338"
+          }
+        },
+        {
+          "client_id": "548171447107-tadj0thvoc3cf4hf0jad3lv7m554jun9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCPXO6WazBPietOSmwUm4gu3lBNZ1i4-NY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "548171447107-tadj0thvoc3cf4hf0jad3lv7m554jun9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:548171447107:android:150e42e69dd34bdadd0df6",
+        "android_client_info": {
           "package_name": "com.help.finance_code"
         }
       },
       "oauth_client": [
         {
-          "client_id": "548171447107-m7radl1gqt56joai14stsgkndj7hkqk3.apps.googleusercontent.com",
+          "client_id": "548171447107-2l2p6g30t1p0m7br4hl9n94ukim0vbmi.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.help.finance_code",
+            "certificate_hash": "aaec6fe4d75c884cea0dbb8a5ac4d3d9f0448956"
+          }
+        },
+        {
+          "client_id": "548171447107-408g5cochpc57d7ki3vc333njd648a4n.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.help.finance_code",
+            "certificate_hash": "84d1ab46e40b5edd60703b2498c9c739fee2ecbf"
+          }
+        },
+        {
+          "client_id": "548171447107-elr9akv6omfcu6m1gflc0ppob3ru06mr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.help.finance_code",
+            "certificate_hash": "875b71d3e8f1a20c4bf1d2d91022c43ee735b0cb"
+          }
+        },
+        {
+          "client_id": "548171447107-lqf1jpf8hs33gk8o3vhoa97qrnddtcgq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.help.finance_code",
+            "certificate_hash": "10c346b32ca92824c052160ed2223e347e804338"
+          }
+        },
+        {
+          "client_id": "548171447107-tk8sikpbm2s3g9aegcg2ecdiin3b2dke.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.help.finance_code",

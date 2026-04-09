@@ -15,8 +15,8 @@ android {
         applicationId = "com.help.finance_code"
         minSdk = 28
         targetSdk = 36
-        versionCode = 8
-        versionName = "2.10"
+        versionCode = 11
+        versionName = "2.40"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -112,6 +112,7 @@ dependencies {
     // --- GOOGLE PLAY CONSOLE ---
     implementation("com.google.android.play:app-update-ktx:2.1.0")
     implementation("com.google.android.play:review-ktx:2.0.1")
+    implementation("com.google.android.play:integrity:1.6.0")
 
     // Google AI Edge SDK para inferencia local
     implementation("com.google.ai.client.generativeai:generativeai:0.7.0")
