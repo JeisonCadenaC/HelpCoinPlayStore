@@ -26,6 +26,7 @@ import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -88,6 +89,7 @@ class MovimientosFragment : Fragment() {
     private lateinit var tvSaldoTotal: TextView
     private lateinit var btnHideBalance: ImageButton
     private lateinit var cardSaldoContainer: View
+    private lateinit var imgLogo: ImageView
     private var tvUserName: TextView? = null
     private var btnDiscreetModeManual: ImageButton? = null
 
@@ -98,7 +100,7 @@ class MovimientosFragment : Fragment() {
     private lateinit var btnDeleteSelected: ImageButton
     private lateinit var btnCancelSelection: ImageButton
 
-    // FAB Expandible (Corregido el nombre fabAddTransaction)
+    // FAB Expandible
     private var isFabOpen = false
     private lateinit var fabAddTransaction: FloatingActionButton
     private lateinit var fabManual: ExtendedFloatingActionButton
@@ -144,6 +146,7 @@ class MovimientosFragment : Fragment() {
         tvSaldoTotal = view.findViewById(R.id.tvSaldoTotal)
         btnHideBalance = view.findViewById(R.id.btnHideBalance)
         cardSaldoContainer = view.findViewById(R.id.cardSaldoContainer)
+        imgLogo = view.findViewById(R.id.imgLogo)
         tvUserName = view.findViewById(R.id.tvUserName)
         btnDiscreetModeManual = view.findViewById(R.id.btnDiscreetModeManual)
 
@@ -154,7 +157,7 @@ class MovimientosFragment : Fragment() {
         btnDeleteSelected = view.findViewById(R.id.btnDeleteSelected)
         btnCancelSelection = view.findViewById(R.id.btnCancelSelection)
 
-        // Enlace FABs (Nombres corregidos)
+        // Enlace FABs
         fabAddTransaction = view.findViewById(R.id.fabAddTransaction)
         fabManual = view.findViewById(R.id.fabAddManual)
         fabImportPDF = view.findViewById(R.id.fabImportPDF)
@@ -388,6 +391,7 @@ class MovimientosFragment : Fragment() {
         }
 
         updateDiscreetModeButtonIcon()
+        actualizarUIModoDiscreto()
     }
 
     override fun onPause() {
@@ -407,6 +411,13 @@ class MovimientosFragment : Fragment() {
     private fun actualizarUIModoDiscreto() {
         actualizarSaldoTotal()
         adapter.updateDiscreetMode()
+
+        // --- AQUÍ ESTÁ EL CÓDIGO QUE CAMBIA EL LOGO ---
+        if (DiscreetModeManager.isDiscreetModeActive) {
+            imgLogo.setImageResource(R.drawable.logo_incognito)
+        } else {
+            imgLogo.setImageResource(R.drawable.help_coin_logotp)
+        }
     }
 
     private fun getSafeLong(prefs: SharedPreferences, key: String, defaultVal: Long): Long {
