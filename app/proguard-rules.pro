@@ -14,8 +14,14 @@
 # -------------------------------------------------------------
 # Evita que se ofusquen los nombres de las clases y atributos de tus datos
 # Esto es vital para que al leer y escribir en Firestore o Room no dé NullPointer
+
+# --- Reglas para el paquete antiguo (example) ---
 -keep class com.example.finance_code.data.** { *; }
 -keep class com.example.finance_code.chatbot.** { *; }
+
+# --- Reglas para el paquete nuevo (help) ---
+-keep class com.help.finance_code.data.** { *; }
+-keep class com.help.finance_code.chatbot.** { *; }
 
 # Mantener la información de los atributos genéricos (Listas, HashMaps, etc.)
 -keepattributes Signature
