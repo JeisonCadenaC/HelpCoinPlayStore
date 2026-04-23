@@ -15,8 +15,8 @@ android {
         applicationId = "com.help.finance_code"
         minSdk = 28
         targetSdk = 36
-        versionCode = 13
-        versionName = "2.60"
+        versionCode = 14
+        versionName = "2.70"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

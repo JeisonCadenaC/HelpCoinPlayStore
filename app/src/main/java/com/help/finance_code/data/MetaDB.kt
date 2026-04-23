@@ -1,9 +1,11 @@
 package com.help.finance_code.data
 
+import androidx.annotation.Keep
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import java.util.UUID
 
+@Keep
 @Entity(tableName = "metas_table")
 data class MetaDB(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),

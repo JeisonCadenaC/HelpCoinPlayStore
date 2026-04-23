@@ -82,7 +82,7 @@ class MetasAdapter(
         private val cardImageMeta: View = itemView.findViewById(R.id.cardImageMeta)
         private val ivExpandIcon: ImageView = itemView.findViewById(R.id.ivExpandIcon)
         private val ivDragHandle: View = itemView.findViewById(R.id.ivDragHandle)
-        private val hitboxDrag: View? = itemView.findViewById(R.id.hitboxDrag) // Capa opcional si existe en el XML
+        private val hitboxDrag: View? = itemView.findViewById(R.id.hitboxDrag)
 
         private var isExpanded = false
 
@@ -114,7 +114,11 @@ class MetasAdapter(
         ) {
             ivDragHandle.visibility = View.GONE
 
-            val esInvitacion = meta.invitaciones.contains(myEmail)
+            // Manejo seguro para evitar NullPointerException si la ofuscación arrojó nulos
+            val invitacionesSeguras: List<String>? = meta.invitaciones
+            val usuariosSeguros: List<String>? = meta.usuarios
+
+            val esInvitacion = invitacionesSeguras?.contains(myEmail) == true
             val formatoMoneda = NumberFormat.getCurrencyInstance(Locale("es", "CO"))
             formatoMoneda.maximumFractionDigits = 0
 
@@ -134,7 +138,7 @@ class MetasAdapter(
                 cardView.setCardBackgroundColor(colorSurface)
 
                 tvInviteTitulo.text = meta.nombre
-                val remitente = meta.usuarios.firstOrNull() ?: "Alguien"
+                val remitente = usuariosSeguros?.firstOrNull() ?: "Alguien"
                 tvInviteRemitente.text = "Invitado por: $remitente"
 
                 if (DiscreetModeManager.isDiscreetModeActive) {
@@ -198,7 +202,6 @@ class MetasAdapter(
                     cardView.setCardBackgroundColor(colorSurface)
                 }
 
-                // LOGICA DE EVENTOS (Expansión)
                 val clickAction = View.OnClickListener {
                     if (!DiscreetModeManager.isDiscreetModeActive) {
                         isExpanded = !isExpanded
@@ -208,14 +211,12 @@ class MetasAdapter(
                 }
 
                 itemView.setOnClickListener(clickAction)
-                hitboxDrag?.setOnClickListener(clickAction) // Por si el hitbox atrapa el clic normal
+                hitboxDrag?.setOnClickListener(clickAction)
 
-                // LÓGICA DE ARRASTRE AL MANTENER PRESIONADO
                 val longClickAction = View.OnLongClickListener {
                     if (!DiscreetModeManager.isDiscreetModeActive) {
                         itemView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
                         onDragStart(this@MetaViewHolder)
-                        // onLongClick(meta) <-- Lo comento para que arrastrar no active acciones secundarias a la vez
                     }
                     true
                 }

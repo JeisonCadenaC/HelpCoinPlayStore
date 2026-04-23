@@ -23,5 +23,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "finance_code"
+rootProject.name = "Help_Coin_PlayStore"
 include(":app")
