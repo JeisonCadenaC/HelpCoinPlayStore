@@ -24,6 +24,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -55,6 +56,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+data class RamaActiva(val id: Int, val nombre: String, val saldo: Double)
+
 class addTransaction : AppCompatActivity() {
 
     private lateinit var etDescripcion: TextInputEditText
@@ -67,6 +70,10 @@ class addTransaction : AppCompatActivity() {
     private lateinit var tvEmojiCategoriaActual: TextView
     private lateinit var tvNombreCategoriaActual: TextView
 
+    private lateinit var tvRamaLabel: TextView
+    private lateinit var cardSelectorRama: MaterialCardView
+    private lateinit var tvNombreRamaActual: TextView
+
     private lateinit var database: AppDB
 
     private var tipoSeleccionado = -1
@@ -76,6 +83,9 @@ class addTransaction : AppCompatActivity() {
     private var currentCategoriaNombre: String = ""
     private var currentCategoriaEmoji: String = ""
     private var currentColorHex: String = "#E0E0E0"
+
+    private var currentRamaId: Int? = null
+    private var listaRamasActivas: List<RamaActiva> = emptyList()
 
     private var listaCategoriasEnDB: List<Categoria> = emptyList()
 
@@ -90,13 +100,11 @@ class addTransaction : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // SOLUCIÓN 1: Forzar el tema de Aura ANTES de crear la vista
         setTheme(ThemeUtils.getAuraTheme(this))
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_add_transaction)
 
-        // SOLUCIÓN 2: Respetar el modo AMOLED en fondos de esta actividad
         val sharedPrefs = getSharedPreferences("AppPrefe", Context.MODE_PRIVATE)
         val isAmoled = sharedPrefs.getBoolean("amoled_mode", false)
         val isDark = sharedPrefs.getBoolean("modo_oscuro", false)
@@ -119,9 +127,12 @@ class addTransaction : AppCompatActivity() {
         val btnVoiceInput = findViewById<ImageButton>(R.id.btnVoiceInput)
         val voiceContainer = findViewById<LinearLayout>(R.id.voiceInputContainer)
 
+        tvRamaLabel = findViewById(R.id.tvRamaLabel)
+        cardSelectorRama = findViewById(R.id.cardSelectorRama)
+        tvNombreRamaActual = findViewById(R.id.tvNombreRamaActual)
+
         val auraColor = ThemeUtils.getAuraColor(this)
         btnGuardar.backgroundTintList = ColorStateList.valueOf(auraColor)
-
         btnVoiceInput.setColorFilter(auraColor, PorterDuff.Mode.SRC_IN)
 
         val voiceBg = voiceContainer.background?.mutate() as? android.graphics.drawable.GradientDrawable
@@ -160,11 +171,13 @@ class addTransaction : AppCompatActivity() {
         viewModel = ViewModelProvider(this, factory)[MovimientoViewModel::class.java]
 
         cargarCategorias()
+        cargarRamasActivas()
 
         cardIngreso.setOnClickListener { seleccionarTipo(1) }
         cardEgreso.setOnClickListener { seleccionarTipo(0) }
 
         cardSelectorCategoria.setOnClickListener { mostrarBottomSheetCategorias() }
+        cardSelectorRama.setOnClickListener { mostrarSelectorRamas() }
 
         val transactionTypeFromWidget = intent.getIntExtra(EXTRA_WIDGET_TRANSACTION_TYPE, -1)
         if (transactionTypeFromWidget != -1) {
@@ -253,6 +266,11 @@ class addTransaction : AppCompatActivity() {
                 return@setOnClickListener
             }
 
+            if (tipoSeleccionado == 0 && currentRamaId == null) {
+                Toast.makeText(this, "⚠️ Por favor selecciona de dónde saldrá el dinero", Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
+
             if (currentCategoriaId == -1L) {
                 val catOtros = listaCategoriasEnDB.find { it.nombre == "Otros" }
                 if (catOtros != null) {
@@ -275,6 +293,8 @@ class addTransaction : AppCompatActivity() {
             val fechaActual = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
             val horaActual = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
 
+            val finalParentId = if (tipoSeleccionado == 0 && currentRamaId != -1) currentRamaId else null
+
             val nuevoMovimiento = Movimiento(
                 descripcion = descripcion,
                 cantidad = cantidad,
@@ -282,7 +302,8 @@ class addTransaction : AppCompatActivity() {
                 fecha = fechaActual,
                 categoria = currentCategoriaNombre,
                 categoriaId = currentCategoriaId,
-                hora = horaActual
+                hora = horaActual,
+                parentId = finalParentId
             )
 
             val job = viewModel.insertar(nuevoMovimiento)
@@ -301,6 +322,86 @@ class addTransaction : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun cargarRamasActivas() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            val todosLosMovimientos = database.movimientoDao().obtenerTodosSync()
+
+            val balancePorRama = todosLosMovimientos.groupBy { it.parentId ?: it.id }
+                .mapValues { entry ->
+                    entry.value.sumOf { if (it.tipo == 1) it.cantidad else -it.cantidad }
+                }
+
+            val ramasActivasTemp = mutableListOf<RamaActiva>()
+            balancePorRama.forEach { (ramaId, saldo) ->
+                if (saldo > 0) {
+                    val ramaPadre = todosLosMovimientos.find { it.id == ramaId }
+                    if (ramaPadre != null) {
+                        val tituloConFecha = "${ramaPadre.descripcion} (${ramaPadre.fecha})"
+                        ramasActivasTemp.add(RamaActiva(ramaId, tituloConFecha, saldo))
+                    }
+                }
+            }
+
+            withContext(Dispatchers.Main) {
+                // ORDENAMOS DE MÁS RECIENTE A MÁS ANTIGUO (MAYOR ID = MÁS RECIENTE)
+                listaRamasActivas = ramasActivasTemp.sortedByDescending { it.id }
+            }
+        }
+    }
+
+    private fun mostrarSelectorRamas() {
+        val dialog = BottomSheetDialog(this)
+        val view = LayoutInflater.from(this).inflate(R.layout.layout_bottom_sheet_ramas, null)
+        dialog.setContentView(view)
+
+        val llListaRamas = view.findViewById<LinearLayout>(R.id.llListaRamas)
+        val format = DecimalFormat("$#,###", DecimalFormatSymbols(Locale("es", "CO")))
+
+        val viewLibre = LayoutInflater.from(this).inflate(R.layout.item_rama_selector, llListaRamas, false)
+        val tvNombreLibre = viewLibre.findViewById<TextView>(R.id.tvRamaNombre)
+        val tvSaldoLibre = viewLibre.findViewById<TextView>(R.id.tvRamaSaldo)
+        val ivIconLibre = viewLibre.findViewById<ImageView>(R.id.ivRamaIcon)
+
+        tvNombreLibre.text = "Gasto Libre / Dinero Extra"
+        tvSaldoLibre.text = "No se descontará de ningún bolsillo"
+        ivIconLibre.setImageResource(R.drawable.ic_info)
+        ivIconLibre.setColorFilter(Color.GRAY)
+
+        viewLibre.setOnClickListener {
+            currentRamaId = -1
+            tvNombreRamaActual.text = "Gasto Libre"
+            dialog.dismiss()
+        }
+        llListaRamas.addView(viewLibre)
+
+        if (listaRamasActivas.isNotEmpty()) {
+            val tvTituloDisponibles = TextView(this).apply {
+                text = "Tus Bolsillos Disponibles"
+                setPadding(16, 24, 16, 8)
+                textSize = 14f
+                setTextColor(Color.GRAY)
+            }
+            llListaRamas.addView(tvTituloDisponibles)
+
+            listaRamasActivas.forEach { rama ->
+                val viewRama = LayoutInflater.from(this).inflate(R.layout.item_rama_selector, llListaRamas, false)
+                val tvNombre = viewRama.findViewById<TextView>(R.id.tvRamaNombre)
+                val tvSaldo = viewRama.findViewById<TextView>(R.id.tvRamaSaldo)
+
+                tvNombre.text = rama.nombre
+                tvSaldo.text = "Disponible: ${format.format(rama.saldo)}"
+
+                viewRama.setOnClickListener {
+                    currentRamaId = rama.id
+                    tvNombreRamaActual.text = "${rama.nombre} (${format.format(rama.saldo)})"
+                    dialog.dismiss()
+                }
+                llListaRamas.addView(viewRama)
+            }
+        }
+        dialog.show()
     }
 
     private fun checkAndRequestReview() {
@@ -509,7 +610,7 @@ class addTransaction : AppCompatActivity() {
 
         val auraColor = ThemeUtils.getAuraColor(this)
         btnGuardar.backgroundTintList = ColorStateList.valueOf(auraColor)
-        btnGuardar.setTextColor(Color.WHITE) // Asegurar texto blanco
+        btnGuardar.setTextColor(Color.WHITE)
 
         val cardLivePreview = view.findViewById<MaterialCardView>(R.id.cardLivePreview)
         val tvLivePreviewEmoji = view.findViewById<TextView>(R.id.tvLivePreviewEmoji)
@@ -659,25 +760,32 @@ class addTransaction : AppCompatActivity() {
     private fun seleccionarTipo(tipo: Int) {
         tipoSeleccionado = tipo
 
-        val colorIngreso = Color.parseColor("#4CAF50") // Verde
-        val colorEgreso = Color.parseColor("#F44336")  // Rojo
+        val colorIngreso = Color.parseColor("#4CAF50")
+        val colorEgreso = Color.parseColor("#F44336")
 
-        if (tipo == 1) { // Ingreso Seleccionado
+        if (tipo == 1) {
             cardIngreso.strokeColor = colorIngreso
             cardIngreso.strokeWidth = 6
             cardIngreso.setCardBackgroundColor(Color.argb(38, Color.red(colorIngreso), Color.green(colorIngreso), Color.blue(colorIngreso)))
 
-            // Egreso Inactivo
             cardEgreso.strokeWidth = 0
             cardEgreso.setCardBackgroundColor(Color.TRANSPARENT)
-        } else { // Egreso Seleccionado
+
+            tvRamaLabel.visibility = View.GONE
+            cardSelectorRama.visibility = View.GONE
+            currentRamaId = null
+            tvNombreRamaActual.text = "Selecciona el origen"
+
+        } else {
             cardEgreso.strokeColor = colorEgreso
             cardEgreso.strokeWidth = 6
             cardEgreso.setCardBackgroundColor(Color.argb(38, Color.red(colorEgreso), Color.green(colorEgreso), Color.blue(colorEgreso)))
 
-            // Ingreso Inactivo
             cardIngreso.strokeWidth = 0
             cardIngreso.setCardBackgroundColor(Color.TRANSPARENT)
+
+            tvRamaLabel.visibility = View.VISIBLE
+            cardSelectorRama.visibility = View.VISIBLE
         }
     }
 

@@ -15,10 +15,14 @@ android {
         applicationId = "com.help.finance_code"
         minSdk = 28
         targetSdk = 36
-        versionCode = 14
-        versionName = "2.70"
+        versionCode = 15
+        versionName = "2.80"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        ndk {
+            abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a"))
+        }
 
         packaging {
             resources {
@@ -28,6 +32,12 @@ android {
                 excludes.add("META-INF/NOTICE")
                 excludes.add("META-INF/NOTICE.txt")
             }
+        }
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
         }
     }
 
@@ -80,7 +90,7 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
-    // --- FIREBASE (Centralizado y limpio con un solo BoM) ---
+    // --- FIREBASE ---
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.auth)
@@ -114,10 +124,9 @@ dependencies {
     implementation("com.google.android.play:review-ktx:2.0.1")
     implementation("com.google.android.play:integrity:1.6.0")
 
-    // Google AI Edge SDK para inferencia local
+    // --- AI Y ML KIT ---
     implementation("com.google.ai.client.generativeai:generativeai:0.7.0")
-    // ML Kit para extracción de entidades (montos, fechas) sin API
     implementation("com.google.mlkit:entity-extraction:16.0.0-beta5")
-    // Corrutinas para no bloquear la UI
+
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 }

@@ -1,5 +1,6 @@
 package com.help.finance_code.ui.home
 
+import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.Context
 import android.content.Intent
@@ -27,6 +28,7 @@ import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -82,6 +84,9 @@ class MovimientosFragment : Fragment() {
     private var fFin: Long = Long.MAX_VALUE
     private var fAgrupacion: Int = 1
     private var isBalanceHidden = false
+
+    // NUEVO: Para saber qué bolsillo estamos viendo en la tarjeta
+    private var bolsilloSeleccionadoId: Int? = null
 
     // Vistas
     private lateinit var btnFiltrar: Button
@@ -169,6 +174,11 @@ class MovimientosFragment : Fragment() {
         aplicarBordeTarjetaCredito(cardSaldoContainer, auraColor)
         fabAddTransaction.backgroundTintList = ColorStateList.valueOf(auraColor)
 
+        // NUEVO: Click en la tarjeta para desplegar bolsillos
+        cardSaldoContainer.setOnClickListener {
+            mostrarSelectorBolsillosHome()
+        }
+
         cargarPreferencias()
         actualizarBotonFiltro()
 
@@ -185,7 +195,6 @@ class MovimientosFragment : Fragment() {
                 cardSelectionMode.visibility = View.VISIBLE
                 tvSelectedCount.text = "$count seleccionados"
 
-                // Ocultar FABs en modo selección para no molestar
                 if (isFabOpen) toggleFabMenu()
                 fabAddTransaction.hide()
             } else {
@@ -315,6 +324,72 @@ class MovimientosFragment : Fragment() {
         checkAndShowShakeAnimation()
     }
 
+    @SuppressLint("MissingInflatedId")
+    private fun mostrarSelectorBolsillosHome() {
+        val dialog = com.google.android.material.bottomsheet.BottomSheetDialog(requireContext())
+        val view = layoutInflater.inflate(R.layout.layout_bottom_sheet_ramas, null)
+        dialog.setContentView(view)
+
+        view.findViewById<TextView>(R.id.tvRamaNombre)?.text = "Filtrar por Bolsillo"
+
+        val llListaRamas = view.findViewById<LinearLayout>(R.id.llListaRamas)
+        val format = java.text.DecimalFormat("$#,###", java.text.DecimalFormatSymbols(java.util.Locale("es", "CO")))
+
+        val balancePorRama = listaMovimientosGlobal.groupBy { it.parentId ?: it.id }
+            .mapValues { entry -> entry.value.sumOf { if (it.tipo == 1) it.cantidad else -it.cantidad } }
+
+        data class BolsilloActivo(val id: Int, val nombre: String, val saldo: Double)
+
+        val ramasActivas = mutableListOf<BolsilloActivo>()
+        balancePorRama.forEach { (ramaId, saldo) ->
+            if (saldo > 0) {
+                val ramaPadre = listaMovimientosGlobal.find { it.id == ramaId }
+                if (ramaPadre != null) ramasActivas.add(BolsilloActivo(ramaId, ramaPadre.descripcion, saldo))
+            }
+        }
+
+        val viewTodos = layoutInflater.inflate(R.layout.item_rama_selector, llListaRamas, false)
+        viewTodos.findViewById<TextView>(R.id.tvRamaNombre).text = "TODOS"
+        viewTodos.findViewById<TextView>(R.id.tvRamaSaldo).text = "Ver saldo global disponible"
+        val ivIconTodos = viewTodos.findViewById<ImageView>(R.id.ivRamaIcon)
+        ivIconTodos.setImageResource(R.drawable.ic_movimientos) // Un icono que tengas a la mano
+        ivIconTodos.setColorFilter(Color.GRAY)
+
+        viewTodos.setOnClickListener {
+            bolsilloSeleccionadoId = null
+            actualizarSaldoTotal()
+            aplicarFiltrosActuales()
+            dialog.dismiss()
+        }
+        llListaRamas.addView(viewTodos)
+
+        if (ramasActivas.isNotEmpty()) {
+            val tvTituloDisponibles = TextView(requireContext()).apply {
+                text = "Tus Bolsillos Disponibles"
+                setPadding(16, 24, 16, 8)
+                textSize = 14f
+                setTextColor(Color.GRAY)
+            }
+            llListaRamas.addView(tvTituloDisponibles)
+
+            ramasActivas.sortedByDescending { it.saldo }.forEach { rama ->
+                val viewRama = layoutInflater.inflate(R.layout.item_rama_selector, llListaRamas, false)
+                viewRama.findViewById<TextView>(R.id.tvRamaNombre).text = rama.nombre
+                viewRama.findViewById<TextView>(R.id.tvRamaSaldo).text = "Disponible: ${format.format(rama.saldo)}"
+
+                viewRama.setOnClickListener {
+                    bolsilloSeleccionadoId = rama.id
+                    actualizarSaldoTotal()
+                    aplicarFiltrosActuales()
+                    dialog.dismiss()
+                }
+                llListaRamas.addView(viewRama)
+            }
+        }
+
+        dialog.show()
+    }
+
     private fun toggleFabMenu() {
         isFabOpen = !isFabOpen
         if (isFabOpen) {
@@ -400,11 +475,30 @@ class MovimientosFragment : Fragment() {
     }
 
     private fun actualizarSaldoTotal() {
-        val total = listaMovimientosGlobal.sumOf { if (it.tipo == 1) it.cantidad else -it.cantidad }
-        if (DiscreetModeManager.isDiscreetModeActive || isBalanceHidden) {
-            tvSaldoTotal.text = "$ •••••••"
+        if (bolsilloSeleccionadoId == null) {
+            val balancePorRama = listaMovimientosGlobal.groupBy { it.parentId ?: it.id }
+                .mapValues { entry ->
+                    entry.value.sumOf { if (it.tipo == 1) it.cantidad else -it.cantidad }
+                }
+            val total = balancePorRama.values.filter { it > 0 }.sum()
+
+            if (DiscreetModeManager.isDiscreetModeActive || isBalanceHidden) {
+                tvSaldoTotal.text = "$ •••••••"
+            } else {
+                tvSaldoTotal.text = formatCop(total)
+            }
         } else {
-            tvSaldoTotal.text = formatCop(total)
+            val ramaPadre = listaMovimientosGlobal.find { it.id == bolsilloSeleccionadoId }
+            val hijos = listaMovimientosGlobal.filter { it.parentId == bolsilloSeleccionadoId }
+
+            var saldoBolsillo = ramaPadre?.cantidad ?: 0.0
+            saldoBolsillo -= hijos.sumOf { it.cantidad }
+
+            if (DiscreetModeManager.isDiscreetModeActive || isBalanceHidden) {
+                tvSaldoTotal.text = "$ •••••••"
+            } else {
+                tvSaldoTotal.text = formatCop(saldoBolsillo)
+            }
         }
     }
 
@@ -412,7 +506,6 @@ class MovimientosFragment : Fragment() {
         actualizarSaldoTotal()
         adapter.updateDiscreetMode()
 
-        // --- AQUÍ ESTÁ EL CÓDIGO QUE CAMBIA EL LOGO ---
         if (DiscreetModeManager.isDiscreetModeActive) {
             imgLogo.setImageResource(R.drawable.logo_incognito)
         } else {
@@ -470,10 +563,11 @@ class MovimientosFragment : Fragment() {
 
     private fun aplicarFiltrosActuales() {
         val filtrados = listaMovimientosGlobal.filter { mov ->
-            if (fInicio == 0L && fFin == Long.MAX_VALUE) true
-            else {
-                val time = parseDateToMillis(mov.fecha)
-                time in fInicio..fFin
+            if (bolsilloSeleccionadoId != null) {
+                mov.id == bolsilloSeleccionadoId || mov.parentId == bolsilloSeleccionadoId
+            } else {
+                if (fInicio == 0L && fFin == Long.MAX_VALUE) true
+                else parseDateToMillis(mov.fecha) in fInicio..fFin
             }
         }
 
@@ -483,7 +577,14 @@ class MovimientosFragment : Fragment() {
 
         val itemsFinales = mutableListOf<MovimientoListItem>()
 
-        if (fAgrupacion == 0 || ordenados.isEmpty()) {
+        if (fAgrupacion == 4) {
+            val agrupadosPorRama = ordenados.groupBy { it.parentId ?: it.id }
+            for ((ramaId, movsDeLaRama) in agrupadosPorRama) {
+                val nombreRama = listaMovimientosGlobal.find { it.id == ramaId }?.descripcion ?: "Gasto Libre / Extra"
+                itemsFinales.add(MovimientoListItem.Header(nombreRama))
+                itemsFinales.addAll(movsDeLaRama.map { MovimientoListItem.Item(it) })
+            }
+        } else if (fAgrupacion == 0 || ordenados.isEmpty()) {
             itemsFinales.addAll(ordenados.map { MovimientoListItem.Item(it) })
         } else {
             val formatDia = SimpleDateFormat("dd 'de' MMMM, yyyy", Locale("es", "CO"))
@@ -513,7 +614,11 @@ class MovimientosFragment : Fragment() {
             adapter.setSelectionModeActive(false)
         }
 
-        adapter.setData(itemsFinales)
+        val mapaBolsillos = listaMovimientosGlobal
+            .filter { it.parentId == null }
+            .associate { it.id to it.descripcion }
+
+        adapter.setData(itemsFinales, mapaBolsillos)
     }
 
     private fun actualizarBotonFiltro() {

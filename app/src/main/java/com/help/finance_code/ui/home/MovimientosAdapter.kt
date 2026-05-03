@@ -26,9 +26,10 @@ class MovimientosAdapter(
     private var items: List<MovimientoListItem>
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    // --- NUEVAS VARIABLES DE SELECCIÓN MÚLTIPLE ---
     var isSelectionMode = false
     val selectedItems = mutableSetOf<Movimiento>()
+
+    var mapRamas: Map<Int, String> = emptyMap()
 
     var onItemClickListener: ((Movimiento) -> Unit)? = null
     var onSelectionModeChangeListener: ((Boolean, Int) -> Unit)? = null
@@ -64,7 +65,6 @@ class MovimientosAdapter(
             val movimiento = item.movimiento
             val context = holder.itemView.context
 
-            // --- TU LÓGICA VISUAL ORIGINAL (INTACTA) ---
             if (DiscreetModeManager.isDiscreetModeActive) {
                 holder.tvNombre.text = "***********"
                 holder.tvFecha.text = "--/--/----"
@@ -72,6 +72,7 @@ class MovimientosAdapter(
                 holder.tvMonto.setTextColor(Color.parseColor("#9E9E9E"))
                 holder.tvBanco.visibility = View.VISIBLE
                 holder.tvBanco.text = "****"
+                holder.tvRamaAsociada.visibility = View.GONE
 
                 val grisClaro = Color.parseColor("#9E9E9E")
                 val grisFondo = Color.parseColor("#EEEEEE")
@@ -82,19 +83,11 @@ class MovimientosAdapter(
             } else {
                 holder.tvNombre.text = movimiento.descripcion
 
-                if (movimiento.banco == "General") {
-                    holder.tvBanco.visibility = View.GONE
-                } else {
-                    holder.tvBanco.visibility = View.VISIBLE
-                    holder.tvBanco.text = movimiento.banco
-                }
+                if (movimiento.banco == "General") holder.tvBanco.visibility = View.GONE
+                else { holder.tvBanco.visibility = View.VISIBLE; holder.tvBanco.text = movimiento.banco }
 
                 val horaCorta = if (movimiento.hora.length >= 5) movimiento.hora.substring(0, 5) else ""
-                if (horaCorta.isNotEmpty() && horaCorta != "00:00") {
-                    holder.tvFecha.text = "${movimiento.fecha} • $horaCorta"
-                } else {
-                    holder.tvFecha.text = movimiento.fecha
-                }
+                holder.tvFecha.text = if (horaCorta.isNotEmpty() && horaCorta != "00:00") "${movimiento.fecha} • $horaCorta" else movimiento.fecha
 
                 val locale = Locale.Builder().setLanguage("es").setRegion("CO").build()
                 val formatter = NumberFormat.getCurrencyInstance(locale)
@@ -105,77 +98,68 @@ class MovimientosAdapter(
                     holder.tvMonto.text = "+ $montoFormateado"
                     val verde = Color.parseColor("#4CAF50")
                     holder.tvMonto.setTextColor(verde)
-
                     holder.ivIcono.setImageResource(R.drawable.ic_arrow_up)
                     holder.ivIcono.imageTintList = ColorStateList.valueOf(verde)
                     holder.iconContainer.setCardBackgroundColor(Color.parseColor("#F5F5F5"))
+                    holder.tvRamaAsociada.visibility = View.GONE
                 } else {
                     holder.tvMonto.text = "- $montoFormateado"
                     val rojo = Color.parseColor("#F44336")
                     holder.tvMonto.setTextColor(rojo)
-
                     holder.ivIcono.setImageResource(R.drawable.ic_arrow_down)
                     holder.ivIcono.imageTintList = ColorStateList.valueOf(rojo)
                     holder.iconContainer.setCardBackgroundColor(Color.parseColor("#F5F5F5"))
+
+                    if (movimiento.parentId != null) {
+                        val nombrePadre = mapRamas[movimiento.parentId] ?: "Bolsillo Desconocido"
+                        holder.tvRamaAsociada.text = "De: $nombrePadre"
+                        holder.tvRamaAsociada.visibility = View.VISIBLE
+                    } else {
+                        holder.tvRamaAsociada.text = "Gasto Libre"
+                        holder.tvRamaAsociada.visibility = View.VISIBLE
+                        holder.tvRamaAsociada.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#209E9E9E"))
+                        holder.tvRamaAsociada.setTextColor(Color.parseColor("#757575"))
+                    }
                 }
             }
 
-            // --- NUEVA LÓGICA DE SELECCIÓN MÚLTIPLE (Adaptada a tus bordes dinámicos) ---
             val isSelected = selectedItems.contains(movimiento)
             val materialCardView = holder.itemView as MaterialCardView
 
-            // Mostramos u ocultamos el checkbox dependiendo si estamos en modo selección masiva
             holder.cbSeleccion.visibility = if (isSelectionMode) View.VISIBLE else View.GONE
             holder.cbSeleccion.isChecked = isSelected
 
-            // Tu efecto de borde original, pero ahora se activa con la selección múltiple
             if (isSelected) {
                 val strokeWidthPx = (2 * context.resources.displayMetrics.density).toInt()
                 materialCardView.strokeWidth = strokeWidthPx
-
-                if (movimiento.tipo == 1) {
-                    materialCardView.strokeColor = Color.parseColor("#4CAF50")
-                } else {
-                    materialCardView.strokeColor = Color.parseColor("#F44336")
-                }
+                materialCardView.strokeColor = if (movimiento.tipo == 1) Color.parseColor("#4CAF50") else Color.parseColor("#F44336")
             } else {
                 materialCardView.strokeWidth = 0
                 materialCardView.strokeColor = Color.TRANSPARENT
             }
 
-            // --- CONTROL DE CLICS (Integrando lo tuyo con la nueva función) ---
             holder.itemView.setOnClickListener {
                 if (isSelectionMode) {
-                    if (selectedItems.contains(movimiento)) {
-                        selectedItems.remove(movimiento)
-                    } else {
-                        selectedItems.add(movimiento)
-                    }
+                    if (selectedItems.contains(movimiento)) selectedItems.remove(movimiento) else selectedItems.add(movimiento)
                     notifyItemChanged(position)
                     onSelectionModeChangeListener?.invoke(isSelectionMode, selectedItems.size)
                 } else {
-                    // Si no estamos seleccionando, abre la pantalla de edición como querías
                     onItemClickListener?.invoke(movimiento)
                 }
             }
 
-            // Reemplazo del Long Click original para activar el modo selección múltiple
             holder.itemView.setOnLongClickListener {
                 if (!isSelectionMode) {
                     setSelectionModeActive(true)
                     selectedItems.add(movimiento)
-                    notifyDataSetChanged() // Refresca todo para que aparezcan los checkboxes
+                    notifyDataSetChanged()
                     onSelectionModeChangeListener?.invoke(isSelectionMode, selectedItems.size)
                 }
                 true
             }
 
             holder.cbSeleccion.setOnClickListener {
-                if (holder.cbSeleccion.isChecked) {
-                    selectedItems.add(movimiento)
-                } else {
-                    selectedItems.remove(movimiento)
-                }
+                if (holder.cbSeleccion.isChecked) selectedItems.add(movimiento) else selectedItems.remove(movimiento)
                 notifyItemChanged(position)
                 onSelectionModeChangeListener?.invoke(isSelectionMode, selectedItems.size)
             }
@@ -184,34 +168,25 @@ class MovimientosAdapter(
 
     override fun getItemCount(): Int = items.size
 
-    fun setData(nuevosItems: List<MovimientoListItem>) {
+    fun setData(nuevosItems: List<MovimientoListItem>, mapaBolsillos: Map<Int, String>) {
         this.items = nuevosItems
-        // Solo limpiamos la selección si no estamos en modo selección activa
-        if (!isSelectionMode) {
-            selectedItems.clear()
-        }
+        this.mapRamas = mapaBolsillos
+        if (!isSelectionMode) selectedItems.clear()
         notifyDataSetChanged()
     }
 
-    fun updateDiscreetMode() {
-        notifyDataSetChanged()
-    }
+    fun updateDiscreetMode() { notifyDataSetChanged() }
 
-    // Funciones para manejar el modo selección múltiple
     fun setSelectionModeActive(active: Boolean) {
         isSelectionMode = active
-        if (!active) {
-            selectedItems.clear()
-        }
+        if (!active) selectedItems.clear()
         notifyDataSetChanged()
         onSelectionModeChangeListener?.invoke(isSelectionMode, selectedItems.size)
     }
 
     fun selectAll() {
         selectedItems.clear()
-        items.forEach {
-            if (it is MovimientoListItem.Item) selectedItems.add(it.movimiento)
-        }
+        items.forEach { if (it is MovimientoListItem.Item) selectedItems.add(it.movimiento) }
         notifyDataSetChanged()
         onSelectionModeChangeListener?.invoke(isSelectionMode, selectedItems.size)
     }
@@ -227,8 +202,7 @@ class MovimientosAdapter(
         val tvFecha: TextView = itemView.findViewById(R.id.tvFecha)
         val iconContainer: CardView = itemView.findViewById(R.id.iconContainer)
         val tvBanco: TextView = itemView.findViewById(R.id.tvBancoMovimiento)
-
-        // El nuevo checkbox
         val cbSeleccion: MaterialCheckBox = itemView.findViewById(R.id.cbSeleccion)
+        val tvRamaAsociada: TextView = itemView.findViewById(R.id.tvRamaAsociada)
     }
 }

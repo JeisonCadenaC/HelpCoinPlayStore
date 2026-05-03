@@ -13,92 +13,109 @@
     app:cardBackgroundColor="?attr/colorSurface"
     android:clickable="true"
     android:focusable="true"
-    android:foreground="?attr/selectableItemBackground"> <androidx.constraintlayout.widget.ConstraintLayout
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:padding="16dp">
+    android:foreground="?attr/selectableItemBackground">
 
-    <com.google.android.material.checkbox.MaterialCheckBox
-        android:id="@+id/cbSeleccion"
-        android:layout_width="wrap_content"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:visibility="gone"
-        tools:visibility="visible"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        android:padding="16dp">
 
-    <androidx.cardview.widget.CardView
-        android:id="@+id/iconContainer"
-        android:layout_width="46dp"
-        android:layout_height="46dp"
-        app:cardCornerRadius="23dp"
-        app:cardElevation="0dp"
-        app:cardBackgroundColor="@android:color/transparent"
-        app:layout_constraintStart_toEndOf="@id/cbSeleccion"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent">
-
-        <ImageView
-            android:id="@+id/ivIcono"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_gravity="center"
-            tools:src="@drawable/ic_arrow_up"/>
-    </androidx.cardview.widget.CardView>
-
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="8dp"
-        app:layout_constraintStart_toEndOf="@id/iconContainer"
-        app:layout_constraintEnd_toStartOf="@id/tvCantidad"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent">
-
-        <TextView
-            android:id="@+id/tvDescripcion"
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/cbSeleccion"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            tools:text="Pago Netflix"
+            android:visibility="gone"
+            tools:visibility="visible"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/iconContainer"
+            android:layout_width="46dp"
+            android:layout_height="46dp"
+            app:cardCornerRadius="23dp"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="@android:color/transparent"
+            app:layout_constraintStart_toEndOf="@id/cbSeleccion"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <ImageView
+                android:id="@+id/ivIcono"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                tools:src="@drawable/ic_arrow_up"/>
+        </androidx.cardview.widget.CardView>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="8dp"
+            app:layout_constraintStart_toEndOf="@id/iconContainer"
+            app:layout_constraintEnd_toStartOf="@id/tvCantidad"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <TextView
+                android:id="@+id/tvDescripcion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:text="Pago Netflix"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorOnSurface"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/tvBancoMovimiento"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:text="Banco"
+                android:textSize="12sp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:layout_marginTop="2dp" />
+
+            <TextView
+                android:id="@+id/tvFecha"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:text="Hoy, 10:30 AM"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="12sp"
+                android:layout_marginTop="2dp" />
+
+            <TextView
+                android:id="@+id/tvRamaAsociada"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:text="De: Sueldo"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorPrimary"
+                android:background="@drawable/button_rounded"
+                android:backgroundTint="#204CAF50"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"
+                android:layout_marginTop="4dp"
+                android:visibility="gone"
+                tools:visibility="visible"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvCantidad"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="-$ 15.000"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:textColor="?attr/colorOnSurface"
-            android:maxLines="1"
-            android:ellipsize="end" />
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
 
-        <TextView
-            android:id="@+id/tvBancoMovimiento"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            tools:text="Banco"
-            android:textSize="12sp"
-            android:textColor="?android:attr/textColorSecondary"
-            android:layout_marginTop="2dp" />
-
-        <TextView
-            android:id="@+id/tvFecha"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            tools:text="Hoy, 10:30 AM"
-            android:textColor="?android:attr/textColorSecondary"
-            android:textSize="12sp"
-            android:layout_marginTop="2dp" />
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/tvCantidad"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        tools:text="-$ 15.000"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
-
-</androidx.constraintlayout.widget.ConstraintLayout>
-
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>

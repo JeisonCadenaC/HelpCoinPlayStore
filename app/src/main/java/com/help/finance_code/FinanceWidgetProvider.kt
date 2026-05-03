@@ -10,7 +10,6 @@ import android.os.Build
 import android.widget.RemoteViews
 import com.help.finance_code.data.AppDB
 import com.help.finance_code.data.EXTRA_WIDGET_TRANSACTION_TYPE
-import com.help.finance_code.data.MovimientoRepository
 import com.help.finance_code.data.TYPE_EGRESO
 import com.help.finance_code.data.TYPE_INGRESO
 import com.help.finance_code.ui.login.AuthCheckActivity
@@ -19,7 +18,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import java.text.NumberFormat
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 import java.util.Locale
 
 private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -59,21 +59,27 @@ internal fun updateAppWidget(
         val balanceText = if (userEmail != null) {
             try {
                 val database = AppDB.getDatabase(context, userEmail)
-                val repository = MovimientoRepository(database.movimientoDao())
-                val balance = repository.obtenerSaldoActualSincrono() ?: 0.0
 
-                val format = NumberFormat.getCurrencyInstance(Locale.getDefault())
-                format.maximumFractionDigits = 0
-                "Saldo: ${format.format(balance)}"
+                val todosLosMovimientos = database.movimientoDao().obtenerTodosSync()
+
+                val balancePorRama = todosLosMovimientos.groupBy { it.parentId ?: it.id }
+                    .mapValues { entry ->
+                        entry.value.sumOf { if (it.tipo == 1) it.cantidad else -it.cantidad }
+                    }
+                val disponibleReal = balancePorRama.values.filter { it > 0 }.sum()
+
+                val format = DecimalFormat("$#,###", DecimalFormatSymbols(Locale("es", "CO")))
+                format.format(disponibleReal)
             } catch (e: Exception) {
                 "Error"
             }
         } else {
-            "Login Requerido"
+            "Iniciar Sesión"
         }
 
         views.setTextViewText(R.id.widget_balance, balanceText)
 
+        // Configurar botón de Egreso (-)
         val gastoIntent = Intent(context, AuthCheckActivity::class.java).apply {
             putExtra(EXTRA_WIDGET_TRANSACTION_TYPE, TYPE_EGRESO)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK

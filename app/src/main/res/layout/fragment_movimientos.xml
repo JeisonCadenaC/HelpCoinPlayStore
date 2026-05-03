@@ -44,6 +44,9 @@
         android:background="@drawable/card_exclusive_bg"
         android:elevation="10dp"
         android:padding="24dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackground"
         app:layout_constraintTop_toBottomOf="@id/tvHeader"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -84,6 +87,17 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/lblSaldo"/>
 
+        <ImageView
+            android:id="@+id/ivDropdownArrow"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginStart="8dp"
+            android:src="@drawable/ic_arrow_down"
+            app:tint="#FFFFFF"
+            app:layout_constraintStart_toEndOf="@id/tvSaldoTotal"
+            app:layout_constraintTop_toTopOf="@id/tvSaldoTotal"
+            app:layout_constraintBottom_toBottomOf="@id/tvSaldoTotal" />
+
         <ImageButton
             android:id="@+id/btnHideBalance"
             android:layout_width="32dp"
@@ -92,7 +106,7 @@
             android:src="@drawable/ic_visibility"
             app:tint="#FFFFFF"
             android:layout_marginStart="16dp"
-            app:layout_constraintStart_toEndOf="@id/tvSaldoTotal"
+            app:layout_constraintStart_toEndOf="@id/ivDropdownArrow"
             app:layout_constraintTop_toTopOf="@id/tvSaldoTotal"
             app:layout_constraintBottom_toBottomOf="@id/tvSaldoTotal"/>
 
