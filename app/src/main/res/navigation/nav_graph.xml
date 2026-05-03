@@ -23,6 +23,9 @@
         <action
             android:id="@+id/action_movimientosFragment_to_eTransactionFragment"
             app:destination="@id/eTransactionFragment" />
+        <action
+            android:id="@+id/action_movimientosFragment_to_perfilFragment"
+            app:destination="@id/perfilFragment" />
     </fragment>
 
     <fragment

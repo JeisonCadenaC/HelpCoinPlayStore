@@ -48,6 +48,8 @@ import com.help.finance_code.data.AppDB
 import com.help.finance_code.data.Movimiento
 import com.help.finance_code.data.MovimientoRepository
 import com.help.finance_code.ui.transaction.addTransaction
+// Recuerda importar aquí la actividad de tu perfil si la necesitas
+// import com.help.finance_code.ui.profile.ProfileActivity
 import com.help.finance_code.utils.ThemeUtils
 import com.help.finance_code.viewmodel.MovimientoViewModel
 import com.help.finance_code.viewmodel.MovimientoViewModelFactory
@@ -85,7 +87,6 @@ class MovimientosFragment : Fragment() {
     private var fAgrupacion: Int = 1
     private var isBalanceHidden = false
 
-    // NUEVO: Para saber qué bolsillo estamos viendo en la tarjeta
     private var bolsilloSeleccionadoId: Int? = null
 
     // Vistas
@@ -97,6 +98,9 @@ class MovimientosFragment : Fragment() {
     private lateinit var imgLogo: ImageView
     private var tvUserName: TextView? = null
     private var btnDiscreetModeManual: ImageButton? = null
+
+    // Lápiz de edición
+    private var btnEditProfile: ImageButton? = null
 
     // Multi-selección Vistas
     private lateinit var cardSelectionMode: View
@@ -154,6 +158,7 @@ class MovimientosFragment : Fragment() {
         imgLogo = view.findViewById(R.id.imgLogo)
         tvUserName = view.findViewById(R.id.tvUserName)
         btnDiscreetModeManual = view.findViewById(R.id.btnDiscreetModeManual)
+        btnEditProfile = view.findViewById(R.id.btnEditProfile)
 
         // Enlace Multi-selección
         cardSelectionMode = view.findViewById(R.id.cardSelectionMode)
@@ -174,9 +179,18 @@ class MovimientosFragment : Fragment() {
         aplicarBordeTarjetaCredito(cardSaldoContainer, auraColor)
         fabAddTransaction.backgroundTintList = ColorStateList.valueOf(auraColor)
 
-        // NUEVO: Click en la tarjeta para desplegar bolsillos
         cardSaldoContainer.setOnClickListener {
             mostrarSelectorBolsillosHome()
+        }
+
+        btnEditProfile?.setOnClickListener {
+            try {
+                // Navegación al perfil
+                findNavController().navigate(R.id.action_movimientosFragment_to_perfilFragment)
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "Aún no se ha conectado el Perfil en el grafo de navegación", Toast.LENGTH_LONG).show()
+                e.printStackTrace()
+            }
         }
 
         cargarPreferencias()
@@ -352,7 +366,7 @@ class MovimientosFragment : Fragment() {
         viewTodos.findViewById<TextView>(R.id.tvRamaNombre).text = "TODOS"
         viewTodos.findViewById<TextView>(R.id.tvRamaSaldo).text = "Ver saldo global disponible"
         val ivIconTodos = viewTodos.findViewById<ImageView>(R.id.ivRamaIcon)
-        ivIconTodos.setImageResource(R.drawable.ic_movimientos) // Un icono que tengas a la mano
+        ivIconTodos.setImageResource(R.drawable.ic_movimientos)
         ivIconTodos.setColorFilter(Color.GRAY)
 
         viewTodos.setOnClickListener {
@@ -644,13 +658,6 @@ class MovimientosFragment : Fragment() {
         val sheetView = layoutInflater.inflate(R.layout.layout_bottom_sheet_filtros, null)
         bottomSheetDialog.setContentView(sheetView)
 
-        try {
-            sheetView.findViewById<TextView>(R.id.tvTituloComparacion)?.visibility = View.GONE
-            sheetView.findViewById<View>(R.id.divisorComparacion)?.visibility = View.GONE
-            sheetView.findViewById<View>(R.id.scrollComparacion)?.visibility = View.GONE
-            sheetView.findViewById<ChipGroup>(R.id.chipGroupComparacion)?.visibility = View.GONE
-        } catch (e: Exception) {}
-
         val chipGroupPeriodo = sheetView.findViewById<ChipGroup>(R.id.chipGroupPeriodo)
         val chipGroupAgrupacion = sheetView.findViewById<ChipGroup>(R.id.chipGroupAgrupacion)
         val btnAplicar = sheetView.findViewById<MaterialButton>(R.id.btnAplicarAnalisis)
@@ -695,6 +702,7 @@ class MovimientosFragment : Fragment() {
             1 -> R.id.chipAgruparDia
             2 -> R.id.chipAgruparMes
             3 -> R.id.chipAgruparAno
+            4 -> R.id.chipAgruparBolsillo
             else -> R.id.chipAgruparDia
         }
         sheetView.findViewById<Chip>(chipIdAgrupar)?.isChecked = true
@@ -717,6 +725,7 @@ class MovimientosFragment : Fragment() {
                 R.id.chipAgruparDia -> 1
                 R.id.chipAgruparMes -> 2
                 R.id.chipAgruparAno -> 3
+                R.id.chipAgruparBolsillo -> 4
                 else -> 1
             }
 

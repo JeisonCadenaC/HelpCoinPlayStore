@@ -112,7 +112,7 @@
 
         <TextView
             android:id="@+id/tvUserName"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:letterSpacing="0.1"
@@ -121,10 +121,21 @@
             android:textColor="#FFFFFF"
             android:textSize="16sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tvSaldoTotal" />
+
+        <ImageButton
+            android:id="@+id/btnEditProfile"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:layout_marginStart="6dp"
+            android:background="?selectableItemBackgroundBorderless"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_edit"
+            app:tint="#FFFFFF"
+            app:layout_constraintBottom_toBottomOf="@id/tvUserName"
+            app:layout_constraintStart_toEndOf="@id/tvUserName"
+            app:layout_constraintTop_toTopOf="@id/tvUserName" />
 
         <TextView
             android:id="@+id/tvCardNumber"
