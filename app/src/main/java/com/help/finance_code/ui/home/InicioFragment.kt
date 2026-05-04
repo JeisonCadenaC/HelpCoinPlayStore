@@ -30,6 +30,8 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.getkeepsafe.taptargetview.TapTarget
+import com.getkeepsafe.taptargetview.TapTargetSequence
 import com.help.finance_code.R
 import com.help.finance_code.data.AppDB
 import com.help.finance_code.data.Categoria
@@ -104,6 +106,7 @@ class InicioFragment : Fragment() {
     private var cFinIngresos: Long = Long.MAX_VALUE
 
     private var fechasIngresosFormat = mutableListOf<String>()
+
 
     data class EventoCombinado(
         val id: String,
@@ -228,6 +231,118 @@ class InicioFragment : Fragment() {
         } else {
             requestCalendarPermissionLauncher.launch(Manifest.permission.READ_CALENDAR)
         }
+
+        // Lanzar el tutorial interactivo con un ligero retraso
+        view.postDelayed({
+            mostrarTutorialDetallado(view)
+        }, 500)
+    }
+
+    private fun mostrarTutorialDetallado(view: View) {
+        val prefs = requireContext().getSharedPreferences("HelpCoinPrefs", Context.MODE_PRIVATE)
+        // Cambia a 'false' si quieres probarlo cada vez que entres mientras desarrollas
+        val tutorialCompletado = prefs.getBoolean("tutorial_inicio_completo", false)
+
+        if (tutorialCompletado) return
+
+        // Buscamos todas las vistas clave de tu fragment_inicio.xml y sus includes
+        val btnPerfil = view.findViewById<View>(R.id.btnIrPerfil)
+        val cardGastos = view.findViewById<View>(R.id.layoutCardHeader) // Del include de gastos
+        val cardIngresos = view.findViewById<View>(R.id.layoutCardHeaderIngresos) // Del include de ingresos
+        val calendario = view.findViewById<View>(R.id.calendarViewInicio)
+        val fabRecordatorio = view.findViewById<View>(R.id.fabNuevoRecordatorio)
+
+        // Evitamos crasheos si alguna vista no ha cargado
+        if (btnPerfil == null || cardGastos == null || cardIngresos == null || calendario == null || fabRecordatorio == null) return
+
+        // Color principal para los círculos (Aura de HelpCoin)
+        val colorPrimario = R.color.colorPrimary
+        val colorBlanco = android.R.color.white
+
+        TapTargetSequence(requireActivity())
+            .targets(
+                // --- PASO 1: PERFIL ---
+                TapTarget.forView(
+                    btnPerfil,
+                    "Tu Perfil y Ajustes",
+                    "Aquí puedes personalizar tu cuenta, cambiar tu foto, activar el modo discreto y gestionar tus copias de seguridad.\n\n(Toca el círculo iluminado para continuar)"
+                )
+                    .outerCircleColor(colorPrimario)
+                    .targetCircleColor(colorBlanco)
+                    .titleTextSize(22)
+                    .titleTextColor(colorBlanco)
+                    .descriptionTextSize(16)
+                    .descriptionTextColor(colorBlanco)
+                    .cancelable(true) // Permite omitir el tutorial si tocan la zona oscura
+                    .transparentTarget(true)
+                    .targetRadius(40),
+
+                // --- PASO 2: GASTOS ---
+                TapTarget.forView(
+                    cardGastos,
+                    "Análisis de Gastos",
+                    "Toca esta tarjeta para expandir un gráfico detallado de tus gastos. ¡Usa el botón de configuración para filtrar por fechas y comparar meses!"
+                )
+                    .outerCircleColor(colorPrimario)
+                    .targetCircleColor(colorBlanco)
+                    .cancelable(true)
+                    .transparentTarget(true)
+                    .targetRadius(60),
+
+                // --- PASO 3: INGRESOS ---
+                TapTarget.forView(
+                    cardIngresos,
+                    "Control de Ingresos",
+                    "Igual que con los gastos, aquí puedes visualizar una gráfica de tendencia de tu dinero entrante. ¡Mantén tus finanzas en verde!"
+                )
+                    .outerCircleColor(colorPrimario)
+                    .targetCircleColor(colorBlanco)
+                    .cancelable(true)
+                    .transparentTarget(true)
+                    .targetRadius(60),
+
+                // --- PASO 4: CALENDARIO ---
+                TapTarget.forView(
+                    calendario,
+                    "Tu Agenda Financiera",
+                    "Selecciona cualquier día en el calendario para ver los eventos, pagos o recordatorios programados para esa fecha específica."
+                )
+                    .outerCircleColor(colorPrimario)
+                    .targetCircleColor(colorBlanco)
+                    .cancelable(true)
+                    .transparentTarget(true)
+                    .targetRadius(80), // Radio más grande porque el calendario es ancho
+
+                // --- PASO 5: FAB (RECORDATORIOS) ---
+                TapTarget.forView(
+                    fabRecordatorio,
+                    "Añadir Recordatorios",
+                    "¿Tienes un pago pendiente o una suscripción por vencer? Toca aquí para agregar un nuevo recordatorio a tu agenda.\n\n¡Eso es todo! Estás listo para usar HelpCoin."
+                )
+                    .outerCircleColor(colorPrimario)
+                    .targetCircleColor(colorBlanco)
+                    .cancelable(true)
+                    .transparentTarget(true)
+                    .targetRadius(40)
+            )
+            .listener(object : TapTargetSequence.Listener {
+                override fun onSequenceFinish() {
+                    // Se completó todo el tour
+                    prefs.edit().putBoolean("tutorial_inicio_completo", true).apply()
+                    Toast.makeText(requireContext(), "¡Tutorial completado! A dominar esas finanzas 🚀", Toast.LENGTH_LONG).show()
+                }
+
+                override fun onSequenceStep(lastTarget: TapTarget?, targetClicked: Boolean) {
+                    // Aquí podrías hacer scroll automático si la pantalla es muy larga
+                }
+
+                override fun onSequenceCanceled(lastTarget: TapTarget?) {
+                    // El usuario tocó la zona oscura para saltarse el tutorial
+                    prefs.edit().putBoolean("tutorial_inicio_completo", true).apply()
+                    Toast.makeText(requireContext(), "Tutorial omitido", Toast.LENGTH_SHORT).show()
+                }
+            })
+            .start()
     }
 
     private fun getSafeLong(prefs: SharedPreferences, key: String, defaultVal: Long): Long {

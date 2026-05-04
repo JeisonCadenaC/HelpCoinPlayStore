@@ -39,6 +39,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.getkeepsafe.taptargetview.TapTarget
+import com.getkeepsafe.taptargetview.TapTargetSequence
 import com.help.finance_code.DiscreetModeManager
 import com.help.finance_code.PDF.ExtractoBancarioHelper
 import com.help.finance_code.PDF.MovimientoExtraido
@@ -48,8 +50,6 @@ import com.help.finance_code.data.AppDB
 import com.help.finance_code.data.Movimiento
 import com.help.finance_code.data.MovimientoRepository
 import com.help.finance_code.ui.transaction.addTransaction
-// Recuerda importar aquí la actividad de tu perfil si la necesitas
-// import com.help.finance_code.ui.profile.ProfileActivity
 import com.help.finance_code.utils.ThemeUtils
 import com.help.finance_code.viewmodel.MovimientoViewModel
 import com.help.finance_code.viewmodel.MovimientoViewModelFactory
@@ -185,7 +185,6 @@ class MovimientosFragment : Fragment() {
 
         btnEditProfile?.setOnClickListener {
             try {
-                // Navegación al perfil
                 findNavController().navigate(R.id.action_movimientosFragment_to_perfilFragment)
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), "Aún no se ha conectado el Perfil en el grafo de navegación", Toast.LENGTH_LONG).show()
@@ -336,6 +335,13 @@ class MovimientosFragment : Fragment() {
         actualizarUIModoDiscreto()
         updateDiscreetModeButtonIcon()
         checkAndShowShakeAnimation()
+
+        // Llamada al tutorial con retraso seguro
+        view.postDelayed({
+            if (isAdded && context != null) {
+                mostrarTutorialMovimientosParte1(view)
+            }
+        }, 1000)
     }
 
     @SuppressLint("MissingInflatedId")
@@ -946,5 +952,206 @@ class MovimientosFragment : Fragment() {
             viewModel.insertar(nuevoMovimiento)
         }
         Toast.makeText(requireContext(), "${movimientosAImportar.size} movimientos importados exitosamente", Toast.LENGTH_LONG).show()
+    }
+
+    // =========================================================================================
+    // LÓGICA DEL TUTORIAL INTERACTIVO EN DOS PARTES
+    // =========================================================================================
+
+    // INTERRUPTOR DE PRUEBAS DEL TUTORIAL
+    // Cambiar a 'false' al publicar la aplicacion para que solo aparezca la primera vez
+    private val MODO_PRUEBAS_TUTORIAL = true
+
+    private fun mostrarTutorialMovimientosParte1(view: View) {
+        val prefs = requireContext().getSharedPreferences("HelpCoinPrefs", Context.MODE_PRIVATE)
+
+        if (MODO_PRUEBAS_TUTORIAL) {
+            prefs.edit().putBoolean("tutorial_movimientos_completo", false).apply()
+        }
+
+        val tutorialCompletado = prefs.getBoolean("tutorial_movimientos_completo", false)
+        if (tutorialCompletado) return
+
+        val tvSaldo = view.findViewById<View>(R.id.tvSaldoTotal)
+        val btnEdit = view.findViewById<View>(R.id.btnEditProfile)
+        val btnHideBalance = view.findViewById<View>(R.id.btnHideBalance)
+        val btnDiscreto = view.findViewById<View>(R.id.btnDiscreetModeManual)
+        val fabAdd = view.findViewById<View>(R.id.fabAddTransaction)
+
+        if (tvSaldo == null || btnEdit == null || btnHideBalance == null || btnDiscreto == null || fabAdd == null) return
+
+        val colorAura = ThemeUtils.getAuraColor(requireContext())
+        val colorBlanco = Color.WHITE
+
+        val textoSiguiente = "\n\n• Toca el circulo iluminado para continuar."
+        val textoOmitir = "\n• Toca la zona oscura para salir del tutorial."
+
+        try {
+            TapTargetSequence(requireActivity())
+                .targets(
+                    TapTarget.forView(
+                        tvSaldo,
+                        "Saldo Disponible",
+                        "Este es tu dinero actual. Puedes tocar esta tarjeta en cualquier momento para filtrar tus movimientos por un bolsillo especifico.$textoSiguiente$textoOmitir"
+                    )
+                        .outerCircleColorInt(colorAura)
+                        .targetCircleColorInt(colorBlanco)
+                        .dimColor(android.R.color.black)
+                        .titleTextSize(22)
+                        .titleTextColorInt(colorBlanco)
+                        .descriptionTextSize(15)
+                        .descriptionTextColorInt(colorBlanco)
+                        .cancelable(true)
+                        .transparentTarget(true)
+                        .targetRadius(50),
+
+                    TapTarget.forView(
+                        btnEdit,
+                        "Editar Perfil",
+                        "Usa este boton para modificar tu nombre, foto de perfil y acceder a los ajustes de tu cuenta.$textoSiguiente$textoOmitir"
+                    )
+                        .outerCircleColorInt(colorAura)
+                        .targetCircleColorInt(colorBlanco)
+                        .dimColor(android.R.color.black)
+                        .titleTextSize(22)
+                        .titleTextColorInt(colorBlanco)
+                        .descriptionTextSize(15)
+                        .descriptionTextColorInt(colorBlanco)
+                        .cancelable(true)
+                        .transparentTarget(true)
+                        .targetRadius(40),
+
+                    TapTarget.forView(
+                        btnHideBalance,
+                        "Ocultar Saldo",
+                        "Si solo quieres censurar el monto total de la parte superior, toca este icono.$textoSiguiente$textoOmitir"
+                    )
+                        .outerCircleColorInt(colorAura)
+                        .targetCircleColorInt(colorBlanco)
+                        .dimColor(android.R.color.black)
+                        .titleTextSize(22)
+                        .titleTextColorInt(colorBlanco)
+                        .descriptionTextSize(15)
+                        .descriptionTextColorInt(colorBlanco)
+                        .cancelable(true)
+                        .transparentTarget(true)
+                        .targetRadius(40),
+
+                    TapTarget.forView(
+                        btnDiscreto,
+                        "Modo Discreto Total",
+                        "Activa este modo para censurar todos los valores de la aplicacion y proteger tu privacidad. Tambien se activa agitando el celular.$textoSiguiente$textoOmitir"
+                    )
+                        .outerCircleColorInt(colorAura)
+                        .targetCircleColorInt(colorBlanco)
+                        .dimColor(android.R.color.black)
+                        .titleTextSize(22)
+                        .titleTextColorInt(colorBlanco)
+                        .descriptionTextSize(15)
+                        .descriptionTextColorInt(colorBlanco)
+                        .cancelable(true)
+                        .transparentTarget(true)
+                        .targetRadius(40),
+
+                    TapTarget.forView(
+                        fabAdd,
+                        "Menu de Acciones",
+                        "Finalmente, este es el boton principal para registrar dinero. Vamos a abrirlo para ver sus opciones.$textoSiguiente$textoOmitir"
+                    )
+                        .outerCircleColorInt(colorAura)
+                        .targetCircleColorInt(colorBlanco)
+                        .dimColor(android.R.color.black)
+                        .titleTextSize(22)
+                        .titleTextColorInt(colorBlanco)
+                        .descriptionTextSize(15)
+                        .descriptionTextColorInt(colorBlanco)
+                        .cancelable(true)
+                        .transparentTarget(true)
+                        .targetRadius(45)
+                )
+                .listener(object : TapTargetSequence.Listener {
+                    override fun onSequenceFinish() {
+                        // 1. Abrimos el menú programáticamente
+                        if (!isFabOpen) toggleFabMenu()
+
+                        // 2. Esperamos a que la animación termine y lanzamos la Parte 2
+                        view.postDelayed({
+                            mostrarTutorialMovimientosParte2(view, prefs)
+                        }, 400)
+                    }
+                    override fun onSequenceStep(lastTarget: TapTarget?, targetClicked: Boolean) {}
+                    override fun onSequenceCanceled(lastTarget: TapTarget?) {
+                        prefs.edit().putBoolean("tutorial_movimientos_completo", true).apply()
+                    }
+                })
+                .start()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun mostrarTutorialMovimientosParte2(view: View, prefs: SharedPreferences) {
+        val fabManual = view.findViewById<View>(R.id.fabAddManual)
+        val fabImportPDF = view.findViewById<View>(R.id.fabImportPDF)
+
+        if (fabManual == null || fabImportPDF == null) return
+
+        val colorAura = ThemeUtils.getAuraColor(requireContext())
+        val colorBlanco = Color.WHITE
+
+        val textoSiguiente = "\n\n• Toca el circulo iluminado para continuar."
+        val textoOmitir = "\n• Toca la zona oscura para salir del tutorial."
+
+        try {
+            TapTargetSequence(requireActivity())
+                .targets(
+                    TapTarget.forView(
+                        fabManual,
+                        "Registro Manual",
+                        "Usa esta opcion para añadir un nuevo gasto o ingreso escribiendo los datos paso a paso.$textoSiguiente$textoOmitir"
+                    )
+                        .outerCircleColorInt(colorAura)
+                        .targetCircleColorInt(colorBlanco)
+                        .dimColor(android.R.color.black)
+                        .titleTextSize(22)
+                        .titleTextColorInt(colorBlanco)
+                        .descriptionTextSize(15)
+                        .descriptionTextColorInt(colorBlanco)
+                        .cancelable(true)
+                        .transparentTarget(true)
+                        .targetRadius(60),
+
+                    TapTarget.forView(
+                        fabImportPDF,
+                        "Importar Extracto PDF",
+                        "Sube el extracto mensual de tu banco en PDF y HelpCoin extraera y organizara todos tus movimientos automaticamente.\n\n• Toca el circulo para finalizar."
+                    )
+                        .outerCircleColorInt(colorAura)
+                        .targetCircleColorInt(colorBlanco)
+                        .dimColor(android.R.color.black)
+                        .titleTextSize(22)
+                        .titleTextColorInt(colorBlanco)
+                        .descriptionTextSize(15)
+                        .descriptionTextColorInt(colorBlanco)
+                        .cancelable(true)
+                        .transparentTarget(true)
+                        .targetRadius(60)
+                )
+                .listener(object : TapTargetSequence.Listener {
+                    override fun onSequenceFinish() {
+                        if (isFabOpen) toggleFabMenu() // Cerramos el menú
+                        prefs.edit().putBoolean("tutorial_movimientos_completo", true).apply()
+                        if (MODO_PRUEBAS_TUTORIAL) Toast.makeText(requireContext(), "Tutorial completo (Modo Pruebas)", Toast.LENGTH_SHORT).show()
+                    }
+                    override fun onSequenceStep(lastTarget: TapTarget?, targetClicked: Boolean) {}
+                    override fun onSequenceCanceled(lastTarget: TapTarget?) {
+                        if (isFabOpen) toggleFabMenu() // Cerramos el menú
+                        prefs.edit().putBoolean("tutorial_movimientos_completo", true).apply()
+                    }
+                })
+                .start()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 }

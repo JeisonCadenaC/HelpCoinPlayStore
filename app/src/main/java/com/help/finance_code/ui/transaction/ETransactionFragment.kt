@@ -6,7 +6,6 @@ import android.graphics.Color
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.TypedValue
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -26,12 +25,13 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
+import androidx.core.os.BundleCompat
 import com.help.finance_code.R
 import com.help.finance_code.data.AppDB
 import com.help.finance_code.data.Categoria
 import com.help.finance_code.data.Movimiento
 import com.help.finance_code.data.MovimientoRepository
-import com.help.finance_code.utils.ThemeUtils // Importamos ThemeUtils
+import com.help.finance_code.utils.ThemeUtils
 import com.help.finance_code.viewmodel.MovimientoViewModel
 import com.help.finance_code.viewmodel.MovimientoViewModelFactory
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -44,7 +44,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
+
+// Nota: La clase RamaActiva ya está declarada en el paquete por addTransaction.kt
+// por lo que podemos usarla directamente sin necesidad de redeclararla aquí.
 
 class ETransactionFragment : Fragment(R.layout.fragment_e_transaction) {
 
@@ -65,6 +70,11 @@ class ETransactionFragment : Fragment(R.layout.fragment_e_transaction) {
     private lateinit var tvEmojiCategoriaActual: TextView
     private lateinit var tvNombreCategoriaActual: TextView
 
+    // Variables UI para el Bolsillo (Rama) - con ? para no crashear si falta en el XML
+    private var tvRamaLabel: TextView? = null
+    private var cardSelectorRama: MaterialCardView? = null
+    private var tvNombreRamaActual: TextView? = null
+
     private lateinit var database: AppDB
     private var isUpdating = false
 
@@ -73,6 +83,9 @@ class ETransactionFragment : Fragment(R.layout.fragment_e_transaction) {
     private var currentCategoriaEmoji: String = ""
     private var currentColorHex: String = "#E0E0E0"
 
+    // Variables para la lógica de Ramas (Bolsillos)
+    private var currentRamaId: Int? = null
+    private var listaRamasActivas: List<RamaActiva> = emptyList()
     private var listaCategoriasEnDB: List<Categoria> = emptyList()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -84,12 +97,17 @@ class ETransactionFragment : Fragment(R.layout.fragment_e_transaction) {
             findNavController().popBackStack()
         }
 
-        movimiento = requireArguments().getParcelable("movimiento", Movimiento::class.java)!!
+        movimiento = BundleCompat.getParcelable(requireArguments(), "movimiento", Movimiento::class.java)!!
 
         val etDescripcion = view.findViewById<EditText>(R.id.etDescripcion)
         val btnGuardar = view.findViewById<MaterialButton>(R.id.btnGuardar)
         val btnEliminar = view.findViewById<MaterialButton>(R.id.btnEliminar)
         etMonto = view.findViewById(R.id.etMonto)
+
+        // UI Ramas
+        tvRamaLabel = view.findViewById(R.id.tvRamaLabel)
+        cardSelectorRama = view.findViewById(R.id.cardSelectorRama)
+        tvNombreRamaActual = view.findViewById(R.id.tvNombreRamaActual)
 
         // 🛑 APLICAR AURA AL BOTÓN GUARDAR 🛑
         val auraColor = ThemeUtils.getAuraColor(requireContext())
@@ -112,6 +130,7 @@ class ETransactionFragment : Fragment(R.layout.fragment_e_transaction) {
 
         currentCategoriaId = movimiento.categoriaId
         currentCategoriaNombre = movimiento.categoria
+        currentRamaId = movimiento.parentId // Recuperamos el bolsillo actual asignado al movimiento
 
         tipoMovimientoSeleccionado = movimiento.tipo
         actualizarEstiloBotones()
@@ -130,6 +149,10 @@ class ETransactionFragment : Fragment(R.layout.fragment_e_transaction) {
             mostrarBottomSheetCategorias()
         }
 
+        cardSelectorRama?.setOnClickListener {
+            mostrarSelectorRamas()
+        }
+
         val userEmail = FirebaseAuth.getInstance().currentUser?.email
         if (userEmail == null) {
             Toast.makeText(requireContext(), "Error: Usuario no autenticado", Toast.LENGTH_LONG).show()
@@ -143,6 +166,7 @@ class ETransactionFragment : Fragment(R.layout.fragment_e_transaction) {
         viewModel = ViewModelProvider(this, factory)[MovimientoViewModel::class.java]
 
         cargarCategorias()
+        cargarRamasActivas()
 
         etDescripcion.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -212,12 +236,29 @@ class ETransactionFragment : Fragment(R.layout.fragment_e_transaction) {
                 return@setOnClickListener
             }
 
+            // Validaciones de Bolsillos (Ramas)
+            if (tipoMovimientoSeleccionado == 0 && currentRamaId == null) {
+                Toast.makeText(requireContext(), "⚠️ Por favor selecciona de dónde saldrá el dinero", Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
+
+            if (tipoMovimientoSeleccionado == 0 && currentRamaId != null && currentRamaId != -1) {
+                val ramaSeleccionada = listaRamasActivas.find { it.id == currentRamaId }
+                if (ramaSeleccionada != null && nuevaCantidad > ramaSeleccionada.saldo) {
+                    Toast.makeText(requireContext(), "⚠️ Saldo insuficiente en el bolsillo seleccionado", Toast.LENGTH_LONG).show()
+                    return@setOnClickListener
+                }
+            }
+
+            val finalParentId = if (tipoMovimientoSeleccionado == 0 && currentRamaId != -1) currentRamaId else null
+
             val actualizado = movimiento.copy(
                 descripcion = descripcionTexto,
                 cantidad = nuevaCantidad,
                 tipo = tipoMovimientoSeleccionado,
                 categoria = currentCategoriaNombre,
-                categoriaId = currentCategoriaId
+                categoriaId = currentCategoriaId,
+                parentId = finalParentId
             )
             viewModel.actualizar(actualizado)
             Toast.makeText(requireContext(), "Movimiento actualizado", Toast.LENGTH_SHORT).show()
@@ -246,6 +287,152 @@ class ETransactionFragment : Fragment(R.layout.fragment_e_transaction) {
             }
             dialog.show()
         }
+    }
+
+    // Helper matemático para ordenar fechas de manera robusta
+    private fun parsearFecha(fechaStr: String?): Date {
+        if (fechaStr.isNullOrBlank()) return Date(0)
+
+        val fechaLimpia = fechaStr.trim()
+        val formatos = listOf(
+            "yyyy-MM-dd HH:mm:ss",
+            "yyyy-MM-dd HH:mm",
+            "yyyy-MM-dd",
+            "dd/MM/yyyy HH:mm:ss",
+            "dd/MM/yyyy",
+            "yyyy/MM/dd HH:mm:ss",
+            "yyyy/MM/dd"
+        )
+        for (formato in formatos) {
+            try {
+                val sdf = SimpleDateFormat(formato, Locale.getDefault())
+                sdf.isLenient = false
+                val date = sdf.parse(fechaLimpia)
+                if (date != null) return date
+            } catch (e: Exception) { }
+        }
+        return Date(0)
+    }
+
+    private fun cargarRamasActivas() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            val todosLosMovimientos = database.movimientoDao().obtenerTodosSync()
+
+            val balancePorRama = todosLosMovimientos.groupBy { it.parentId ?: it.id }
+                .mapValues { entry ->
+                    entry.value.sumOf { if (it.tipo == 1) it.cantidad else -it.cantidad }
+                }
+
+            val ramasActivasTemp = mutableListOf<RamaActiva>()
+            balancePorRama.forEach { (ramaId, saldo) ->
+                // ¡CIRUGÍA DE PRECISIÓN!
+                // Si estamos editando un gasto que ya descontó dinero de esta rama,
+                // debemos "devolverle" temporalmente el dinero al saldo disponible para la validación visual y transaccional.
+                var saldoAjustado = saldo
+                if (ramaId == movimiento.parentId && movimiento.tipo == 0) {
+                    saldoAjustado += movimiento.cantidad
+                }
+
+                if (saldoAjustado > 0 || ramaId == movimiento.parentId) {
+                    val ramaPadre = todosLosMovimientos.find { it.id == ramaId }
+                    if (ramaPadre != null) {
+                        val tituloConFecha = "${ramaPadre.descripcion} (${ramaPadre.fecha})"
+                        val fechaMillis = parsearFecha(ramaPadre.fecha).time
+                        ramasActivasTemp.add(RamaActiva(ramaId, tituloConFecha, saldoAjustado, fechaMillis))
+                    }
+                }
+            }
+
+            withContext(Dispatchers.Main) {
+                listaRamasActivas = ramasActivasTemp.sortedByDescending { it.fechaMillis }
+
+                // Setear el nombre inicial en la UI
+                if (currentRamaId != null && currentRamaId != -1) {
+                    val ramaActual = listaRamasActivas.find { it.id == currentRamaId }
+                    if (ramaActual != null) {
+                        val format = DecimalFormat("$#,###", DecimalFormatSymbols(Locale("es", "CO")))
+                        tvNombreRamaActual?.text = "${ramaActual.nombre} (${format.format(ramaActual.saldo)})"
+                    } else {
+                        tvNombreRamaActual?.text = "Gasto Libre"
+                        currentRamaId = -1
+                    }
+                } else if (currentRamaId == -1) {
+                    tvNombreRamaActual?.text = "Gasto Libre"
+                } else {
+                    tvNombreRamaActual?.text = "Selecciona el origen"
+                }
+            }
+        }
+    }
+
+    private fun mostrarSelectorRamas() {
+        val dialog = BottomSheetDialog(requireContext())
+        val view = LayoutInflater.from(requireContext()).inflate(R.layout.layout_bottom_sheet_ramas, null)
+        dialog.setContentView(view)
+
+        val llListaRamas = view.findViewById<LinearLayout>(R.id.llListaRamas)
+        val format = DecimalFormat("$#,###", DecimalFormatSymbols(Locale("es", "CO")))
+
+        val cantidadTexto = etMonto.text.toString().replace(".", "").replace(",", ".")
+        val montoIngresado = cantidadTexto.toDoubleOrNull() ?: 0.0
+
+        val viewLibre = LayoutInflater.from(requireContext()).inflate(R.layout.item_rama_selector, llListaRamas, false)
+        val tvNombreLibre = viewLibre.findViewById<TextView>(R.id.tvRamaNombre)
+        val tvSaldoLibre = viewLibre.findViewById<TextView>(R.id.tvRamaSaldo)
+        val ivIconLibre = viewLibre.findViewById<ImageView>(R.id.ivRamaIcon)
+
+        tvNombreLibre.text = "Gasto Libre / Dinero Extra"
+        tvSaldoLibre.text = "No se descontará de ningún bolsillo"
+        ivIconLibre.setImageResource(R.drawable.ic_info)
+        ivIconLibre.setColorFilter(Color.GRAY)
+
+        viewLibre.setOnClickListener {
+            currentRamaId = -1
+            tvNombreRamaActual?.text = "Gasto Libre"
+            dialog.dismiss()
+        }
+        llListaRamas.addView(viewLibre)
+
+        if (listaRamasActivas.isNotEmpty()) {
+            val tvTituloDisponibles = TextView(requireContext()).apply {
+                text = "Tus Bolsillos Disponibles"
+                setPadding(16, 24, 16, 8)
+                textSize = 14f
+                setTextColor(Color.GRAY)
+            }
+            llListaRamas.addView(tvTituloDisponibles)
+
+            listaRamasActivas.forEach { rama ->
+                val viewRama = LayoutInflater.from(requireContext()).inflate(R.layout.item_rama_selector, llListaRamas, false)
+                val tvNombre = viewRama.findViewById<TextView>(R.id.tvRamaNombre)
+                val tvSaldo = viewRama.findViewById<TextView>(R.id.tvRamaSaldo)
+                val ivIcon = viewRama.findViewById<ImageView>(R.id.ivRamaIcon)
+
+                tvNombre.text = rama.nombre
+
+                if (montoIngresado > rama.saldo) {
+                    tvSaldo.text = "Disponible: ${format.format(rama.saldo)} (Insuficiente)"
+                    val colorError = Color.parseColor("#D32F2F")
+                    tvNombre.setTextColor(colorError)
+                    tvSaldo.setTextColor(colorError)
+                    ivIcon?.setColorFilter(colorError)
+
+                    viewRama.setOnClickListener {
+                        Toast.makeText(requireContext(), "Saldo insuficiente en este bolsillo", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    tvSaldo.text = "Disponible: ${format.format(rama.saldo)}"
+                    viewRama.setOnClickListener {
+                        currentRamaId = rama.id
+                        tvNombreRamaActual?.text = "${rama.nombre} (${format.format(rama.saldo)})"
+                        dialog.dismiss()
+                    }
+                }
+
+                llListaRamas.addView(viewRama)
+            }
+        }
+        dialog.show()
     }
 
     private fun cargarCategorias() {
@@ -562,15 +749,14 @@ class ETransactionFragment : Fragment(R.layout.fragment_e_transaction) {
 
         val colorBordeInactivo = ContextCompat.getColor(context, R.color.stroke_inactive)
 
-        val typedValue = TypedValue()
-        context.theme.resolveAttribute(com.google.android.material.R.attr.colorSurface, typedValue, true)
-        @ColorInt val colorSuperficie = typedValue.data
+        @ColorInt val colorSuperficie = ContextCompat.getColor(context, R.color.surface_card)
 
         cardEgreso.setCardBackgroundColor(colorSuperficie)
         cardEgreso.strokeColor = colorBordeInactivo
         cardEgreso.strokeWidth = 1
         ivEgresoArrow.setColorFilter(colorRojoPuro)
         tvEgresoText.setTextColor(colorRojoPuro)
+
         cardIngreso.setCardBackgroundColor(colorSuperficie)
         cardIngreso.strokeColor = colorBordeInactivo
         cardIngreso.strokeWidth = 1
@@ -578,13 +764,25 @@ class ETransactionFragment : Fragment(R.layout.fragment_e_transaction) {
         tvIngresoText.setTextColor(colorVerdePuro)
 
         if (tipoMovimientoSeleccionado == 0) {
+            // Estilo Egreso
             cardEgreso.setCardBackgroundColor(colorRojoPastel)
             cardEgreso.strokeColor = colorRojoPuro
             cardEgreso.strokeWidth = 2
+
+            // Mostrar Ramas
+            tvRamaLabel?.visibility = View.VISIBLE
+            cardSelectorRama?.visibility = View.VISIBLE
         } else {
+            // Estilo Ingreso
             cardIngreso.setCardBackgroundColor(colorVerdePastel)
             cardIngreso.strokeColor = colorVerdePuro
             cardIngreso.strokeWidth = 2
+
+            // Ocultar Ramas
+            tvRamaLabel?.visibility = View.GONE
+            cardSelectorRama?.visibility = View.GONE
+            currentRamaId = null
+            tvNombreRamaActual?.text = "Selecciona el origen"
         }
     }
 }

@@ -15,8 +15,8 @@ android {
         applicationId = "com.help.finance_code"
         minSdk = 28
         targetSdk = 36
-        versionCode = 15
-        versionName = "2.80"
+        versionCode = 16
+        versionName = "2.90"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -129,4 +129,7 @@ dependencies {
     implementation("com.google.mlkit:entity-extraction:16.0.0-beta5")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
+    // --- Tutorial ---
+    implementation("com.getkeepsafe.taptargetview:taptargetview:1.13.3")
 }

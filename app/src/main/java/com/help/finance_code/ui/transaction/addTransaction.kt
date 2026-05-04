@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.PorterDuff
@@ -29,6 +30,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
+import com.getkeepsafe.taptargetview.TapTarget
+import com.getkeepsafe.taptargetview.TapTargetSequence
 import com.help.finance_code.FinanceWidgetProvider
 import com.help.finance_code.R
 import com.help.finance_code.data.AppDB
@@ -56,7 +59,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-// CIRUGÍA: Agregamos fechaMillis para ordenar matemáticamente de más reciente a más viejo
 data class RamaActiva(val id: Int, val nombre: String, val saldo: Double, val fechaMillis: Long)
 
 class addTransaction : AppCompatActivity() {
@@ -280,7 +282,6 @@ class addTransaction : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // CIRUGÍA: Validación de seguridad si el usuario escribe un monto mayor DESPUÉS de seleccionar el bolsillo
             if (tipoSeleccionado == 0 && currentRamaId != null && currentRamaId != -1) {
                 val ramaSeleccionada = listaRamasActivas.find { it.id == currentRamaId }
                 if (ramaSeleccionada != null && cantidad > ramaSeleccionada.saldo) {
@@ -332,9 +333,12 @@ class addTransaction : AppCompatActivity() {
                 }
             }
         }
+
+        findViewById<View>(android.R.id.content).postDelayed({
+            mostrarTutorialAddTransaction()
+        }, 1000)
     }
 
-    // Helper matemático para ordenar fechas de manera robusta
     private fun parsearFecha(fechaStr: String?): Date {
         if (fechaStr.isNullOrBlank()) return Date(0)
 
@@ -381,7 +385,6 @@ class addTransaction : AppCompatActivity() {
             }
 
             withContext(Dispatchers.Main) {
-                // CIRUGÍA: Ordenamos estrictamente por la fecha matemática (descendente = más reciente primero)
                 listaRamasActivas = ramasActivasTemp.sortedByDescending { it.fechaMillis }
             }
         }
@@ -395,7 +398,6 @@ class addTransaction : AppCompatActivity() {
         val llListaRamas = view.findViewById<LinearLayout>(R.id.llListaRamas)
         val format = DecimalFormat("$#,###", DecimalFormatSymbols(Locale("es", "CO")))
 
-        // CIRUGÍA: Obtenemos el monto escrito actualmente para validar el saldo
         val cantidadTexto = etMonto.text.toString().replace(".", "").replace(",", ".")
         val montoIngresado = cantidadTexto.toDoubleOrNull() ?: 0.0
 
@@ -433,11 +435,9 @@ class addTransaction : AppCompatActivity() {
 
                 tvNombre.text = rama.nombre
 
-                // CIRUGÍA: Validación visual y bloqueo de interacción si el fondo es insuficiente
                 if (montoIngresado > rama.saldo) {
                     tvSaldo.text = "Disponible: ${format.format(rama.saldo)} (Insuficiente)"
 
-                    // Colores de alerta
                     val colorError = Color.parseColor("#D32F2F")
                     tvNombre.setTextColor(colorError)
                     tvSaldo.setTextColor(colorError)
@@ -455,7 +455,6 @@ class addTransaction : AppCompatActivity() {
                         dialog.dismiss()
                     }
                 }
-
                 llListaRamas.addView(viewRama)
             }
         }
@@ -587,7 +586,7 @@ class addTransaction : AppCompatActivity() {
         dialog.setContentView(view)
 
         val rvEmojis = view.findViewById<RecyclerView>(R.id.rvEmojis)
-        val emojisStr = "😀 😃 😄 😁 😆 😅 😂 🤣 🥲 ☺️ 😊 😇 🙂 🙃 😉 😌 😍 🥰 😘 😗 😙 😚 😋 😛 😝 😜 🤪 🤨 🧐 🤓 😎 🥸 🤩 🥳 😏 😒 😞 😔 😟 😕 🙁 ☹️ 😣 😖 😫 😩 🥺 😢 😭 😤 😠 😡 🤬 🤯 😳 🥵 🥶 😱 😨 😰 😥 😓 🤗 🤔 🫣 🤭 🤫 🤥 😶 😶‍🌫️ 😐 😑 😬 🙄 😯 😦 😧 😮 😲 🥱 😴 🤤 😪 😵 😵‍💫 🤐 🥴 🤢 🤮 🤧 😷 🤒 🤕 🤑 🤠 😈 👿 👹 👺 🤡 💩 👻 💀 ☠️ 👽 👾 🤖 🎃 😺 😸 😹 😻 😼 😽 🙀 😿 😾 👋 🤚 🖐 ✋ 🖖 👌 🤌 🤏 ✌️ 🤞 🫰 🤟 🤘 🤙 👈 👉 👆 🖕 👇 ☝️ 👍 👎 ✊ 👊 🤛 🤜 👏 🙌 👐 🤲 🤝 🙏 ✍️ 💅 🤳 💪 🦾 🦿 🦵 🦶 👂 🦻 👃 🫀 🫁 🧠 🦷 🦴 👀 👁 👅 👄 💋 🩸 🐶 🐱 🐭 🐹 🐰 🦊 🐻 🐼 🐻‍❄️ 🐨 🐯 🦁 🐮 🐷 🐽 🐸 🐵 🙈 🙉 🙊 🐒 🐔 🐧 🐦 🐤 🐣 🐥 🦆 🦅 🦉 🦇 🐺 🐗 🐴 🦄 🐝 🪱 🐛 🦋 🐌 🐞 🐜 🪰 🪲 🪳 🦟 🦗 🕷 🦂 🐢 🐍 🦎 🦖 🦕 🐙 🦑 🦐 🦞 🦀 🐡 🐠 🐟 🐬 🐳 🐋 🦈 🦭 🐊 🐅 🐆 🦓 🦍 🦧 🦣 🐘 🦛 🦏 🐪 🐫 🦒 🦘 🐃 🐂 🐄 🐎 🐖 🐏 🐑 🦙 🐐 🦌 🐕 🐩 🦮 🐕‍🦺 🐈 🐈‍⬛ 🪶 🐓 🦃 🦤 🦚 🦜 🦢 🦩 🕊 🐇 🦝 🦨 🦡 🦫 🦦 🦥 🐁 🐀 🐿 🦔 🍏 🍎 🍐 🍊 🍋 🍌 🍉 🍇 🍓 🫐 🍈 🍒 🍑 🥭 🍍 🥥 🥝 🍅 🍆 🥑 🥦 🥬 🥒 🌶 🫑 🌽 🥕 🫒 🧄 🧅 🥔 🍠 🥐 🥯 🍞 🥖 🥨 🧀 🥚 🍳 🧈 🥞 🧇 🥓 🥩 🍗 🍖 🦴 🌭 🍔 🍟 🍕 🫓 🥪 🥙 🧆 🌮 🌯 🫔 🥗 🥘 🫕 🥫 🍝 🍜 🍲 🍛 🍣 🍱 🥟 🦪 🍤 🍙 🍚 🍘 🍥 🥠 🥮 🍢 🍡 🍧 🍨 🍦 🥧 🧁 🍰 🎂 🍮 🍭 🍬 🍫 🍿 🍩 🍪 🌰 🥜 🍯 🥛 🍼 🫖 ☕️ 🍵 🧃 🥤 🧋 🚰 🍺 🍻 🥂 🍷 🥃 🍸 🍹 🧉 🍾 🧊 🥄 🍴 🍽 🥣 🥡 🥢 🧂 🚗 🚕 🚙 🚌 🚎 🏎 🚓 🚑 🚒 🚐 🛻 🚚 🚛 🚜 🦯 🦽 🦼 🛴 🚲 🛵 🏍 🛺 🚨 🚔 🚍 🚘 🚖 🚡 🚠 🚟 🚃 🚋 🚞 🚝 🚄 🚅 🚈 🚂 🚆 🚇 🚊 🚉 ✈️ 🛫 🛬 🛩 💺 🛰 🚀 🛸 🚁 🛶 ⛵️ 🚤 🛥 🛳 ⛴ 🚢 ⚓️ 🪝 ⛽️ 🚧 🚦 🚥 🚏 🗺 🗿 🗽 🗼 🏰 🏯 🏟 🎡 🎢 🎠 ⛲️ ⛱ 🏖 🏝 🏜 🌋 ⛰ 🏔 🗻 🏕 ⛺️ 🛖 🏠 🏡 🏘 🏚 🏗 🏭 🏢 🏬 🏣 🏤 🏥 🏦 🏨 🏪 🏫 🏩 💒 🏛 ⛪️ 🕌 🕍 🛕 🕋 ⛩ 🛤 🛣 🗾 🎑 🏞 🌅 🌄 🌠 🎇 🎆 🌇 🌆 🏙 🌃 🌌 🌉 🌁 ⌚️ 📱 📲 💻 ⌨️ 🖥 🖨 🖱 🖲 🕹 🗜 💽 💾 💿 📀 📼 📷 📸 📹 🎥 📽 🎞 📞 ☎️ 📟 📠 📺 📻 🎙 🎚 🎛 🧭 ⏱ ⏲ ⏰ 🕰 ⌛️ ⏳ 📡 🔋 🔌 💡 🔦 🕯 🪔 🧯 🛢 💸 💵 💴 💶 💷 🪙 💰 💳 💎 ⚖️ 🪜 🧰 🪛 🔧 🔨 ⚒ 🛠 ⛏ 🪚 🔩 ⚙️ 🪤 🧱 ⛓ 🧲 🔫 💣 🧨 🪓 🔪 🗡 ⚔️ 🛡 🚬 ⚰️ 🪦 ⚱️ 🏺 🔮 📿 🧿 💈 ⚗️ 🔭 🔬 🕳 🩹 🩺 💊 💉 🩸 🧬 🦠 🧫 🧪 🌡 🧹 🪠 🧺 🧻 🚽 🚰 🚿 🛁 🛀 🧼 🪥 🧽 🧴 🛎 🔑 🗝 🚪 🪑 🛋 🛏 🛌 🧸 🪆 🖼 🪞 🪟 🛍 🛒 🎁 🎈 🎏 🎀 🪄 🪅 🎊 🎉 🎎 🏮 🎐 🧧 ✉️ 📩 📨 📧 💌 📥 📤 📦 🏷 🪧 📪 📫 📬 📭 📮 📯 📜 📃 📄 📑 🧾 📊 📈 📉 🗒 🗓 📆 📅 🗑 📇 🗃 🗳 🗄 📋 📁 📂 🗂 🗞 📰 📓 📔 📒 📕 📗 📘 📙 📚 📖 🔖 🧷 🔗 📎 🖇 📐 📏 🧮 📌 📍 ✂️ 🖊 🖋 ✒️ 🖌 🖍 📝 ✏️ 🔍 🔎 🔏 🔐 🔒 🔓 ❤️ 🧡 💛 💚 💙 💜 🖤 🤍 🤎 💔 ❣️ 💕 💞 💓 💗 💖 💘 💝 💟 ☮️ ✝️ ☪️ 🕉 ☸️ ✡️ 🔯 🕎 ☯️ ☦️ 🛐 ⛎ ♈️ ♉️ ♊️ ♋️ ♌️ ♍️ ♎️ ♏️ ♐️ ♑️ ♒️ ♓️ 🆔 ⚛️ 🉑 ☢️ ☣️ 📴 📳 🈶 🈚️ 🈸 🈺 🈷️ ✴️ 🆚 💮 🉐 ㊙️ ㊗️ 🈴 🈵 🈹 🈲 🅰️ 🅱️ 🆎 🆑 🅾️ 🆘 ❌ ⭕️ 🛑 ⛔️ 📛 🚫 💯 💢 ♨️ 🚷 🚷 🚯 🚳 🚱 🔞 📵 🚭 ❗️ ❕ ❓ ❔ ‼️ ⁉️ 🔅 🔆 〽️ ⚠️ 🚸 🔱 ⚜️ 🔰 ♻️ ✅ 🈯️ 💹 ❇️ ✳️ ❎ 🌐 💠 Ⓜ️ 🌀 💤 🏧 🚾 ♿️ 🅿️ 🛗 🈳 🈂️ 🛂 🛃 🛄 🛅 🚹 🚺 🚼 ⚧ 🚻 🚮 🎦 🚰 ℹ️ 🔤 🔡 🔠 🔣 🎵 🎶 〰️ ➰ ✔️ 🔃 ➕ ➖ ➗ ✖️ ♾ ©️ ®️ ™️"
+        val emojisStr = "😀 😃 😄 😁 😆 😅 😂 🤣 🥲 ☺️ 😊 😇 🙂 🙃 😉 😌 😍 🥰 😘 😗 😙 😚 😋 😛 😝 😜 🤪 🤨 🧐 🤓 😎 🥸 🤩 🥳 😏 😒 😞 😔 😟 😕 🙁 ☹️ 😣 😖 😫 😩 🥺 😢 😭 😤 😠 😡 🤬 🤯 😳 🥵 🥶 😱 😨 😰 😥 😓 🤗 🤔 🫣 🤭 🤫 🤥 😶 😶‍🌫️ 😐 😑 😬 🙄 😯 😦 😧 😮 😲 🥱 😴 🤤 😪 😵 😵‍💫 🤐 🥴 🤢 🤮 🤧 😷 🤒 🤕 🤑 🤠 😈 👿 👹 👺 🤡 💩 👻 💀 ☠️ 👽 👾 🤖 🎃 😺 😸 😹 😻 😼 😽 🙀 😿 😾 👋 🤚 🖐 ✋ 🖖 👌 🤌 🤏 ✌️ 🤞 🫰 🤟 🤘 🤙 👈 👉 👆 🖕 👇 ☝️ 👍 👎 ✊ 👊 🤛 🤜 👏 🙌 👐 🤲 🤝 🙏 ✍️ 💅 🤳 💪 🦾 🦿 🦵 🦶 👂 🦻 👃 🫀 🫁 🧠 🦷 🦴 👀 👁 👅 👄 💋 🩸 🐶 🐱 🐭 🐹 🐰 🦊 🐻 🐼 🐻‍❄️ 🐨 🐯 🦁 🐮 🐷 🐽 🐸 🐵 🙈 🙉 🙊 🐒 🐔 🐧 🐦 🐤 🐣 🐥 🦆 🦅 🦉 🦇 🐺 🐗 🐴 🦄 🐝 🪱 🐛 🦋 🐌 🐞 🐜 🪰 🪲 🪳 🦟 🦗 🕷 🦂 🐢 🐍 🦎 🦖 🦕 🐙 🦑 🦐 🦞 🦀 🐡 🐠 🐟 🐬 🐳 🐋 🦈 🦭 🐊 🐅 🐆 🦓 🦍 🦧 🦣 🐘 🦛 🦏 🐪 🐫 🦒 🦘 🐃 🐂 🐄 🐎 🐖 🐏 🐑 🦙 🐐 🦌 🐕 🐩 🦮 🐕‍🦺 🐈 🐈‍⬛ 🪶 🐓 🦃 🦤 🦚 🦜 🦢 🦩 🕊 🐇 🦝 🦨 🦡 🦫 🦦 🦥 🐁 🐀 🐿 🦔 🍏 🍎 🍐 🍊 🍋 🍌 🍉 🍇 🍓 🫐 🍈 🍒 🍑 🥭 🍍 🥥 🥝 🍅 🍆 🥑 🥦 🥬 🥒 🌶 🫑 🌽 🥕 🫒 🧄 🧅 🥔 🍠 🥐 🥯 🍞 🥖 🥨 🧀 🥚 🍳 🧈 🥞 🧇 🥓 🥩 🍗 🍖 🦴 🌭 🍔 🍟 🍕 🫓 🥪 🥙 🧆 🌮 🌯 🫔 🥗 🥘 🫕 🥫 🍝 🍜 🍲 🍛 🍣 🍱 🥟 🦪 🍤 🍙 🍚 🍘 🍥 🥠 🥮 🍢 🍡 🍧 🍨 🍦 🥧 🧁 🍰 🎂 🍮 🍭 🍬 🍫 🍿 🍩 🍪 🌰 🥜 🍯 🥛 🍼 🫖 ☕️ 🍵 🧃 🥤 🧋 🚰 🍺 🍻 🥂 🍷 🥃 🍸 🍹 🧉 🍾 🧊 🥄 🍴 🍽 🥣 🥡 🥢 🧂 🚗 🚕 🚙 🚌 🚎 🏎 🚓 🚑 🚒 🚐 🛻 🚚 🚛 🚜 🦯 🦽 🦼 🛴 🚲 🛵 🏍 🛺 🚨 🚔 🚍 🚘 🚖 🚡 🚠 🚟 🚃 🚋 🚞 🚝 🚄 🚅 🚈 🚂 🚆 🚇 🚊 🚉 ✈️ 🛫 🛬 🛩 💺 🛰 🚀 🛸 🚁 🛶 ⛵️ 🚤 🛥 🛳 ⛴ 🚢 ⚓️ 🪝 ⛽️ 🚧 🚦 🚥 🚏 🗺 🗿 🗽 🗼 🏰 🏯 🏟 🎡 🎢 🎠 ⛲️ ⛱ 🏖 🏝 🏜 🌋 ⛰ 🏔 🗻 🏕 ⛺️ 🛖 🏠 🏡 🏘 🏚 🏗 🏭 🏢 🏬 🏣 🏤 🏥 🏦 🏨 🏪 🏫 🏩 💒 🏛 ⛪️ 🕌 🕍 🛕 🕋 ⛩ 🛤 🛣 🗾 🎑 🏞 🌅 🌄 🌠 🎇 🎆 🌇 🌆 🏙 🌃 🌌 🌉 🌁 ⌚️ 📱 📲 💻 ⌨️ 🖥 🖨 🖱 🖲 🕹 🗜 💽 💾 💿 📀 📼 📷 📸 📹 🎥 📽 🎞 📞 ☎️ 📟 📠 📺 📻 🎙 🎚 🎛 🧭 ⏱ ⏲ ⏰ 🕰 ⌛️ ⏳ 📡 🔋 🔌 💡 🔦 🕯 🪔 🧯 🛢 💸 💵 💴 💶 💷 🪙 💰 💳 💎 ⚖️ 🪜 🧰 🪛 🔧 🔨 ⚒ 🛠 ⛏ 🪚 🔩 ⚙️ 🪤 🧱 ⛓ 🧲 🔫 💣 🧨 🪓 🔪 🗡 ⚔️ 🛡 🚬 ⚰️ 🪦 ⚱️ 🏺 🔮 📿 🧿 💈 ⚗️ 🔭 🔬 🕳 🩹 🩺 💊 💉 🩸 🧬 🦠 🧫 🧪 🌡 🧹 🪠 🧺 🧻 🚽 🚰 🚿 🛁 🛀 🧼 🪥 🧽 🧴 🛎 🔑 🗝 🚪 🪑 🛋 🛏 🛌 🧸 🪆 🖼 🪞 🪟 🛍 🛒 🎁 🎈 🎏 🎀 🪄 🪅 🎊 🎉 🎎 🏮 🎐 🧧 ✉️ 📩 📨 📧 💌 📥 📤 📦 🏷 🪧 📪 📫 📬 📭 📮 📯 📜 📃 📄 📑 🧾 📊 📈 📉 🗒 🗓 📆 📅 🗑 📇 🗃 🗳 🗄 📋 📁 📂 🗂 🗞 📰 📓 📔 📒 📕 📗 📘 📙 📚 📖 🔖 🧷 🔗 📎 🖇 📐 📏 🧮 📌 📍 ✂️ 🖊 🖋 ✒️ 🖌 🖍 📝 ✏️ 🔍 🔎 🔏 🔐 🔒 🔓 ❤️ 🧡 💛 💚 💙 💜 🖤 🤍 🤎 💔 ❣️ 💕 💞 💓 💗 💖 💘 💝 💟 ☮️ ✝️ ☪️ 🕉 ☸️ ✡️ 🔯 🕎 ☯️ ☦️ 🛐 ⛎ ♈️ ♉️ ♊️ ♋️ ♌️ ♍️ ♎️ ♏️ ♐️ ♑️ ♒️ ♓️ 🆔 ⚛️ 🉑 ☢️ ☣️ 📴 📳 🈶 🈚️ 🈸 🈺 🈷️ ✴️ 🆚 💮 🉐 ㊙️ ㊗️ 🈴 🈵 🈹 🈲 🅰️ 🅱️ 🆎 🆑 🅾️ 🆘 ❌ ⭕️ 🛑 ⛔️ 📛 🚫 💯 💢 ♨️ 🚷 🚯 🚳 🚱 🔞 📵 🚭 ❗️ ❕ ❓ ❔ ‼️ ⁉️ 🔅 🔆 〽️ ⚠️ 🚸 🔱 ⚜️ 🔰 ♻️ ✅ 🈯️ 💹 ❇️ ✳️ ❎ 🌐 💠 Ⓜ️ 🌀 💤 🏧 🚾 ♿️ 🅿️ 🛗 🈳 🈂️ 🛂 🛃 🛄 🛅 🚹 🚺 🚼 ⚧ 🚻 🚮 🎦 🚰 ℹ️ 🔤 🔡 🔠 🔣 🎵 🎶 〰️ ➰ ✔️ 🔃 ➕ ➖ ➗ ✖️ ♾ ©️ ®️ ™️"
         val emojisList = emojisStr.split(" ").filter { it.isNotBlank() }
 
         val adapter = EmojiAdapter(emojisList) { emoji ->
@@ -951,6 +950,173 @@ class addTransaction : AppCompatActivity() {
         } else {
             etDescripcion.setText(textoOriginal.replaceFirstChar { it.uppercase() })
             Toast.makeText(this, "No detecté ningún número", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // =========================================================================================
+    // LÓGICA DEL TUTORIAL INTERACTIVO
+    // =========================================================================================
+
+    // INTERRUPTOR DE PRUEBAS DEL TUTORIAL
+    private val MODO_PRUEBAS_TUTORIAL = true // Cambiar a 'false' al publicar la aplicacion para que solo aparezca la primera vez
+
+    private fun mostrarTutorialAddTransaction() {
+        val prefs = getSharedPreferences("HelpCoinPrefs", Context.MODE_PRIVATE)
+
+        if (MODO_PRUEBAS_TUTORIAL) {
+            prefs.edit().putBoolean("tutorial_add_transaction", false).apply()
+        }
+
+        val tutorialCompletado = prefs.getBoolean("tutorial_add_transaction", false)
+        if (tutorialCompletado) return
+
+        val btnVoice = findViewById<View>(R.id.btnVoiceInput)
+        val tilDesc = findViewById<View>(R.id.tilDescripcion)
+        val tilMontoView = findViewById<View>(R.id.tilMonto)
+        val cardCat = findViewById<View>(R.id.cardSelectorCategoria)
+
+        // Obtenemos ambas tarjetas de forma separada
+        val cardIngresoView = findViewById<View>(R.id.cardIngreso)
+        val cardEgresoView = findViewById<View>(R.id.cardEgreso)
+
+        val cardRama = findViewById<View>(R.id.cardSelectorRama)
+
+        if (btnVoice == null || tilDesc == null || tilMontoView == null || cardCat == null || cardIngresoView == null || cardEgresoView == null || cardRama == null) return
+
+        val colorAura = ThemeUtils.getAuraColor(this)
+        val colorBlanco = Color.WHITE
+
+        val textoSiguiente = "\n\n• Toca el circulo iluminado para continuar."
+        val textoOmitir = "\n• Toca la zona oscura para salir del tutorial."
+
+        try {
+            TapTargetSequence(this)
+                .targets(
+                    TapTarget.forView(
+                        btnVoice,
+                        "Dictado Inteligente por Voz",
+                        "Ahorra tiempo dictando tu movimiento. Presiona el microfono y di algo como 'Almuerzo 15000' y la aplicacion lo llenara por ti.$textoSiguiente$textoOmitir"
+                    )
+                        .outerCircleColorInt(colorAura)
+                        .targetCircleColorInt(colorBlanco)
+                        .dimColor(android.R.color.black)
+                        .titleTextSize(22)
+                        .titleTextColorInt(colorBlanco)
+                        .descriptionTextSize(15)
+                        .descriptionTextColorInt(colorBlanco)
+                        .cancelable(true)
+                        .transparentTarget(true)
+                        .tintTarget(false)
+                        .targetRadius(40),
+
+                    TapTarget.forView(
+                        tilDesc,
+                        "Descripcion del Movimiento",
+                        "Escribe el detalle de tu transaccion para mantener tu historial claro y organizado.$textoSiguiente$textoOmitir"
+                    )
+                        .outerCircleColorInt(colorAura)
+                        .targetCircleColorInt(colorBlanco)
+                        .dimColor(android.R.color.black)
+                        .titleTextSize(22)
+                        .titleTextColorInt(colorBlanco)
+                        .descriptionTextSize(15)
+                        .descriptionTextColorInt(colorBlanco)
+                        .cancelable(true)
+                        .transparentTarget(true)
+                        .tintTarget(false),
+
+                    TapTarget.forView(
+                        tilMontoView,
+                        "Monto Exacto",
+                        "Ingresa el valor total de la transaccion. Se formateara automaticamente con separadores de miles para mayor facilidad.$textoSiguiente$textoOmitir"
+                    )
+                        .outerCircleColorInt(colorAura)
+                        .targetCircleColorInt(colorBlanco)
+                        .dimColor(android.R.color.black)
+                        .titleTextSize(22)
+                        .titleTextColorInt(colorBlanco)
+                        .descriptionTextSize(15)
+                        .descriptionTextColorInt(colorBlanco)
+                        .cancelable(true)
+                        .transparentTarget(true)
+                        .tintTarget(false),
+
+                    TapTarget.forView(
+                        cardCat,
+                        "Categoria y Personalizacion",
+                        "Elige una categoria para tu movimiento. Tambien podras crear categorias totalmente personalizadas tocando aqui.$textoSiguiente$textoOmitir"
+                    )
+                        .outerCircleColorInt(colorAura)
+                        .targetCircleColorInt(colorBlanco)
+                        .dimColor(android.R.color.black)
+                        .titleTextSize(22)
+                        .titleTextColorInt(colorBlanco)
+                        .descriptionTextSize(15)
+                        .descriptionTextColorInt(colorBlanco)
+                        .cancelable(true)
+                        .transparentTarget(true)
+                        .tintTarget(false),
+
+                    TapTarget.forView(
+                        cardIngresoView,
+                        "Registrar un Ingreso",
+                        "Selecciona esta opcion cuando recibas dinero, como un salario o un pago.$textoSiguiente$textoOmitir"
+                    )
+                        .outerCircleColorInt(colorAura)
+                        .targetCircleColorInt(colorBlanco)
+                        .dimColor(android.R.color.black)
+                        .titleTextSize(22)
+                        .titleTextColorInt(colorBlanco)
+                        .descriptionTextSize(15)
+                        .descriptionTextColorInt(colorBlanco)
+                        .cancelable(true)
+                        .transparentTarget(true)
+                        .tintTarget(false),
+                    TapTarget.forView(
+                        cardEgresoView,
+                        "Registrar un Egreso",
+                        "Selecciona esta opcion cuando realices un pago, compra o cualquier salida de dinero.$textoSiguiente$textoOmitir"
+                    )
+                        .outerCircleColorInt(colorAura)
+                        .targetCircleColorInt(colorBlanco)
+                        .dimColor(android.R.color.black)
+                        .titleTextSize(22)
+                        .titleTextColorInt(colorBlanco)
+                        .descriptionTextSize(15)
+                        .descriptionTextColorInt(colorBlanco)
+                        .cancelable(true)
+                        .transparentTarget(true)
+                        .tintTarget(false),
+
+                    TapTarget.forView(
+                        cardRama,
+                        "Bolsillo de Origen",
+                        "Si el movimiento es un Egreso, aqui podras elegir exactamente de que bolsillo o meta se descontara el dinero.\n\n• Toca el circulo para finalizar."
+                    )
+                        .outerCircleColorInt(colorAura)
+                        .targetCircleColorInt(colorBlanco)
+                        .dimColor(android.R.color.black)
+                        .titleTextSize(22)
+                        .titleTextColorInt(colorBlanco)
+                        .descriptionTextSize(15)
+                        .descriptionTextColorInt(colorBlanco)
+                        .cancelable(true)
+                        .transparentTarget(true)
+                        .tintTarget(false)
+                )
+                .listener(object : TapTargetSequence.Listener {
+                    override fun onSequenceFinish() {
+                        prefs.edit().putBoolean("tutorial_add_transaction", true).apply()
+                        if (MODO_PRUEBAS_TUTORIAL) Toast.makeText(this@addTransaction, "Tutorial completado (Modo Pruebas)", Toast.LENGTH_SHORT).show()
+                    }
+                    override fun onSequenceStep(lastTarget: TapTarget?, targetClicked: Boolean) {}
+                    override fun onSequenceCanceled(lastTarget: TapTarget?) {
+                        prefs.edit().putBoolean("tutorial_add_transaction", true).apply()
+                    }
+                })
+                .start()
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 }

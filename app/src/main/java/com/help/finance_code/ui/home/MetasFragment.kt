@@ -157,7 +157,6 @@ class MetasFragment : Fragment() {
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {}
 
-            // LÓGICA INFALIBLE: Mostrar flechas cuando el sistema inicia el arrastre
             override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
                 super.onSelectedChanged(viewHolder, actionState)
                 if (actionState == ItemTouchHelper.ACTION_STATE_DRAG) {
@@ -167,7 +166,6 @@ class MetasFragment : Fragment() {
                 }
             }
 
-            // LÓGICA INFALIBLE: Ocultar flechas cuando la tarjeta se suelta
             override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
                 super.clearView(recyclerView, viewHolder)
                 if (viewHolder is MetasAdapter.MetaViewHolder) {
@@ -176,7 +174,6 @@ class MetasFragment : Fragment() {
             }
 
             override fun isLongPressDragEnabled(): Boolean {
-                // Deshabilitamos el arrastre automático para controlarlo manualmente por si el modo discreto está activo
                 return false
             }
         }
@@ -214,6 +211,18 @@ class MetasFragment : Fragment() {
         return binding.root
     }
 
+    // AÑADIDO: Método para lanzar el tutorial limpiamente después de construir la vista
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        view.postDelayed({
+            if (isAdded && context != null) {
+                val prefs = requireContext().getSharedPreferences("HelpCoinPrefs", Context.MODE_PRIVATE)
+                TutorialMetas.mostrar(requireActivity(), view, prefs)
+            }
+        }, 1000)
+    }
+
     private fun setupSensors() {
         sensorManager = requireContext().getSystemService(Context.SENSOR_SERVICE) as SensorManager
         accelerometer = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
@@ -221,7 +230,6 @@ class MetasFragment : Fragment() {
         val vibrator = ContextCompat.getSystemService(requireContext(), Vibrator::class.java)
 
         shakeDetector = ShakeDetector {
-            // 🛑 CANDADO INFALIBLE: Revisamos si la función está prohibida antes de reaccionar
             val sharedPrefs = requireContext().getSharedPreferences("AppPrefe", Context.MODE_PRIVATE)
             val isShakeDisabled = sharedPrefs.getBoolean("disable_shake_gesture", false)
 
