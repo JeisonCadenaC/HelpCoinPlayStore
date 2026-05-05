@@ -17,7 +17,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.widget.SwitchCompat
 import androidx.fragment.app.Fragment
 import com.help.finance_code.R
-import com.help.finance_code.ui.home.HomeActivity // IMPORTANTE: Importar el HomeActivity
+import com.help.finance_code.ui.home.HomeActivity
 import com.help.finance_code.utils.ThemeUtils
 import com.google.android.material.card.MaterialCardView
 
@@ -114,6 +114,15 @@ class PrivacyFragment : Fragment() {
         }
 
         return root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        view.postDelayed({
+            if (isAdded && context != null) {
+                TutorialPrivacidad(requireActivity(), view).start()
+            }
+        }, 500)
     }
 
     private fun mostrarAdvertenciaBiometrica(switch: SwitchCompat, icon: ImageView?) {

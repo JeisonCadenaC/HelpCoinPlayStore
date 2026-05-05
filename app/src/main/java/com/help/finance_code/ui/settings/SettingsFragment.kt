@@ -108,6 +108,15 @@ class SettingsFragment : Fragment() {
         return root
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        view.postDelayed({
+            if (isAdded && context != null) {
+                TutorialAjustes(requireActivity(), view).start()
+            }
+        }, 500)
+    }
+
     override fun onResume() {
         super.onResume()
         val sharedPrefs = requireActivity().getSharedPreferences("AppPrefe", Context.MODE_PRIVATE)
@@ -133,6 +142,5 @@ class SettingsFragment : Fragment() {
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         requireActivity().finish()
-        // Eliminado: Runtime.getRuntime().exit(0)
     }
 }

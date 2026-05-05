@@ -1,102 +1,224 @@
-package com.help.finance_code.ui.home // Cambia esto si lo pones en otra carpeta
+package com.help.finance_code.ui.home
 
 import android.app.Activity
+import android.content.Context
 import android.content.SharedPreferences
+import android.graphics.Color
 import android.view.View
 import android.widget.Toast
 import com.getkeepsafe.taptargetview.TapTarget
 import com.getkeepsafe.taptargetview.TapTargetSequence
 import com.help.finance_code.R
+import com.help.finance_code.utils.ThemeUtils
 
-object TutorialMovimientos {
+class TutorialMovimientos(
+    private val activity: Activity,
+    private val view: View,
+    private val isFabOpen: () -> Boolean,
+    private val toggleFabMenu: () -> Unit
+) {
 
-    fun mostrar(activity: Activity, view: View, prefs: SharedPreferences) {
-        // Cambia a 'false' si quieres probarlo varias veces mientras programas
+    // =========================================================================================
+    // LÓGICA DEL TUTORIAL INTERACTIVO EN DOS PARTES
+    // =========================================================================================
+
+    // INTERRUPTOR DE PRUEBAS DEL TUTORIAL
+    // Cambiar a 'false' al publicar la aplicacion para que solo aparezca la primera vez
+    private val MODO_PRUEBAS_TUTORIAL = false
+    private val prefs: SharedPreferences = activity.getSharedPreferences("HelpCoinPrefs", Context.MODE_PRIVATE)
+
+    fun start() {
+        if (MODO_PRUEBAS_TUTORIAL) {
+            prefs.edit().putBoolean("tutorial_movimientos_completo", false).apply()
+        }
+
         val tutorialCompletado = prefs.getBoolean("tutorial_movimientos_completo", false)
-
         if (tutorialCompletado) return
 
-        // 1. Buscamos las vistas clave en tu fragment_movimientos.xml
-        val cardSaldo = view.findViewById<View>(R.id.cardSaldoContainer)
+        mostrarTutorialMovimientosParte1()
+    }
+
+    private fun mostrarTutorialMovimientosParte1() {
+        val tvSaldo = view.findViewById<View>(R.id.tvSaldoTotal)
+        val btnEdit = view.findViewById<View>(R.id.btnEditProfile)
+        val btnHideBalance = view.findViewById<View>(R.id.btnHideBalance)
         val btnDiscreto = view.findViewById<View>(R.id.btnDiscreetModeManual)
-        val btnFiltrar = view.findViewById<View>(R.id.btnFiltrarFechas)
         val fabAdd = view.findViewById<View>(R.id.fabAddTransaction)
 
-        // Verificamos que las vistas existan para evitar crasheos
-        if (cardSaldo == null || btnDiscreto == null || btnFiltrar == null || fabAdd == null) return
+        if (tvSaldo == null || btnEdit == null || btnHideBalance == null || btnDiscreto == null || fabAdd == null) return
 
-        val colorPrimario = R.color.colorPrimary
-        val colorBlanco = android.R.color.white
+        val colorAura = ThemeUtils.getAuraColor(activity)
+        val colorBlanco = Color.WHITE
 
-        // 2. Iniciamos la secuencia del tutorial
-        TapTargetSequence(activity)
-            .targets(
-                // --- PASO 1: LA BILLETERA / BOLSILLOS ---
-                TapTarget.forView(
-                    cardSaldo,
-                    "Tu Billetera y Bolsillos",
-                    "Aquí puedes ver tu saldo total. ¡Toca esta tarjeta en cualquier momento para filtrar todos tus movimientos por un Bolsillo específico!"
+        val textoSiguiente = "\n\n• Toca el circulo iluminado para continuar."
+        val textoOmitir = "\n• Toca la zona oscura para salir del tutorial."
+
+        try {
+            TapTargetSequence(activity)
+                .targets(
+                    TapTarget.forView(
+                        tvSaldo,
+                        "Saldo Disponible",
+                        "Este es tu dinero actual. Puedes tocar esta tarjeta en cualquier momento para filtrar tus movimientos por un bolsillo especifico.$textoSiguiente$textoOmitir"
+                    )
+                        .outerCircleColorInt(colorAura)
+                        .targetCircleColorInt(colorBlanco)
+                        .dimColor(android.R.color.black)
+                        .titleTextSize(22)
+                        .titleTextColorInt(colorBlanco)
+                        .descriptionTextSize(15)
+                        .descriptionTextColorInt(colorBlanco)
+                        .cancelable(true)
+                        .transparentTarget(true)
+                        .targetRadius(50),
+
+                    TapTarget.forView(
+                        btnEdit,
+                        "Editar Perfil",
+                        "Usa este boton para modificar tu nombre, foto de perfil y acceder a los ajustes de tu cuenta.$textoSiguiente$textoOmitir"
+                    )
+                        .outerCircleColorInt(colorAura)
+                        .targetCircleColorInt(colorBlanco)
+                        .dimColor(android.R.color.black)
+                        .titleTextSize(22)
+                        .titleTextColorInt(colorBlanco)
+                        .descriptionTextSize(15)
+                        .descriptionTextColorInt(colorBlanco)
+                        .cancelable(true)
+                        .transparentTarget(true)
+                        .targetRadius(40),
+
+                    TapTarget.forView(
+                        btnHideBalance,
+                        "Ocultar Saldo",
+                        "Si solo quieres censurar el monto total de la parte superior, toca este icono.$textoSiguiente$textoOmitir"
+                    )
+                        .outerCircleColorInt(colorAura)
+                        .targetCircleColorInt(colorBlanco)
+                        .dimColor(android.R.color.black)
+                        .titleTextSize(22)
+                        .titleTextColorInt(colorBlanco)
+                        .descriptionTextSize(15)
+                        .descriptionTextColorInt(colorBlanco)
+                        .cancelable(true)
+                        .transparentTarget(true)
+                        .targetRadius(40),
+
+                    TapTarget.forView(
+                        btnDiscreto,
+                        "Modo Discreto Total",
+                        "Activa este modo para censurar todos los valores de la aplicacion y proteger tu privacidad. Tambien se activa agitando el celular.$textoSiguiente$textoOmitir"
+                    )
+                        .outerCircleColorInt(colorAura)
+                        .targetCircleColorInt(colorBlanco)
+                        .dimColor(android.R.color.black)
+                        .titleTextSize(22)
+                        .titleTextColorInt(colorBlanco)
+                        .descriptionTextSize(15)
+                        .descriptionTextColorInt(colorBlanco)
+                        .cancelable(true)
+                        .transparentTarget(true)
+                        .targetRadius(40),
+
+                    TapTarget.forView(
+                        fabAdd,
+                        "Menu de Acciones",
+                        "Finalmente, este es el boton principal para registrar dinero. Vamos a abrirlo para ver sus opciones.$textoSiguiente$textoOmitir"
+                    )
+                        .outerCircleColorInt(colorAura)
+                        .targetCircleColorInt(colorBlanco)
+                        .dimColor(android.R.color.black)
+                        .titleTextSize(22)
+                        .titleTextColorInt(colorBlanco)
+                        .descriptionTextSize(15)
+                        .descriptionTextColorInt(colorBlanco)
+                        .cancelable(true)
+                        .transparentTarget(true)
+                        .targetRadius(45)
                 )
-                    .outerCircleColor(colorPrimario)
-                    .targetCircleColor(colorBlanco)
-                    .titleTextSize(22)
-                    .titleTextColor(colorBlanco)
-                    .descriptionTextSize(16)
-                    .descriptionTextColor(colorBlanco)
-                    .cancelable(true)
-                    .transparentTarget(true)
-                    .targetRadius(80), // Radio amplio para cubrir la tarjeta
+                .listener(object : TapTargetSequence.Listener {
+                    override fun onSequenceFinish() {
+                        // 1. Abrimos el menú programáticamente
+                        if (!isFabOpen()) toggleFabMenu()
 
-                // --- PASO 2: MODO DISCRETO ---
-                TapTarget.forView(
-                    btnDiscreto,
-                    "Modo Discreto (Privacidad)",
-                    "Toca este ojo para ocultar tu saldo y montos si estás en público.\n\n💡 Tip Pro: ¡También puedes activarlo simplemente agitando tu celular!"
+                        // 2. Esperamos a que la animación termine y lanzamos la Parte 2
+                        view.postDelayed({
+                            mostrarTutorialMovimientosParte2()
+                        }, 400)
+                    }
+                    override fun onSequenceStep(lastTarget: TapTarget?, targetClicked: Boolean) {}
+                    override fun onSequenceCanceled(lastTarget: TapTarget?) {
+                        prefs.edit().putBoolean("tutorial_movimientos_completo", true).apply()
+                    }
+                })
+                .start()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun mostrarTutorialMovimientosParte2() {
+        val fabManual = view.findViewById<View>(R.id.fabAddManual)
+        val fabImportPDF = view.findViewById<View>(R.id.fabImportPDF)
+
+        if (fabManual == null || fabImportPDF == null) return
+
+        val colorAura = ThemeUtils.getAuraColor(activity)
+        val colorBlanco = Color.WHITE
+
+        val textoSiguiente = "\n\n• Toca el circulo iluminado para continuar."
+        val textoOmitir = "\n• Toca la zona oscura para salir del tutorial."
+
+        try {
+            TapTargetSequence(activity)
+                .targets(
+                    TapTarget.forView(
+                        fabManual,
+                        "Registro Manual",
+                        "Usa esta opcion para añadir un nuevo gasto o ingreso escribiendo los datos paso a paso.$textoSiguiente$textoOmitir"
+                    )
+                        .outerCircleColorInt(colorAura)
+                        .targetCircleColorInt(colorBlanco)
+                        .dimColor(android.R.color.black)
+                        .titleTextSize(22)
+                        .titleTextColorInt(colorBlanco)
+                        .descriptionTextSize(15)
+                        .descriptionTextColorInt(colorBlanco)
+                        .cancelable(true)
+                        .transparentTarget(true)
+                        .targetRadius(60),
+
+                    TapTarget.forView(
+                        fabImportPDF,
+                        "Importar Extracto PDF",
+                        "Sube el extracto mensual de tu banco en PDF y HelpCoin extraera y organizara todos tus movimientos automaticamente.\n\n• Toca el circulo para finalizar."
+                    )
+                        .outerCircleColorInt(colorAura)
+                        .targetCircleColorInt(colorBlanco)
+                        .dimColor(android.R.color.black)
+                        .titleTextSize(22)
+                        .titleTextColorInt(colorBlanco)
+                        .descriptionTextSize(15)
+                        .descriptionTextColorInt(colorBlanco)
+                        .cancelable(true)
+                        .transparentTarget(true)
+                        .targetRadius(60)
                 )
-                    .outerCircleColor(colorPrimario)
-                    .targetCircleColor(colorBlanco)
-                    .cancelable(true)
-                    .transparentTarget(true)
-                    .targetRadius(40),
-
-                // --- PASO 3: FILTROS ---
-                TapTarget.forView(
-                    btnFiltrar,
-                    "Filtros Avanzados",
-                    "¿Buscas un gasto antiguo? Usa este botón para filtrar por fechas o agrupar tus movimientos por día, mes, año o bolsillos."
-                )
-                    .outerCircleColor(colorPrimario)
-                    .targetCircleColor(colorBlanco)
-                    .cancelable(true)
-                    .transparentTarget(true)
-                    .targetRadius(50),
-
-                // --- PASO 4: BOTÓN DE ACCIÓN (FAB) ---
-                TapTarget.forView(
-                    fabAdd,
-                    "Registrar e Importar",
-                    "Toca el botón + para abrir el menú. Puedes registrar un movimiento manualmente o importar tus Extractos Bancarios en PDF de forma automática."
-                )
-                    .outerCircleColor(colorPrimario)
-                    .targetCircleColor(colorBlanco)
-                    .cancelable(true)
-                    .transparentTarget(true)
-                    .targetRadius(40)
-            )
-            .listener(object : TapTargetSequence.Listener {
-                override fun onSequenceFinish() {
-                    prefs.edit().putBoolean("tutorial_movimientos_completo", true).apply()
-                    Toast.makeText(activity, "¡Tutorial completado!", Toast.LENGTH_SHORT).show()
-                }
-
-                override fun onSequenceStep(lastTarget: TapTarget?, targetClicked: Boolean) {}
-
-                override fun onSequenceCanceled(lastTarget: TapTarget?) {
-                    // El usuario tocó afuera para saltarse el tutorial
-                    prefs.edit().putBoolean("tutorial_movimientos_completo", true).apply()
-                    Toast.makeText(activity, "Tutorial omitido", Toast.LENGTH_SHORT).show()
-                }
-            })
-            .start()
+                .listener(object : TapTargetSequence.Listener {
+                    override fun onSequenceFinish() {
+                        if (isFabOpen()) toggleFabMenu() // Cerramos el menú
+                        prefs.edit().putBoolean("tutorial_movimientos_completo", true).apply()
+                        if (MODO_PRUEBAS_TUTORIAL) Toast.makeText(activity, "Tutorial completo (Modo Pruebas)", Toast.LENGTH_SHORT).show()
+                    }
+                    override fun onSequenceStep(lastTarget: TapTarget?, targetClicked: Boolean) {}
+                    override fun onSequenceCanceled(lastTarget: TapTarget?) {
+                        if (isFabOpen()) toggleFabMenu() // Cerramos el menú
+                        prefs.edit().putBoolean("tutorial_movimientos_completo", true).apply()
+                    }
+                })
+                .start()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 }

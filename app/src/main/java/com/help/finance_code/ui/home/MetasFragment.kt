@@ -217,8 +217,7 @@ class MetasFragment : Fragment() {
 
         view.postDelayed({
             if (isAdded && context != null) {
-                val prefs = requireContext().getSharedPreferences("HelpCoinPrefs", Context.MODE_PRIVATE)
-                TutorialMetas.mostrar(requireActivity(), view, prefs)
+                TutorialMetas(requireActivity(), view).start()
             }
         }, 1000)
     }

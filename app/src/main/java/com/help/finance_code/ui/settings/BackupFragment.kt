@@ -186,6 +186,15 @@ class BackupFragment : Fragment() {
         return root
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        view.postDelayed({
+            if (isAdded && context != null) {
+                TutorialRespaldo(requireActivity(), view).start()
+            }
+        }, 500)
+    }
+
     private fun actualizarBorde(view: View, color: Int) {
         if (view is MaterialCardView) {
             view.strokeColor = color

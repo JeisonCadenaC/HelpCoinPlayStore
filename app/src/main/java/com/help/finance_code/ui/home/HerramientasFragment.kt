@@ -75,6 +75,12 @@ class HerramientasFragment : Fragment() {
         binding.btnInfoImpuestos.setOnClickListener {
             mostrarInformacionFlotante(getString(R.string.info_impuestos_titulo), getString(R.string.info_impuestos_mensaje))
         }
+
+        view.postDelayed({
+            if (isAdded && context != null) {
+                TutorialHerramientas(requireActivity(), view).start()
+            }
+        }, 500)
     }
 
     private fun mostrarInformacionFlotante(titulo: String, mensaje: String) {

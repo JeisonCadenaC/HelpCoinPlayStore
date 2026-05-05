@@ -119,6 +119,15 @@ class CustomizationFragment : Fragment() {
         return root
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        view.postDelayed({
+            if (isAdded && context != null) {
+                TutorialPersonalizacion(requireActivity(), view).start()
+            }
+        }, 500)
+    }
+
     private fun aplicarColorSwitchYTarjetas(switch: SwitchCompat, card1: View, card2: View, color: Int) {
         switch.thumbTintList = ColorStateList.valueOf(color)
         val trackStates = arrayOf(
@@ -173,3 +182,4 @@ class CustomizationFragment : Fragment() {
         bottomNav?.visibility = View.VISIBLE
     }
 }
+
